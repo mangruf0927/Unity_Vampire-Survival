@@ -501,6 +501,7 @@ GameObject:
   - component: {fileID: 477741195}
   - component: {fileID: 477741194}
   - component: {fileID: 477741193}
+  - component: {fileID: 1900000200}
   m_Layer: 0
   m_Name: Bat (2)
   m_TagString: Untagged
@@ -916,6 +917,7 @@ GameObject:
   - component: {fileID: 1537364576}
   - component: {fileID: 1537364575}
   - component: {fileID: 1537364574}
+  - component: {fileID: 1900000201}
   m_Layer: 0
   m_Name: Bat (1)
   m_TagString: Untagged
@@ -1231,6 +1233,7 @@ GameObject:
   - component: {fileID: 1800000002}
   - component: {fileID: 1800000003}
   - component: {fileID: 1800000004}
+  - component: {fileID: 1900000202}
   m_Layer: 0
   m_Name: Bat
   m_TagString: Untagged
@@ -1437,6 +1440,45 @@ MonoBehaviour:
   projectilePrefab: {fileID: 11400000, guid: 34d23ba512954b75a01e058c47817d64, type: 3}
   cooldown: 1.2
   projectileSpeed: 12
+--- !u!114 &1900000200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 477741192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd530ccd80ad4cf5bb818d6f76fd0df2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  maxHealth: 5
+--- !u!114 &1900000201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1537364573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd530ccd80ad4cf5bb818d6f76fd0df2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  maxHealth: 5
+--- !u!114 &1900000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd530ccd80ad4cf5bb818d6f76fd0df2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  maxHealth: 5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

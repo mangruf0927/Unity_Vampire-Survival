@@ -51,8 +51,9 @@ public static class EnemyCrowd
         hitGridFrame = Time.frameCount;
     }
 
-    internal static bool HasProjectileHit(Vector3 start, Vector3 end, float hitRadius)
+    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy)
     {
+        hitEnemy = null;
         if (hitGridFrame != Time.frameCount)
         {
             RefreshGrid(true);
@@ -67,6 +68,7 @@ public static class EnemyCrowd
 
         Vector3 segment = end - start;
         float lengthSquared = segment.sqrMagnitude;
+        float firstHitTime = float.PositiveInfinity;
 
         for (int x = min.x; x <= max.x; x++)
         {
@@ -83,13 +85,30 @@ public static class EnemyCrowd
                             : 0f;
                         Vector3 closestPoint = start + segment * t;
                         float radius = enemy.BodyRadius + hitRadius;
-                        if ((center - closestPoint).sqrMagnitude <= radius * radius) return true;
+                        if ((center - closestPoint).sqrMagnitude <= radius * radius)
+                        {
+                            // 여러 적을 통과하는 프레임에도 격자 순서가 아닌 첫 접촉 대상을 선택한다.
+                            float hitTime = 0f;
+                            if (lengthSquared > 0f)
+                            {
+                                Vector3 offset = start - center;
+                                float b = Vector3.Dot(offset, segment);
+                                float c = offset.sqrMagnitude - radius * radius;
+                                float discriminant = Mathf.Max(0f, b * b - lengthSquared * c);
+                                hitTime = Mathf.Max(0f, (-b - Mathf.Sqrt(discriminant)) / lengthSquared);
+                            }
+                            if (hitTime < firstHitTime)
+                            {
+                                firstHitTime = hitTime;
+                                hitEnemy = enemy;
+                            }
+                        }
                     }
                     enemy = enemy.nextInCell;
                 }
             }
         }
-        return false;
+        return hitEnemy != null;
     }
 
     private static void SimulateCrowd()

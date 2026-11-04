@@ -11,6 +11,7 @@ public static class EnemyCrowd
     private static readonly Dictionary<Vector2Int, EnemyMovement> grid = new();
 
     private static int simulationFrame = -1;
+    private static int hitGridFrame = -1;
     private static float largestRadius;
     private static float stepDeltaTime;
 
@@ -20,16 +21,19 @@ public static class EnemyCrowd
         activeEnemies.Clear();
         grid.Clear();
         simulationFrame = -1;
+        hitGridFrame = -1;
     }
 
     public static void Register(EnemyMovement enemy)
     {
         activeEnemies.Add(enemy);
+        hitGridFrame = -1;
     }
 
     public static void Unregister(EnemyMovement enemy)
     {
         activeEnemies.Remove(enemy);
+        hitGridFrame = -1;
     }
 
     public static void UpdateCrowd()
@@ -42,6 +46,50 @@ public static class EnemyCrowd
         stepDeltaTime = Time.deltaTime / steps;
 
         for (int i = 0; i < steps; i++) SimulateCrowd();
+
+        RefreshGrid(true);
+        hitGridFrame = Time.frameCount;
+    }
+
+    internal static bool HasProjectileHit(Vector3 start, Vector3 end, float hitRadius)
+    {
+        if (hitGridFrame != Time.frameCount)
+        {
+            RefreshGrid(true);
+            hitGridFrame = Time.frameCount;
+        }
+
+        if (grid.Count == 0) return false;
+
+        float padding = largestRadius + hitRadius;
+        Vector2Int min = GetCell(new Vector3(Mathf.Min(start.x, end.x) - padding, 0f, Mathf.Min(start.z, end.z) - padding));
+        Vector2Int max = GetCell(new Vector3(Mathf.Max(start.x, end.x) + padding, 0f, Mathf.Max(start.z, end.z) + padding));
+
+        Vector3 segment = end - start;
+        float lengthSquared = segment.sqrMagnitude;
+
+        for (int x = min.x; x <= max.x; x++)
+        {
+            for (int z = min.y; z <= max.y; z++)
+            {
+                grid.TryGetValue(new Vector2Int(x, z), out EnemyMovement enemy);
+                while (enemy != null)
+                {
+                    if (enemy.isActiveAndEnabled)
+                    {
+                        Vector3 center = enemy.transform.position;
+                        float t = lengthSquared > 0f
+                            ? Mathf.Clamp01(Vector3.Dot(center - start, segment) / lengthSquared)
+                            : 0f;
+                        Vector3 closestPoint = start + segment * t;
+                        float radius = enemy.BodyRadius + hitRadius;
+                        if ((center - closestPoint).sqrMagnitude <= radius * radius) return true;
+                    }
+                    enemy = enemy.nextInCell;
+                }
+            }
+        }
+        return false;
     }
 
     private static void SimulateCrowd()
@@ -116,7 +164,7 @@ public static class EnemyCrowd
         return new Vector2Int(Mathf.FloorToInt(position.x / CellSize), Mathf.FloorToInt(position.z / CellSize));
     }
 
-    private static void RefreshGrid()
+    private static void RefreshGrid(bool useCurrentPosition = false)
     {
         grid.Clear();
         largestRadius = 0f;
@@ -124,7 +172,7 @@ public static class EnemyCrowd
         for (int i = 0; i < activeEnemies.Count; i++)
         {
             EnemyMovement enemy = activeEnemies[i];
-            Vector2Int cell = GetCell(enemy.nextPosition);
+            Vector2Int cell = GetCell(useCurrentPosition ? enemy.transform.position : enemy.nextPosition);
 
             grid.TryGetValue(cell, out enemy.nextInCell);
             grid[cell] = enemy;

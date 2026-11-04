@@ -9,9 +9,10 @@ public class EnemyHealth : MonoBehaviour
 
     public float CurrentHealth => currentHealth;
 
-    private void Awake()
+    private void OnEnable()
     {
         currentHealth = maxHealth;
+        isDead = false;
     }
 
     public void TakeDamage(float damage)
@@ -23,7 +24,10 @@ public class EnemyHealth : MonoBehaviour
 
         isDead = true;
 
-        gameObject.SetActive(false);
-        Destroy(gameObject);
+        if (!ObjectPool.Instance.TryReturnToPool(gameObject))
+        {
+            gameObject.SetActive(false);
+            Destroy(gameObject);
+        }
     }
 }

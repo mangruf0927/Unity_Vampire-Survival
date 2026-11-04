@@ -8,6 +8,7 @@ public static class EnemyCrowd
     private const float ContactTolerance = 0.001f;
 
     private static readonly List<EnemyMovement> activeEnemies = new();
+    internal static int ActiveCount => activeEnemies.Count;
     private static readonly Dictionary<Vector2Int, EnemyMovement> grid = new();
 
     private static int simulationFrame = -1;

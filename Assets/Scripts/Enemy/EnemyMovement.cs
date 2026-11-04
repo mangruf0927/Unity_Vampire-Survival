@@ -28,6 +28,11 @@ public class EnemyMovement : MonoBehaviour
     internal float SeparationRange => separationRange;
     internal float OverlapCorrectionSpeed => overlapCorrectionSpeed;
 
+    public void SetTarget(Transform target)
+    {
+        this.target = target;
+    }
+
     private void OnEnable()
     {
         enemyId = GetInstanceID();

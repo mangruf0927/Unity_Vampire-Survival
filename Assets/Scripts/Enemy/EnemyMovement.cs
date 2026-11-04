@@ -56,31 +56,22 @@ public class EnemyMovement : MonoBehaviour
 
     internal void Move(Vector3 direction, Vector3 separation, float stepDeltaTime)
     {
-        Vector3 desiredVelocity = Vector3.ClampMagnitude(direction.normalized + separation * separationStrength, 1f) * moveSpeed;
-        velocity = Vector3.MoveTowards(velocity, desiredVelocity, moveSpeed * 8f * stepDeltaTime);
-        nextPosition = framePosition + velocity * stepDeltaTime;
-    }
-
-    internal void LimitApproach()
-    {
-        if (target == null) return;
-
-        Vector3 outward = nextPosition - targetPosition;
-        outward.y = 0f;
-
-        float contactDistance = bodyRadius + playerRadius;
-        if (outward.sqrMagnitude >= contactDistance * contactDistance) return;
-
-        if (outward.sqrMagnitude < 0.000001f)
+        // 적 자신의 접근만 멈춘다. 플레이어가 겹쳐 들어와도 위치를 바깥으로 밀어내지 않는다.
+        float remainingDistance = Mathf.Max(0f, direction.magnitude - bodyRadius - playerRadius);
+        if (remainingDistance <= 0.001f)
         {
-            outward = framePosition - targetPosition;
-            outward.y = 0f;
-
-            if (outward.sqrMagnitude < 0.000001f) outward = Vector3.right;
+            velocity = Vector3.zero;
+            nextPosition = framePosition;
+            return;
         }
 
-        nextPosition = targetPosition + outward.normalized * contactDistance;
-        nextPosition.y = framePosition.y;
+        float chaseSpeed = Mathf.Min(moveSpeed, remainingDistance / stepDeltaTime);
+        Vector3 desiredVelocity = direction.normalized * chaseSpeed + separation * (separationStrength * moveSpeed);
+        desiredVelocity = Vector3.ClampMagnitude(desiredVelocity, moveSpeed);
+        velocity = Vector3.MoveTowards(velocity, desiredVelocity, moveSpeed * 8f * stepDeltaTime);
+        // 속도 보간에 남은 관성까지 제한한다. 현재 위치를 강제로 바깥으로 옮기지는 않는다.
+        Vector3 movement = Vector3.ClampMagnitude(velocity * stepDeltaTime, remainingDistance);
+        nextPosition = framePosition + movement;
     }
 
     internal Vector3 GetOverlapDirection(EnemyMovement other)

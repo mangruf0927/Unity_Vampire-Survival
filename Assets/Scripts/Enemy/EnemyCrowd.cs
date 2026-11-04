@@ -120,7 +120,6 @@ public static class EnemyCrowd
             for (int i = 0; i < activeEnemies.Count; i++)
             {
                 EnemyMovement enemy = activeEnemies[i];
-                enemy.LimitApproach();
                 enemy.correction = Vector3.zero;
                 enemy.contactCount = 0;
             }
@@ -141,7 +140,6 @@ public static class EnemyCrowd
                     enemy.nextPosition += Vector3.ClampMagnitude(offset, enemy.OverlapCorrectionSpeed * stepDeltaTime);
                 }
 
-                enemy.LimitApproach();
             }
         }
 

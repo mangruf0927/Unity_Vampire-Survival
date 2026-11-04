@@ -1,11 +1,10 @@
 using UnityEngine;
 
-[DefaultExecutionOrder(100)]
 public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] private Transform player;
     [SerializeField] private Camera gameCamera;
-    [SerializeField] private PoolData enemyPool = new() { poolType = PoolTypeEnums.Bat, size = 15 };
+    [SerializeField] private PoolTypeEnums enemyPoolType = PoolTypeEnums.Bat;
     [SerializeField, Min(0.01f)] private float spawnInterval = 1f;
     [SerializeField, Min(0)] private int minimumEnemies = 15;
     [SerializeField, Min(0)] private int maximumEnemies = 50;
@@ -17,36 +16,29 @@ public class EnemySpawner : MonoBehaviour
     private float nextOffscreenCheckTime;
     private float remainingTime;
     private float enemyRadius;
-    private bool registeredPool;
+    private bool isReady;
 
     private void Start()
     {
         if (gameCamera == null) gameCamera = Camera.main;
 
-        if (player == null || gameCamera == null || enemyPool == null || enemyPool.prefab == null
-            || !enemyPool.prefab.TryGetComponent(out EnemyMovement movement)
-            || !enemyPool.prefab.TryGetComponent<EnemyHealth>(out _))
+        if (player == null || gameCamera == null
+            || !ObjectPool.Instance.TryGetPrefab(enemyPoolType, out GameObject prefab)
+            || !prefab.TryGetComponent(out EnemyMovement movement)
+            || !prefab.TryGetComponent<EnemyHealth>(out _))
         {
-            Debug.LogWarning("EnemySpawner의 Player, Camera, 적 프리팹(EnemyMovement/EnemyHealth)을 확인해 주세요.", this);
-            enabled = false;
-            return;
-        }
-
-        if (ObjectPool.Instance.TryGetPrefab(enemyPool.poolType, out _))
-        {
-            Debug.LogWarning("같은 풀 종류를 등록하는 EnemySpawner는 하나만 배치해 주세요.", this);
+            Debug.LogWarning("EnemySpawner의 Player, Camera와 PoolDataInitializer의 적 풀 등록을 확인해 주세요.", this);
             enabled = false;
             return;
         }
 
         enemyRadius = movement.BodyRadius;
-        ObjectPool.Instance.Register(enemyPool, transform);
-        registeredPool = true;
+        isReady = true;
     }
 
     private void LateUpdate()
     {
-        if (!registeredPool || player == null || gameCamera == null || Time.deltaTime <= 0f) return;
+        if (!isReady || player == null || gameCamera == null || Time.deltaTime <= 0f) return;
 
         if (Time.time >= nextOffscreenCheckTime)
         {
@@ -95,7 +87,7 @@ public class EnemySpawner : MonoBehaviour
             if (EnemyCrowd.ActiveCount >= maximum) break;
 
             Vector3 position = GetSpawnPosition();
-            GameObject enemy = ObjectPool.Instance.GetFromPool(enemyPool.poolType, position, Quaternion.identity);
+            GameObject enemy = ObjectPool.Instance.GetFromPool(enemyPoolType, position, Quaternion.identity);
             if (enemy == null) break;
 
             enemy.GetComponent<EnemyMovement>().SetTarget(player);
@@ -127,10 +119,5 @@ public class EnemySpawner : MonoBehaviour
         Vector3 position = Vector3.Lerp(a, b, Random.value) + outward * (spawnMargin + enemyRadius);
         position.y = spawnHeight;
         return position;
-    }
-
-    private void OnDestroy()
-    {
-        if (registeredPool) ObjectPool.Instance.Unregister(enemyPool.poolType);
     }
 }

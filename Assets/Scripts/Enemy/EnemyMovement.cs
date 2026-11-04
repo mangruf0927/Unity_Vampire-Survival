@@ -10,8 +10,12 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float separationRange = 1.5f;
     [SerializeField, Min(0f)] private float separationStrength = 2f;
     [SerializeField, Min(0f)] private float overlapCorrectionSpeed = 3f;
+    [SerializeField, Min(0)] private int damage = 10;
 
-    // EnemyCrowd와 공유하는 실행 중 상태이며 인스펙터 설정은 아니다.
+    private Transform cachedDamageTarget;
+    private IDamageable damageTarget;
+
+    // EnemyCrowd와 공유하는 실행 중 상태
     internal EnemyMovement nextInCell;
     internal Vector3 framePosition;
     internal Vector3 nextPosition;
@@ -25,6 +29,7 @@ public class EnemyMovement : MonoBehaviour
 
     internal Transform Target => target;
     internal float BodyRadius => bodyRadius;
+    internal float PlayerRadius => playerRadius;
     internal float SeparationRange => separationRange;
     internal float OverlapCorrectionSpeed => overlapCorrectionSpeed;
 
@@ -35,6 +40,8 @@ public class EnemyMovement : MonoBehaviour
 
     private void OnEnable()
     {
+        cachedDamageTarget = null;
+        damageTarget = null;
         enemyId = GetInstanceID();
         sidePreference = ((enemyId >> 2) & 1) == 0 ? 1f : -1f;
         velocity = Vector3.zero;
@@ -50,6 +57,26 @@ public class EnemyMovement : MonoBehaviour
     private void LateUpdate()
     {
         EnemyCrowd.UpdateCrowd();
+        ApplyContactDamage();
+    }
+
+    private void ApplyContactDamage()
+    {
+        if (Time.deltaTime <= 0f || target == null) return;
+        if (cachedDamageTarget != target)
+        {
+            cachedDamageTarget = target;
+            target.TryGetComponent(out damageTarget);
+        }
+        if (damageTarget == null) return;
+
+        Vector3 offset = target.position - transform.position;
+        offset.y = 0f;
+        float contactDistance = bodyRadius + playerRadius + 0.002f;
+        if (offset.sqrMagnitude <= contactDistance * contactDistance)
+        {
+            damageTarget.TakeDamage(damage);
+        }
     }
 
     internal Vector3 GetTargetDirection()
@@ -61,7 +88,6 @@ public class EnemyMovement : MonoBehaviour
 
     internal void Move(Vector3 direction, Vector3 separation, float stepDeltaTime)
     {
-        // 적 자신의 접근만 멈춘다. 플레이어가 겹쳐 들어와도 위치를 바깥으로 밀어내지 않는다.
         float remainingDistance = Mathf.Max(0f, direction.magnitude - bodyRadius - playerRadius);
         if (remainingDistance <= 0.001f)
         {
@@ -74,7 +100,7 @@ public class EnemyMovement : MonoBehaviour
         Vector3 desiredVelocity = direction.normalized * chaseSpeed + separation * (separationStrength * moveSpeed);
         desiredVelocity = Vector3.ClampMagnitude(desiredVelocity, moveSpeed);
         velocity = Vector3.MoveTowards(velocity, desiredVelocity, moveSpeed * 8f * stepDeltaTime);
-        // 속도 보간에 남은 관성까지 제한한다. 현재 위치를 강제로 바깥으로 옮기지는 않는다.
+
         Vector3 movement = Vector3.ClampMagnitude(velocity * stepDeltaTime, remainingDistance);
         nextPosition = framePosition + movement;
     }
@@ -83,7 +109,7 @@ public class EnemyMovement : MonoBehaviour
     {
         int pair = enemyId ^ other.enemyId;
         float angle = (pair & 1023) * (Mathf.PI * 2f / 1024f);
-        Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+        Vector3 direction = new(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
         return enemyId < other.enemyId ? direction : -direction;
     }
 

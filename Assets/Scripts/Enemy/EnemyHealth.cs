@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EnemyHealth : MonoBehaviour
+public class EnemyHealth : MonoBehaviour, IDamageable
 {
     [SerializeField, Min(0.01f)] private float maxHealth = 5f;
 
@@ -15,7 +15,7 @@ public class EnemyHealth : MonoBehaviour
         isDead = false;
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(int damage)
     {
         if (isDead || damage <= 0f) return;
 

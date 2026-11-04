@@ -56,7 +56,15 @@
 - 입력을 놓으면 그 순간의 위치와 회전 방향을 유지한다.
 - 경사면이나 다른 Collider와의 겹침 해소에 의한 Y 변화까지 강제로 잠그는 구조는 아니다. 높이 지형을 도입할 때 이동 규칙을 재검토한다.
 
-피격 규칙은 미결정 사항이다.
+### 확정된 플레이어 체력·접촉 피해 규칙
+
+- PlayerHealth의 기본 Max Health는 100이며 인스펙터에서 조절한다. 시작 체력은 최대 체력과 같다.
+- EnemyMovement의 기본 Damage는 정수 10이며 적 프리팹에서 조절한다. PlayerHealth의 Damage Interval 기본값은 1초이며 Player 인스펙터에서 조절한다. 접촉 피해용 별도 컴포넌트는 사용하지 않는다.
+- 플레이어 공통 피해 간격을 사용한다. 피해를 받은 뒤 PlayerHealth의 Damage Interval 동안 다른 적의 피해도 받지 않는다. 여러 적이 동시에 닿으면 먼저 처리된 유효 접촉 하나만 피해를 적용한다.
+- 군중 이동 후 XZ 중심 거리와 기존 Body Radius + Player Radius로 접촉을 검사한다. 이동의 정지 오차를 고려해 0.002의 허용 오차를 포함한다. 물리 Collider나 밀어내기는 추가하지 않는다.
+- IDamageable은 `TakeDamage(int damage)`만 정의한다. PlayerHealth와 EnemyHealth가 구현하고, EnemyMovement와 MagicProjectile은 인터페이스로만 피해를 전달한다. 기존 피해량 10과 체력 설정은 유지한다.
+- 체력은 0 아래로 내려가지 않는다. 체력 0이면 사망 상태를 기록하고 Time.timeScale을 0으로 설정해 게임 진행을 멈춘다. Console에 Game Over를 출력한다. 씬 종료 시 사망으로 정지시킨 시간을 복원한다.
+- 체력 UI, 결과 UI, 재시작, 회복, 플레이어 공격 피격 효과는 이번 구현 범위에 포함하지 않는다.
 
 ### 확정된 카메라 규칙
 

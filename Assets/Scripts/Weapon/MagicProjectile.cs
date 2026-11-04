@@ -3,7 +3,7 @@ using UnityEngine;
 public class MagicProjectile : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float hitRadius = 0.125f;
-    [SerializeField, Min(0f)] private float damage = 10f;
+    [SerializeField, Min(0f)] private int damage = 10;
 
     private Vector3 direction;
     private float speed;
@@ -29,7 +29,7 @@ public class MagicProjectile : MonoBehaviour
         Vector3 end = start + direction * speed * Time.deltaTime;
         if (EnemyCrowd.TryGetProjectileHit(start, end, hitRadius, out EnemyMovement hitEnemy))
         {
-            if (hitEnemy.TryGetComponent(out EnemyHealth health)) health.TakeDamage(damage);
+            if (hitEnemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(damage);
             Destroy(gameObject);
             return;
         }

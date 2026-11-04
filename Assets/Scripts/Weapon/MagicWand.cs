@@ -41,7 +41,6 @@ public class MagicWand : MonoBehaviour
 
     private EnemyMovement FindNearestVisibleEnemy()
     {
-        // 발사 주기에만 검색한다. 기존 적 이동 코드에는 등록/검색 의존성을 추가하지 않는다.
         EnemyMovement[] enemies = FindObjectsByType<EnemyMovement>(FindObjectsSortMode.None);
         EnemyMovement nearest = null;
         float nearestDistance = float.PositiveInfinity;

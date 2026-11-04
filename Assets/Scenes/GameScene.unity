@@ -508,7 +508,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &477741193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -524,12 +524,13 @@ MonoBehaviour:
   target: {fileID: 774257183}
   moveSpeed: 3
   rotationSpeed: 540
-  playerRadius: 0.4
   bodyRadius: 0.5
+  playerRadius: 0.4
   separationRange: 1.3
   separationStrength: 1.5
   overlapCorrectionSpeed: 3
   damage: 10
+  offscreenReturnDelay: 5
 --- !u!23 &477741194
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -926,7 +927,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1537364574
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -942,12 +943,13 @@ MonoBehaviour:
   target: {fileID: 774257183}
   moveSpeed: 3
   rotationSpeed: 540
-  playerRadius: 0.4
   bodyRadius: 0.5
+  playerRadius: 0.4
   separationRange: 1.3
   separationStrength: 1.5
   overlapCorrectionSpeed: 3
   damage: 10
+  offscreenReturnDelay: 5
 --- !u!23 &1537364575
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1243,7 +1245,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1800000001
 Transform:
   m_ObjectHideFlags: 0
@@ -1332,12 +1334,13 @@ MonoBehaviour:
   target: {fileID: 774257183}
   moveSpeed: 3
   rotationSpeed: 540
-  playerRadius: 0.4
   bodyRadius: 0.5
+  playerRadius: 0.4
   separationRange: 1.3
   separationStrength: 1.5
   overlapCorrectionSpeed: 3
   damage: 10
+  offscreenReturnDelay: 5
 --- !u!1 &1800000010
 GameObject:
   m_ObjectHideFlags: 0
@@ -1438,8 +1441,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 635f0e23c2314619acfe65f1fc860300, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   targetCamera: {fileID: 330585545}
   projectilePrefab: {fileID: 11400000, guid: 34d23ba512954b75a01e058c47817d64, type: 3}
   cooldown: 1.2
@@ -1454,8 +1457,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cd530ccd80ad4cf5bb818d6f76fd0df2, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxHealth: 5
 --- !u!114 &1900000201
 MonoBehaviour:
@@ -1467,8 +1470,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cd530ccd80ad4cf5bb818d6f76fd0df2, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxHealth: 5
 --- !u!114 &1900000202
 MonoBehaviour:
@@ -1480,8 +1483,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cd530ccd80ad4cf5bb818d6f76fd0df2, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxHealth: 5
 --- !u!1 &2100000000
 GameObject:
@@ -1496,6 +1499,9 @@ GameObject:
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &2100000001
 Transform:
@@ -1508,6 +1514,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1521,8 +1528,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 68da8b17616a47ddb17fae99675060e7, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   player: {fileID: 774257183}
   gameCamera: {fileID: 330585545}
   enemyPool:
@@ -1545,8 +1552,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21837c57607848a1a13eff0e4418a24e, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxHealth: 100
   damageInterval: 1
 --- !u!1660057539 &9223372036854775807

@@ -9,6 +9,7 @@ public static class EnemyCrowd
 
     private static readonly List<EnemyMovement> activeEnemies = new();
     internal static int ActiveCount => activeEnemies.Count;
+    internal static EnemyMovement GetActiveEnemy(int index) => activeEnemies[index];
     private static readonly Dictionary<Vector2Int, EnemyMovement> grid = new();
 
     private static int simulationFrame = -1;

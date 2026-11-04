@@ -11,6 +11,9 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float separationStrength = 2f;
     [SerializeField, Min(0f)] private float overlapCorrectionSpeed = 3f;
     [SerializeField, Min(0)] private int damage = 10;
+    [SerializeField, Min(0.01f)] private float offscreenReturnDelay = 5f;
+
+    private float offscreenSince = -1f;
 
     private Transform cachedDamageTarget;
     private IDamageable damageTarget;
@@ -40,6 +43,7 @@ public class EnemyMovement : MonoBehaviour
 
     private void OnEnable()
     {
+        offscreenSince = -1f;
         cachedDamageTarget = null;
         damageTarget = null;
         enemyId = GetInstanceID();
@@ -52,6 +56,18 @@ public class EnemyMovement : MonoBehaviour
     {
         EnemyCrowd.Unregister(this);
         velocity = Vector3.zero;
+    }
+
+    internal bool ShouldReturnOffscreen(bool inside, float now)
+    {
+        if (inside)
+        {
+            offscreenSince = -1f;
+            return false;
+        }
+
+        if (offscreenSince < 0f) offscreenSince = now;
+        return now - offscreenSince >= offscreenReturnDelay;
     }
 
     private void LateUpdate()

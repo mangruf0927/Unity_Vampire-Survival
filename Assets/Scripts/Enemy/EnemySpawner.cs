@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[DefaultExecutionOrder(100)]
 public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] private Transform player;
@@ -12,6 +13,8 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField, Min(0.1f)] private float spawnMargin = 2f;
 
     private readonly Vector3[] corners = new Vector3[4];
+    private const float OffscreenCheckInterval = 0.2f;
+    private float nextOffscreenCheckTime;
     private float remainingTime;
     private float enemyRadius;
     private bool registeredPool;
@@ -45,11 +48,37 @@ public class EnemySpawner : MonoBehaviour
     {
         if (!registeredPool || player == null || gameCamera == null || Time.deltaTime <= 0f) return;
 
+        if (Time.time >= nextOffscreenCheckTime)
+        {
+            ReturnOffscreenEnemies();
+            nextOffscreenCheckTime = Time.time + OffscreenCheckInterval;
+        }
+
         remainingTime -= Time.deltaTime;
         if (remainingTime > 0f) return;
 
         remainingTime = Mathf.Max(0.01f, spawnInterval);
         SpawnEnemies();
+    }
+
+    private void ReturnOffscreenEnemies()
+    {
+        float now = Time.time;
+        for (int i = EnemyCrowd.ActiveCount - 1; i >= 0; i--)
+        {
+            EnemyMovement enemy = EnemyCrowd.GetActiveEnemy(i);
+            Vector3 viewport = gameCamera.WorldToViewportPoint(enemy.transform.position);
+            bool inside = viewport.z >= gameCamera.nearClipPlane && viewport.z <= gameCamera.farClipPlane
+                && viewport.x >= 0f && viewport.x <= 1f
+                && viewport.y >= 0f && viewport.y <= 1f;
+            if (!enemy.ShouldReturnOffscreen(inside, now)) continue;
+
+            if (!ObjectPool.Instance.TryReturnToPool(enemy.gameObject))
+            {
+                enemy.gameObject.SetActive(false);
+                Destroy(enemy.gameObject);
+            }
+        }
     }
 
     private void SpawnEnemies()

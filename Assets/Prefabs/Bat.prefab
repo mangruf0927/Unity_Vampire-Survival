@@ -114,6 +114,7 @@ MonoBehaviour:
   separationStrength: 1.5
   overlapCorrectionSpeed: 3
   damage: 10
+  offscreenReturnDelay: 5
 --- !u!114 &1900000202
 MonoBehaviour:
   m_ObjectHideFlags: 0

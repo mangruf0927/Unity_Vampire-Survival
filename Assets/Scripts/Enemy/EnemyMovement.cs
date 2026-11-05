@@ -35,6 +35,7 @@ public class EnemyMovement : MonoBehaviour
     internal int enemyId;
     internal float sidePreference;
 
+    internal int ActivationVersion { get; private set; }
     internal Transform Target => target;
     internal float BodyRadius => bodyRadius;
     internal float PlayerRadius => playerRadius;
@@ -48,6 +49,7 @@ public class EnemyMovement : MonoBehaviour
 
     private void OnEnable()
     {
+        ActivationVersion++;
         offscreenSince = -1f;
         cachedDamageTarget = null;
         damageTarget = null;

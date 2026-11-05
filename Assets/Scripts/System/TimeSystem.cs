@@ -11,6 +11,7 @@ public class TimeSystem : MonoBehaviour, ISubject
     private int seconds = -1;
     private float timeElapsed;
 
+    public float ElapsedSeconds => timeElapsed;
     public int Minutes => minutes;
     public int Seconds => seconds;
 

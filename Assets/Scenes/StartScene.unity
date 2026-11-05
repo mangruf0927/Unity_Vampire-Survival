@@ -296,7 +296,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff8945d6a0f943758fb72cc32aaad225, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StartScreenUI
-  startText: {fileID: 0}
+  startText: {fileID: 1535553881}
   blinkInterval: 0.7
   nextSceneName: GameScene
 --- !u!114 &1137259967

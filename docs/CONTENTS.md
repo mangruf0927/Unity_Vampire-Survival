@@ -40,18 +40,18 @@
 - StartScreenUI가 기본 0.7초 간격으로 문구를 켜고 끈다. Blink Interval은 Inspector에서 수정할 수 있다.
 - Input System의 Keyboard.anyKey가 새로 눌리면 GameScene을 로드한다. 마우스·게임패드 입력은 이번 키보드 시작 기능에 포함하지 않는다. 씬 전환 요청은 한 번만 실행한다.
 - 시작 화면 진입 시 Time.timeScale을 1로 설정한다. StartScene과 GameScene을 빌드 씬 목록에 등록하고, StartScene을 첫 씬으로 둔다. 기존 SampleScene 등록은 유지한다.
-- 게임 오버·나가기 버튼은 아래 규칙으로 구현한다. 게임 클리어는 아직 구현하지 않는다. 향후 같은 프레임의 사망/10분 도달은 클리어 우선으로 처리하기로 확정했다.
+- 게임 오버·나가기 버튼은 아래 규칙으로 구현한다. 게임 클리어는 10분 생존 시 처리한다. 같은 프레임의 사망/10분 도달은 클리어 우선으로 처리하기로 확정했다.
 
-### 게임 진행 상태와 게임 오버
+### 게임 진행 상태와 게임 오버·클리어
 
-- 씬에 배치한 GameManager 하나가 Playing/GameOver 상태를 관리한다. 싱글턴이나 별도 상태 클래스는 사용하지 않는다.
-- GameManager는 IObserver로 PlayerHealth를 구독하고, HP 0을 감지하면 상태를 GameOver로 한 번만 바꾸고 Time.timeScale을 0으로 설정한다.
-- GameManager가 PlayerHealth, GameOverUI, PlayerHPBar를 SerializeField로 직접 참조한다. UI는 GameManager를 참조하거나 게임 상태를 구독하지 않는다.
+- 씬에 배치한 GameManager 하나가 Playing/GameOver/Completed 상태를 관리한다. 싱글턴이나 별도 상태 클래스는 사용하지 않는다.
+- GameManager는 IObserver로 PlayerHealth를 구독하고, HP 0을 감지하면 사망 요청을 기록한다. LateUpdate에서 TimeSystem의 누적 시간이 600초 이상인지 먼저 검사하고, 클리어가 아니면 사망 요청을 처리한다. 결과는 한 번만 확정하고 Time.timeScale을 0으로 설정한다.
+- GameManager가 PlayerHealth, TimeSystem, GameOverUI, GameClearUI, PlayerHPBar를 SerializeField로 직접 참조한다. UI는 GameManager를 참조하거나 게임 상태를 구독하지 않는다.
 - 게임 오버 시 GameManager가 HP 바를 숨기고 결과 패널을 표시한 뒤 플레이어를 비활성화·제거한다.
-- GameOverUI는 Show/Hide와 버튼 선택 표시만 담당한다. PlayerHPBar는 체력 알림만 구독하고 SetVisible로 표시와 위치 갱신을 제어한다.
+- GameOverUI와 GameClearUI는 각각 게임 오버·클리어 패널의 Show/Hide와 버튼 선택 표시만 담당한다. PlayerHPBar는 체력 알림만 구독하고 SetVisible로 표시와 위치 갱신을 제어한다.
 - 나가기 Button의 Inspector On Click()에서 GameManager.ReturnToStartScene()을 연결한다. 코드에서 버튼 리스너는 등록하지 않는다. GameManager는 중복 전환을 막고 Time.timeScale을 1로 복원한 뒤 StartScene을 로드한다. 종료된 GameManager가 제거될 때도 시간을 복원한다.
 - GameScene의 EventSystem/InputSystemUIInputModule과 GraphicRaycaster로 게임이 정지한 상태에서도 버튼 입력을 받는다.
-- 게임 클리어와 추가 상태·기능은 이번 분리에 포함하지 않는다.
+- 클리어 시 별도 GameClearUI 패널에 GAME COMPLETED와 나가기 버튼을 표시한다. 플레이어는 유지하고 HP 바는 숨긴다. 게임 오버 시에는 GAME OVER를 표시한다. 각 패널의 나가기 버튼은 Inspector On Click()으로 같은 GameManager.ReturnToStartScene()을 호출해 StartScene에 복귀한다.
 
 ## 3. 플레이어 — 확정 기획
 

@@ -53,7 +53,7 @@ public static class EnemyCrowd
         hitGridFrame = Time.frameCount;
     }
 
-    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy)
+    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, HashSet<EnemyMovement> ignoredEnemies = null)
     {
         hitEnemy = null;
         if (hitGridFrame != Time.frameCount)
@@ -79,7 +79,7 @@ public static class EnemyCrowd
                 grid.TryGetValue(new Vector2Int(x, z), out EnemyMovement enemy);
                 while (enemy != null)
                 {
-                    if (enemy.isActiveAndEnabled)
+                    if (enemy.isActiveAndEnabled && (ignoredEnemies == null || !ignoredEnemies.Contains(enemy)))
                     {
                         Vector3 center = enemy.transform.position;
                         float t = lengthSquared > 0f

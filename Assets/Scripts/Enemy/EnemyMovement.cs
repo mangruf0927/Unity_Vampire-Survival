@@ -13,6 +13,11 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0)] private int damage = 10;
     [SerializeField, Min(0.01f)] private float offscreenReturnDelay = 5f;
 
+    [SerializeField, Min(0f)] private float knockbackDistance = 1f;
+    [SerializeField, Min(0.01f)] private float knockbackDuration = 0.15f;
+
+    private Vector3 knockbackVelocity;
+    private float knockbackRemaining;
     private float offscreenSince = -1f;
 
     private Transform cachedDamageTarget;
@@ -49,11 +54,15 @@ public class EnemyMovement : MonoBehaviour
         enemyId = GetInstanceID();
         sidePreference = ((enemyId >> 2) & 1) == 0 ? 1f : -1f;
         velocity = Vector3.zero;
+        knockbackRemaining = 0f;
+        knockbackVelocity = Vector3.zero;
         EnemyCrowd.Register(this);
     }
 
     private void OnDisable()
     {
+        knockbackRemaining = 0f;
+        knockbackVelocity = Vector3.zero;
         EnemyCrowd.Unregister(this);
         velocity = Vector3.zero;
     }
@@ -95,6 +104,16 @@ public class EnemyMovement : MonoBehaviour
         }
     }
 
+    public void ApplyKnockback(Vector3 direction, float strength)
+    {
+        direction.y = 0f;
+        if (strength <= 0f || knockbackDistance <= 0f || direction.sqrMagnitude <= 0.000001f) return;
+        // 새 명중은 밀림을 무한히 누적하지 않고 방향과 지속 시간을 갱신한다.
+        knockbackRemaining = Mathf.Max(0.01f, knockbackDuration);
+        knockbackVelocity = direction.normalized * (knockbackDistance * strength / knockbackRemaining);
+        velocity = Vector3.zero;
+    }
+
     internal Vector3 GetTargetDirection()
     {
         Vector3 direction = targetPosition - framePosition;
@@ -104,6 +123,15 @@ public class EnemyMovement : MonoBehaviour
 
     internal void Move(Vector3 direction, Vector3 separation, float stepDeltaTime)
     {
+        if (knockbackRemaining > 0f)
+        {
+            float duration = Mathf.Min(stepDeltaTime, knockbackRemaining);
+            nextPosition = framePosition + knockbackVelocity * duration;
+            knockbackRemaining = Mathf.Max(0f, knockbackRemaining - duration);
+            velocity = Vector3.zero;
+            return;
+        }
+
         float remainingDistance = Mathf.Max(0f, direction.magnitude - bodyRadius - playerRadius);
         if (remainingDistance <= 0.001f)
         {

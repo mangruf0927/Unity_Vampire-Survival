@@ -14,6 +14,7 @@ public class PlayerHPBar : MonoBehaviour, IObserver
     private RectTransform parentRect;
     private Canvas canvas;
     private CanvasGroup canvasGroup;
+    private bool isVisible = true;
 
     private void Awake()
     {
@@ -25,9 +26,7 @@ public class PlayerHPBar : MonoBehaviour, IObserver
 
     private void OnEnable()
     {
-        if (playerHealth == null) return;
-
-        playerHealth.AddObserver(this);
+        if (playerHealth != null) playerHealth.AddObserver(this);
         Notify();
     }
 
@@ -38,7 +37,8 @@ public class PlayerHPBar : MonoBehaviour, IObserver
 
     private void LateUpdate()
     {
-        if (playerHealth == null || gameCamera == null || parentRect == null) return;
+        if (playerHealth == null || gameCamera == null || parentRect == null
+            || !isVisible) return;
 
         UpdateBarPosition();
     }
@@ -90,6 +90,12 @@ public class PlayerHPBar : MonoBehaviour, IObserver
     {
         if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) return null;
         return canvas.worldCamera != null ? canvas.worldCamera : gameCamera;
+    }
+
+    public void SetVisible(bool visible)
+    {
+        isVisible = visible;
+        if (canvasGroup != null) canvasGroup.alpha = visible ? 1f : 0f;
     }
 
     public void Notify()

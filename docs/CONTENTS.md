@@ -40,7 +40,18 @@
 - StartScreenUI가 기본 0.7초 간격으로 문구를 켜고 끈다. Blink Interval은 Inspector에서 수정할 수 있다.
 - Input System의 Keyboard.anyKey가 새로 눌리면 GameScene을 로드한다. 마우스·게임패드 입력은 이번 키보드 시작 기능에 포함하지 않는다. 씬 전환 요청은 한 번만 실행한다.
 - 시작 화면 진입 시 Time.timeScale을 1로 설정한다. StartScene과 GameScene을 빌드 씬 목록에 등록하고, StartScene을 첫 씬으로 둔다. 기존 SampleScene 등록은 유지한다.
-- 게임 오버·게임 클리어·나가기 버튼은 아직 구현하지 않는다. 향후 같은 프레임의 사망/10분 도달은 클리어 우선으로 처리하기로 확정했다.
+- 게임 오버·나가기 버튼은 아래 규칙으로 구현한다. 게임 클리어는 아직 구현하지 않는다. 향후 같은 프레임의 사망/10분 도달은 클리어 우선으로 처리하기로 확정했다.
+
+### 게임 진행 상태와 게임 오버
+
+- 씬에 배치한 GameManager 하나가 Playing/GameOver 상태를 관리한다. 싱글턴이나 별도 상태 클래스는 사용하지 않는다.
+- GameManager는 IObserver로 PlayerHealth를 구독하고, HP 0을 감지하면 상태를 GameOver로 한 번만 바꾸고 Time.timeScale을 0으로 설정한다.
+- GameManager가 PlayerHealth, GameOverUI, PlayerHPBar를 SerializeField로 직접 참조한다. UI는 GameManager를 참조하거나 게임 상태를 구독하지 않는다.
+- 게임 오버 시 GameManager가 HP 바를 숨기고 결과 패널을 표시한 뒤 플레이어를 비활성화·제거한다.
+- GameOverUI는 Show/Hide와 버튼 선택 표시만 담당한다. PlayerHPBar는 체력 알림만 구독하고 SetVisible로 표시와 위치 갱신을 제어한다.
+- 나가기 Button의 Inspector On Click()에서 GameManager.ReturnToStartScene()을 연결한다. 코드에서 버튼 리스너는 등록하지 않는다. GameManager는 중복 전환을 막고 Time.timeScale을 1로 복원한 뒤 StartScene을 로드한다. 종료된 GameManager가 제거될 때도 시간을 복원한다.
+- GameScene의 EventSystem/InputSystemUIInputModule과 GraphicRaycaster로 게임이 정지한 상태에서도 버튼 입력을 받는다.
+- 게임 클리어와 추가 상태·기능은 이번 분리에 포함하지 않는다.
 
 ## 3. 플레이어 — 확정 기획
 
@@ -71,11 +82,11 @@
 - 플레이어 공통 피해 간격을 사용한다. 피해를 받은 뒤 PlayerHealth의 Damage Interval 동안 다른 적의 피해도 받지 않는다. 여러 적이 동시에 닿으면 먼저 처리된 유효 접촉 하나만 피해를 적용한다.
 - 군중 이동 후 XZ 중심 거리와 기존 Body Radius + Player Radius로 접촉을 검사한다. 이동의 정지 오차를 고려해 0.002의 허용 오차를 포함한다. 물리 Collider나 밀어내기는 추가하지 않는다.
 - IDamageable은 `TakeDamage(int damage)`만 정의한다. PlayerHealth와 EnemyHealth가 구현하고, EnemyMovement와 MagicProjectile은 인터페이스로만 피해를 전달한다. 기존 피해량 10과 체력 설정은 유지한다.
-- 체력은 0 아래로 내려가지 않는다. 체력 0이면 사망 상태를 기록하고 Time.timeScale을 0으로 설정해 게임 진행을 멈춘다. Console에 Game Over를 출력한다. 씬 종료 시 사망으로 정지시킨 시간을 복원한다.
+- 체력은 0 아래로 내려가지 않는다. PlayerHealth는 HP 0에서 사망 상태를 기록하고 알린다. 게임 종료 상태, 시간 정지, 플레이어 제거와 씬 복귀는 GameManager가 관리한다.
 - 플레이어 발밑 HP 바는 PlayerHUD의 Screen Space Overlay Canvas에서 표시한다. PlayerHPBar가 기존 IObserver를, PlayerHealth가 ISubject를 구현한다. HP 비율은 활성화 시와 체력 변경 Notify 알림 때만 갱신하고, 발 위치 추적은 LateUpdate에서 처리한다. 사망으로 시간이 정지한 프레임에도 0을 표시한다.
 - HP 바는 OnEnable에서 구독하고 OnDisable에서 해제한다. PlayerHealth 초기 체력 설정 때도 알림을 보내 초기화 순서와 관계없이 표시를 맞춘다. 중복 구독은 막으며 피해 간격에 차단된 공격은 알림을 보내지 않는다.
 - HP 바 기본 크기는 100×10(Canvas 기준), worldOffset=(0,-1,0), screenOffset=(0,-14)이다. 바의 RectTransform과 스크립트 설정으로 크기·위치를 조절한다. 빨간 전경과 어두운 배경을 사용하고 입력은 받지 않는다.
-- 일시정지 메뉴·결과 UI·재시작·회복·피격 효과는 아직 구현하지 않는다. 생존 타이머는 아래 규칙으로 구현한다.
+- 일시정지 메뉴·재시작·회복·피격 효과는 아직 구현하지 않는다. 생존 타이머는 아래 규칙으로 구현한다.
 
 ### 확정된 카메라 규칙
 

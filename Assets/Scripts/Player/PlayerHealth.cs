@@ -9,7 +9,6 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
     private float currentHealth;
     private float nextDamageTime;
     private bool isDead;
-    private float previousTimeScale = 1f;
     private readonly List<IObserver> observers = new();
 
     public float MaxHealth => maxHealth;
@@ -34,7 +33,9 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
 
     public void NotifyObservers()
     {
-        for (int i = 0; i < observers.Count; i++) observers[i].Notify();
+        // 결과 UI가 HP 바를 끄면서 구독을 해제해도 현재 알림 순서는 유지한다.
+        IObserver[] snapshot = observers.ToArray();
+        for (int i = 0; i < snapshot.Length; i++) snapshot[i].Notify();
     }
 
     public void TakeDamage(int damage)
@@ -50,13 +51,5 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
     private void Die()
     {
         isDead = true;
-        previousTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
-        Debug.Log("Game Over: 플레이어가 사망했습니다.", this);
-    }
-
-    private void OnDestroy()
-    {
-        if (isDead && Time.timeScale == 0f) Time.timeScale = previousTimeScale;
     }
 }

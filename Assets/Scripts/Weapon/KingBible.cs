@@ -32,6 +32,17 @@ public class KingBible : Weapon
     private float speedMultiplier = 1f;
     private float radiusMultiplier = 1f;
 
+    public override string DisplayName => "King Bible";
+    public override string GetChoiceDescription()
+    {
+        if (!IsOwned) return "플레이어 주위를 회전하는 성경이 주변 적을 공격합니다.";
+        int nextLevel = Level + 1;
+        if (nextLevel == 2 || nextLevel == 5 || nextLevel == 8) return "투사체를 1개 더 생성합니다.";
+        if (nextLevel == 3 || nextLevel == 6) return "회전 속도가 30%, 공격 범위가 25% 증가합니다.";
+        if (nextLevel == 4 || nextLevel == 7) return "지속시간이 0.5초, 피해량이 10 증가합니다.";
+        return "최대 레벨";
+    }
+
     public override float Cooldown => Mathf.Max(0.01f, cooldown);
     public float Duration => duration;
     public float OrbitRadius => orbitRadius * radiusMultiplier;

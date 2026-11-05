@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-public enum GameState { Playing, GameOver, Completed, Paused }
+public enum GameState { Playing, GameOver, Completed, Paused, ChoosingUpgrade }
 
 public class GameManager : MonoBehaviour, IObserver
 {
@@ -16,6 +17,14 @@ public class GameManager : MonoBehaviour, IObserver
     [SerializeField] private PlayerHPBar playerHPBar;
     [SerializeField] private PauseUI pauseUI;
 
+    [SerializeField] private PlayerExperience playerExperience;
+    [SerializeField] private Weapon startingWeapon;
+    [SerializeField] private Weapon[] weapons;
+    [SerializeField] private LevelUpUI levelUpUI;
+
+    private readonly List<Weapon> choices = new();
+    private int lastPlayerLevel = 1;
+    private int pendingChoices;
     private bool isLeaving;
     private bool isDeathPending;
     public GameState State { get; private set; } = GameState.Playing;
@@ -23,11 +32,13 @@ public class GameManager : MonoBehaviour, IObserver
     private void Awake()
     {
         Time.timeScale = 1f;
+        if (startingWeapon != null) startingWeapon.Acquire();
     }
 
     private void Start()
     {
         if (State != GameState.Playing) return;
+        if (levelUpUI != null) levelUpUI.Hide();
         if (gameOverUI != null) gameOverUI.Hide();
         if (gameClearUI != null) gameClearUI.Hide();
         if (playerHPBar != null) playerHPBar.SetVisible(true);
@@ -49,12 +60,14 @@ public class GameManager : MonoBehaviour, IObserver
     private void OnEnable()
     {
         if (playerHealth != null) playerHealth.AddObserver(this);
+        if (playerExperience != null) playerExperience.AddObserver(this);
         Notify();
     }
 
     private void OnDisable()
     {
         if (playerHealth != null) playerHealth.RemoveObserver(this);
+        if (playerExperience != null) playerExperience.RemoveObserver(this);
     }
 
     private void OnDestroy()
@@ -72,9 +85,56 @@ public class GameManager : MonoBehaviour, IObserver
 
     public void Notify()
     {
-        if ((State == GameState.Playing || State == GameState.Paused)
-            && playerHealth != null && playerHealth.IsDead)
-            isDeathPending = true;
+        if (State == GameState.GameOver || State == GameState.Completed || isLeaving) return;
+        if (playerHealth != null && playerHealth.IsDead) isDeathPending = true;
+        if (playerExperience != null)
+        {
+            // 경험치 알림의 최종 레벨과 이전 레벨의 차이를 선택 횟수로 보관한다.
+            pendingChoices += Mathf.Max(0, playerExperience.Level - lastPlayerLevel);
+            lastPlayerLevel = playerExperience.Level;
+        }
+    }
+
+    public void ChooseWeapon(int index)
+    {
+        if (State != GameState.ChoosingUpgrade || isLeaving || index < 0 || index >= choices.Count) return;
+        if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)) return;
+        Weapon weapon = choices[index];
+        if (weapon == null || !weapon.CanUpgrade) return;
+
+        if (weapon.IsOwned) weapon.LevelUp();
+        else weapon.Acquire();
+        pendingChoices--;
+        choices.Clear();
+        if (levelUpUI != null) levelUpUI.Hide();
+        State = GameState.Playing;
+        // 연속 레벨업 중에는 시간을 재개하지 않고 다음 선택으로 진행한다.
+        if (!ShowNextChoice())
+        {
+            Time.timeScale = 1f;
+            if (pauseUI != null) pauseUI.SetPauseAvailable(true);
+        }
+    }
+
+    private bool ShowNextChoice()
+    {
+        if (pendingChoices <= 0 || levelUpUI == null) return false;
+        choices.Clear();
+        for (int i = 0; weapons != null && i < weapons.Length && choices.Count < levelUpUI.Capacity; i++)
+        {
+            Weapon weapon = weapons[i];
+            if (weapon != null && weapon.CanUpgrade && !choices.Contains(weapon)) choices.Add(weapon);
+        }
+        if (choices.Count == 0)
+        {
+            pendingChoices = 0;
+            return false;
+        }
+        State = GameState.ChoosingUpgrade;
+        Time.timeScale = 0f;
+        if (pauseUI != null) pauseUI.SetPauseAvailable(false);
+        levelUpUI.Show(choices);
+        return true;
     }
 
     public void PauseGame()
@@ -97,17 +157,22 @@ public class GameManager : MonoBehaviour, IObserver
 
     private void LateUpdate()
     {
-        if (State != GameState.Playing && State != GameState.Paused) return;
+        if (State == GameState.GameOver || State == GameState.Completed || isLeaving) return;
 
         if (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)
             FinishGame(GameState.Completed);
         else if (isDeathPending)
             FinishGame(GameState.GameOver);
+        else if (State == GameState.Playing)
+            ShowNextChoice();
     }
 
     private void FinishGame(GameState result)
     {
-        if (State != GameState.Playing && State != GameState.Paused) return;
+        if (State == GameState.GameOver || State == GameState.Completed || isLeaving) return;
+        pendingChoices = 0;
+        choices.Clear();
+        if (levelUpUI != null) levelUpUI.Hide();
         State = result;
         Time.timeScale = 0f;
 

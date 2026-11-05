@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerHealth : MonoBehaviour, IDamageable
+public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
 {
     [SerializeField, Min(0.01f)] private float maxHealth = 100f;
     [SerializeField, Min(0.01f)] private float damageInterval = 1f;
@@ -9,13 +10,31 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     private float nextDamageTime;
     private bool isDead;
     private float previousTimeScale = 1f;
+    private readonly List<IObserver> observers = new();
 
+    public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
     public bool IsDead => isDead;
 
     private void Awake()
     {
         currentHealth = maxHealth;
+        NotifyObservers();
+    }
+
+    public void AddObserver(IObserver observer)
+    {
+        if (observer != null && !observers.Contains(observer)) observers.Add(observer);
+    }
+
+    public void RemoveObserver(IObserver observer)
+    {
+        observers.Remove(observer);
+    }
+
+    public void NotifyObservers()
+    {
+        for (int i = 0; i < observers.Count; i++) observers[i].Notify();
     }
 
     public void TakeDamage(int damage)
@@ -25,6 +44,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         currentHealth = Mathf.Max(0f, currentHealth - damage);
         nextDamageTime = Time.time + Mathf.Max(0.01f, damageInterval);
         if (currentHealth <= 0f) Die();
+        NotifyObservers();
     }
 
     private void Die()

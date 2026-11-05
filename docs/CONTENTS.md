@@ -64,7 +64,10 @@
 - 군중 이동 후 XZ 중심 거리와 기존 Body Radius + Player Radius로 접촉을 검사한다. 이동의 정지 오차를 고려해 0.002의 허용 오차를 포함한다. 물리 Collider나 밀어내기는 추가하지 않는다.
 - IDamageable은 `TakeDamage(int damage)`만 정의한다. PlayerHealth와 EnemyHealth가 구현하고, EnemyMovement와 MagicProjectile은 인터페이스로만 피해를 전달한다. 기존 피해량 10과 체력 설정은 유지한다.
 - 체력은 0 아래로 내려가지 않는다. 체력 0이면 사망 상태를 기록하고 Time.timeScale을 0으로 설정해 게임 진행을 멈춘다. Console에 Game Over를 출력한다. 씬 종료 시 사망으로 정지시킨 시간을 복원한다.
-- 체력 UI, 결과 UI, 재시작, 회복, 플레이어 공격 피격 효과는 이번 구현 범위에 포함하지 않는다.
+- 플레이어 발밑 HP 바는 PlayerHUD의 Screen Space Overlay Canvas에서 표시한다. PlayerHPBar가 기존 IObserver를, PlayerHealth가 ISubject를 구현한다. HP 비율은 활성화 시와 체력 변경 Notify 알림 때만 갱신하고, 발 위치 추적은 LateUpdate에서 처리한다. 사망으로 시간이 정지한 프레임에도 0을 표시한다.
+- HP 바는 OnEnable에서 구독하고 OnDisable에서 해제한다. PlayerHealth 초기 체력 설정 때도 알림을 보내 초기화 순서와 관계없이 표시를 맞춘다. 중복 구독은 막으며 피해 간격에 차단된 공격은 알림을 보내지 않는다.
+- HP 바 기본 크기는 100×10(Canvas 기준), worldOffset=(0,-1,0), screenOffset=(0,-14)이다. 바의 RectTransform과 스크립트 설정으로 크기·위치를 조절한다. 빨간 전경과 어두운 배경을 사용하고 입력은 받지 않는다.
+- 타이머·경험치/레벨 UI·일시정지 메뉴·결과 UI·재시작·회복·피격 효과는 이번 HP 바 작업에 포함하지 않는다.
 
 ### 확정된 카메라 규칙
 

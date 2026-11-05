@@ -27,11 +27,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         isDead = true;
         DropExperienceGem();
 
-        if (!ObjectPool.Instance.TryReturnToPool(gameObject))
-        {
-            gameObject.SetActive(false);
-            Destroy(gameObject);
-        }
+        ObjectPool.Instance.TryReturnToPool(gameObject);
     }
 
     private void DropExperienceGem()

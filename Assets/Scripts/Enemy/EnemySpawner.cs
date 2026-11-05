@@ -65,11 +65,7 @@ public class EnemySpawner : MonoBehaviour
                 && viewport.y >= 0f && viewport.y <= 1f;
             if (!enemy.ShouldReturnOffscreen(inside, now)) continue;
 
-            if (!ObjectPool.Instance.TryReturnToPool(enemy.gameObject))
-            {
-                enemy.gameObject.SetActive(false);
-                Destroy(enemy.gameObject);
-            }
+            ObjectPool.Instance.TryReturnToPool(enemy.gameObject);
         }
     }
 

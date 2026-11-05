@@ -620,6 +620,7 @@ GameObject:
   - component: {fileID: 774257184}
   - component: {fileID: 1800000100}
   - component: {fileID: 2110000103}
+  - component: {fileID: 2130000000}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -1613,6 +1614,20 @@ MonoBehaviour:
     prefab: {fileID: 100000, guid: acb8ec55882d4b38bc93586d0bfcfa24, type: 3}
     size: 15
     parent: {fileID: 0}
+--- !u!114 &2130000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774257179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3936eca6bdc74a739627d549ae037f4e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  firstLevelRequirement: 5
+  experienceIncreasePerLevel: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

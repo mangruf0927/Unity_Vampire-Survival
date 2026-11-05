@@ -153,7 +153,11 @@ public class ObjectPool
 
     public bool TryReturnToPool(GameObject obj)
     {
-        if (obj == null || !objectPoolTypes.TryGetValue(obj, out PoolTypeEnums type)) return false;
+        if (obj == null || !objectPoolTypes.TryGetValue(obj, out PoolTypeEnums type))
+        {
+            RemoveObject(obj);
+            return false;
+        }
         ReturnToPool(obj, type);
         return true;
     }

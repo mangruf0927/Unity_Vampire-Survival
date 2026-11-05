@@ -121,6 +121,8 @@
 
 ### 풀 데이터 등록·관리
 
+- TryReturnToPool은 풀 소유 객체를 반환하고, 미등록 객체는 ObjectPool 내부에서 비활성화 후 Destroy한다. 반환값은 기존처럼 풀 소유 여부에 따라 true/false이며, 호출부에서 별도 제거를 하지 않는다.
+
 - 씬의 PoolDataInitializer 하나에 PoolData 배열을 모아 등록한다. 현재 Bat와 ExperienceGem 풀의 기존 프리팹·준비 수 15·Parent 설정을 이관했다.
 - DefaultExecutionOrder(-200)의 Awake에서 등록해 다른 스크립트의 Start 전에 준비한다. 중복 풀 종류나 누락된 프리팹은 경고 후 건너뛴다.
 - 초기화 오브젝트는 자신이 등록한 풀 종류만 기록하고 OnDestroy에서 정리한다. Parent가 비어 있으면 PoolDataInitializer Transform 아래에 풀 오브젝트를 둔다.
@@ -190,10 +192,10 @@
 
 - EnemyHealth에서 사망이 확정된 직후, 적 반환/제거 전에 사망 위치의 XZ 좌표에 보석 1개를 확률적으로 생성한다.
 - Gem Drop Chance 기본값은 0.6(60%)이며 Inspector에서 0~1로 수정한다. 중복 사망 호출은 보석을 중복 생성하지 않는다. 화면 밖 반환은 사망이 아니므로 드롭하지 않는다.
-- ExperienceGem 프리팹은 기존 Blue 재질의 Sphere이며 지름은 0.3이다. 별도 클래스·Collider·Rigidbody는 추가하지 않는다.
+- ExperienceGem 프리팹은 기존 Blue 재질의 Sphere이며 지름은 0.3이다. SphereCollider의 Is Trigger를 사용한다. ExperienceGem이 XP 값·접촉 획득·풀 반환을 담당한다. 별도 Rigidbody는 추가하지 않고 플레이어의 기존 CharacterController와 접촉한다.
 - Ground Layers(기본 Ground 레이어)를 아래 방향 Raycast로 검사하고, 바닥 높이 + Sphere 반높이에 중심을 배치한다. 현재 바닥 Y=0에서는 보석 중심 Y=0.15이다. 바닥을 찾지 못하면 공중에 생성하지 않는다.
 - PoolDataInitializer가 보석 풀을 등록·정리하며 ObjectPool의 ExperienceGem 종류로 생성한다. 적 스폰 규칙과 기존 사망·피해 계산은 유지한다.
-- 현재는 생성만 구현해 보석이 바닥에 남는다. 획득·경험치량·레벨업·시간 경과 제거는 구현하지 않는다. 획득 시 기존 풀 반환을 연결할 수 있도록 준비한 상태이며, 아직 보석을 반환하는 기능은 없다.
+- 보석의 기본 Experience Value는 1 XP이며 프리팹 Inspector에서 수정한다. 플레이어 접촉 시 경험치를 지급하고 기존 ObjectPool에 반환한다. 시간 경과 제거는 추가하지 않는다.
 
 ## 7. 경험치와 레벨업 — 확정 기획
 
@@ -205,7 +207,18 @@
 6. 새 무기 또는 장신구를 획득하거나, 기존 무기 또는 장신구를 강화한다.
 7. 선택 효과를 적용하고 게임을 재개한다.
 
-경험치량, 레벨별 필요 경험치, 선택지 개수와 구성 규칙은 추후 결정한다.
+### 현재 구현된 획득·자동 레벨업
+
+- PlayerExperience는 레벨 1, 현재 XP 0으로 시작한다.
+- 기본 필요 XP는 5, 15, 25, 35…이다. 해당 레벨에서 다음 레벨로 가는 데 필요한 양이며 총 누적 XP가 아니다.
+- First Level Requirement(기본 5)와 Experience Increase Per Level(기본 10)을 Inspector에서 조절한다. 수식은 `첫 필요량 + (현재 레벨 - 1) × 증가량`이다.
+- 플레이어 CharacterController가 보석 SphereCollider Trigger에 닿으면 ExperienceGem.OnTriggerEnter에서 PlayerExperience에 XP를 전달한다.
+- ExperienceGem 전용 레이어(10)는 Player 레이어(8)와만 상호작용한다. 물리적으로 막거나 밀지 않는다. 프리팹의 Radius 0.5와 Scale 0.3으로 실제 보석 반경은 기존과 같은 0.15이다.
+- PlayerExperience의 전체 보석 순회와 직접 캡슐·거리 계산, ExperienceGem의 활성 목록을 제거했다. 경험치 누적·레벨업 계산은 그대로 유지한다.
+- 보석은 획득 상태를 먼저 기록해 중복 이벤트의 XP 지급을 막고 풀로 반환한다. 재활성화 시 획득 상태를 초기화한다. 일시정지·게임 종료 중에는 획득하지 않는다.
+- 필요 XP가 충족되면 자동 레벨업하고 초과 XP는 이월한다. 한 번에 큰 XP를 얻으면 여러 레벨을 연속 처리한다.
+- 이번 단계에서는 일시정지·선택 UI·무기 강화·능력치 변경을 연결하지 않는다. 위의 선택형 레벨업 흐름은 향후 목표로 유지한다.
+- 선택지 개수와 구성 규칙은 추후 결정한다.
 
 ## 8. 장신구 — 확정 기획
 

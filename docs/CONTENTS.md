@@ -67,7 +67,7 @@
 - 플레이어 발밑 HP 바는 PlayerHUD의 Screen Space Overlay Canvas에서 표시한다. PlayerHPBar가 기존 IObserver를, PlayerHealth가 ISubject를 구현한다. HP 비율은 활성화 시와 체력 변경 Notify 알림 때만 갱신하고, 발 위치 추적은 LateUpdate에서 처리한다. 사망으로 시간이 정지한 프레임에도 0을 표시한다.
 - HP 바는 OnEnable에서 구독하고 OnDisable에서 해제한다. PlayerHealth 초기 체력 설정 때도 알림을 보내 초기화 순서와 관계없이 표시를 맞춘다. 중복 구독은 막으며 피해 간격에 차단된 공격은 알림을 보내지 않는다.
 - HP 바 기본 크기는 100×10(Canvas 기준), worldOffset=(0,-1,0), screenOffset=(0,-14)이다. 바의 RectTransform과 스크립트 설정으로 크기·위치를 조절한다. 빨간 전경과 어두운 배경을 사용하고 입력은 받지 않는다.
-- 타이머·경험치/레벨 UI·일시정지 메뉴·결과 UI·재시작·회복·피격 효과는 이번 HP 바 작업에 포함하지 않는다.
+- 경험치/레벨 UI·일시정지 메뉴·결과 UI·재시작·회복·피격 효과는 아직 구현하지 않는다. 생존 타이머는 아래 규칙으로 구현한다.
 
 ### 확정된 카메라 규칙
 
@@ -79,6 +79,14 @@
 - 직교 투영의 화면 범위는 Camera의 Size로 조절한다. Distance는 배치 거리이며 확대·축소 값이 아니다.
 - 기존 월드 기준 이동을 유지하며 W·↑는 화면 위쪽, D·→는 화면 오른쪽으로 이동한다.
 - 이번 범위는 고정 구도와 즉시 추적까지이다.
+
+### 생존 타이머 UI
+
+- 기존 TimeSystem과 TimerUI를 재사용한다. TimeSystem은 경과 시간을 계산하고 분·초가 달라질 때만 ISubject 알림을 보낸다. TimerUI는 IObserver로 구독·해제하고 TextMeshProUGUI에 `00 : 00` 형식으로 표시한다.
+- 기본 Start Time은 0초이며 TimeSystem 인스펙터에서 변경해 경계 시간을 테스트할 수 있다. 정수 총 초에서 `/ 60`, `% 60`으로 분·초를 함께 계산한다.
+- Time.deltaTime 기반이므로 일시정지·사망으로 Time.timeScale이 0이면 생존 시간도 멈춘다. 현재 단계에서는 실제 전투가 진행되는 시간만 센다.
+- HUDCanvas/TimerUI/TimerText의 기존 상단 중앙 배치를 유지한다. 텍스트는 위에서 50만큼 아래, 높이 50, 글자 크기 36이며 이후 경험치 바 아래에 놓을 공간이다.
+- 시간 제한 도달 시 클리어·결과 화면·일시정지 버튼은 이번에 추가하지 않는다.
 
 ## 4. 적 — 확정 기획
 

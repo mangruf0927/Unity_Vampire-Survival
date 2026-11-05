@@ -44,7 +44,7 @@
 
 ### 게임 진행 상태와 게임 오버·클리어
 
-- 씬에 배치한 GameManager 하나가 Playing/GameOver/Completed 상태를 관리한다. 싱글턴이나 별도 상태 클래스는 사용하지 않는다.
+- 씬에 배치한 GameManager 하나가 Playing/GameOver/Completed/Paused 상태를 관리한다. 싱글턴이나 별도 상태 클래스는 사용하지 않는다.
 - GameManager는 IObserver로 PlayerHealth를 구독하고, HP 0을 감지하면 사망 요청을 기록한다. LateUpdate에서 TimeSystem의 누적 시간이 600초 이상인지 먼저 검사하고, 클리어가 아니면 사망 요청을 처리한다. 결과는 한 번만 확정하고 Time.timeScale을 0으로 설정한다.
 - GameManager가 PlayerHealth, TimeSystem, GameOverUI, GameClearUI, PlayerHPBar를 SerializeField로 직접 참조한다. UI는 GameManager를 참조하거나 게임 상태를 구독하지 않는다.
 - 게임 오버 시 GameManager가 HP 바를 숨기고 결과 패널을 표시한 뒤 플레이어를 비활성화·제거한다.
@@ -86,7 +86,7 @@
 - 플레이어 발밑 HP 바는 PlayerHUD의 Screen Space Overlay Canvas에서 표시한다. PlayerHPBar가 기존 IObserver를, PlayerHealth가 ISubject를 구현한다. HP 비율은 활성화 시와 체력 변경 Notify 알림 때만 갱신하고, 발 위치 추적은 LateUpdate에서 처리한다. 사망으로 시간이 정지한 프레임에도 0을 표시한다.
 - HP 바는 OnEnable에서 구독하고 OnDisable에서 해제한다. PlayerHealth 초기 체력 설정 때도 알림을 보내 초기화 순서와 관계없이 표시를 맞춘다. 중복 구독은 막으며 피해 간격에 차단된 공격은 알림을 보내지 않는다.
 - HP 바 기본 크기는 100×10(Canvas 기준), worldOffset=(0,-1,0), screenOffset=(0,-14)이다. 바의 RectTransform과 스크립트 설정으로 크기·위치를 조절한다. 빨간 전경과 어두운 배경을 사용하고 입력은 받지 않는다.
-- 일시정지 메뉴·재시작·회복·피격 효과는 아직 구현하지 않는다. 생존 타이머는 아래 규칙으로 구현한다.
+- 일시 정지 메뉴는 구현했으며 재시작·회복·피격 효과는 아직 구현하지 않는다. 생존 타이머는 아래 규칙으로 구현한다.
 
 ### 확정된 카메라 규칙
 
@@ -105,7 +105,7 @@
 - 기본 Start Time은 0초이며 TimeSystem 인스펙터에서 변경해 경계 시간을 테스트할 수 있다. 정수 총 초에서 `/ 60`, `% 60`으로 분·초를 함께 계산한다.
 - Time.deltaTime 기반이므로 일시정지·사망으로 Time.timeScale이 0이면 생존 시간도 멈춘다. 현재 단계에서는 실제 전투가 진행되는 시간만 센다.
 - HUDCanvas/TimerUI/TimerText의 기존 상단 중앙 배치를 유지한다. 텍스트는 위에서 50만큼 아래, 높이 50, 글자 크기 36이며 이후 경험치 바 아래에 놓을 공간이다.
-- 시간 제한 도달 시 클리어·결과 화면·일시정지 버튼은 이번에 추가하지 않는다.
+- 시간 제한 클리어와 결과 화면, 일시 정지 버튼은 GameManager와 각 UI에서 관리한다.
 
 ## 4. 적 — 확정 기획
 
@@ -402,3 +402,13 @@
 - 확인한 파일 목록에서는 게임플레이용 C# 스크립트가 보이지 않았다.
 - 초기 기획 검토에서는 코드나 파일을 생성·수정하지 않았다.
 - 이번 작업 범위는 이 기준 기획서 작성이며 게임 기능 구현은 포함하지 않는다.
+
+### 일시 정지 — 구현
+
+- GameManager는 Paused 상태를 관리한다. 화면 오른쪽 중간의 일시 정지 버튼은 Resource/pause-button 스프라이트를 사용한다.
+- PauseGame()은 Playing에서만 동작하며 Time.timeScale을 0으로 설정하고 PauseUI 팝업을 표시한다.
+- ESC 키도 동일한 정지·재개 메서드를 호출한다. 플레이 중에는 일시 정지하고, 일시 정지 중에는 재개한다. 게임 오버·클리어 상태에서는 무시한다.
+- 팝업 왼쪽 종료하기는 ReturnToStartScene(), 오른쪽 계속하기는 ResumeGame()을 Inspector On Click()으로 호출한다.
+- ResumeGame()은 Paused에서만 동작하며 팝업을 닫고 Time.timeScale을 1로 복구한다. 타이머와 전투는 정지한 시점부터 이어진다.
+- 게임 오버·클리어 시 팝업을 닫고 일시 정지 버튼을 숨긴다. 종료 상태에서는 정지·재개 요청을 무시하며, 같은 프레임 종료 조건은 일시 정지보다 우선한다.
+- PauseUI는 패널 표시와 버튼 선택만 담당하고 종료·재개 흐름은 씬의 GameManager가 관리한다.

@@ -1,7 +1,8 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-public enum GameState { Playing, GameOver, Completed }
+public enum GameState { Playing, GameOver, Completed, Paused }
 
 public class GameManager : MonoBehaviour, IObserver
 {
@@ -13,6 +14,7 @@ public class GameManager : MonoBehaviour, IObserver
     [SerializeField] private GameOverUI gameOverUI;
     [SerializeField] private GameClearUI gameClearUI;
     [SerializeField] private PlayerHPBar playerHPBar;
+    [SerializeField] private PauseUI pauseUI;
 
     private bool isLeaving;
     private bool isDeathPending;
@@ -29,6 +31,19 @@ public class GameManager : MonoBehaviour, IObserver
         if (gameOverUI != null) gameOverUI.Hide();
         if (gameClearUI != null) gameClearUI.Hide();
         if (playerHPBar != null) playerHPBar.SetVisible(true);
+        if (pauseUI != null)
+        {
+            pauseUI.Hide();
+            pauseUI.SetPauseAvailable(true);
+        }
+    }
+
+    private void Update()
+    {
+        if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
+
+        if (State == GameState.Playing) PauseGame();
+        else if (State == GameState.Paused) ResumeGame();
     }
 
     private void OnEnable()
@@ -57,13 +72,32 @@ public class GameManager : MonoBehaviour, IObserver
 
     public void Notify()
     {
-        if (State == GameState.Playing && playerHealth != null && playerHealth.IsDead)
+        if ((State == GameState.Playing || State == GameState.Paused)
+            && playerHealth != null && playerHealth.IsDead)
             isDeathPending = true;
+    }
+
+    public void PauseGame()
+    {
+        if (State != GameState.Playing || isLeaving) return;
+        // 종료 조건이 이미 충족됐다면 일시 정지보다 종료를 우선한다.
+        if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)) return;
+        State = GameState.Paused;
+        Time.timeScale = 0f;
+        if (pauseUI != null) pauseUI.Show();
+    }
+
+    public void ResumeGame()
+    {
+        if (State != GameState.Paused || isLeaving) return;
+        State = GameState.Playing;
+        Time.timeScale = 1f;
+        if (pauseUI != null) pauseUI.Hide();
     }
 
     private void LateUpdate()
     {
-        if (State != GameState.Playing) return;
+        if (State != GameState.Playing && State != GameState.Paused) return;
 
         if (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)
             FinishGame(GameState.Completed);
@@ -73,10 +107,15 @@ public class GameManager : MonoBehaviour, IObserver
 
     private void FinishGame(GameState result)
     {
-        if (State != GameState.Playing) return;
+        if (State != GameState.Playing && State != GameState.Paused) return;
         State = result;
         Time.timeScale = 0f;
 
+        if (pauseUI != null)
+        {
+            pauseUI.Hide();
+            pauseUI.SetPauseAvailable(false);
+        }
         if (playerHPBar != null) playerHPBar.SetVisible(false);
         if (result == GameState.Completed)
         {

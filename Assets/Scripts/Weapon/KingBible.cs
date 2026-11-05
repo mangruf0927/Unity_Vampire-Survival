@@ -145,14 +145,15 @@ public class KingBible : Weapon
     {
         attacking = false;
         for (int i = 0; i < projectiles.Count; i++)
+        {
             if (projectiles[i] != null) projectiles[i].gameObject.SetActive(false);
+        }
     }
 
     internal void TryHit(EnemyMovement enemy)
     {
         if (!enemy.isActiveAndEnabled) return;
-        if (hitRecords.TryGetValue(enemy, out HitRecord record)
-            && record.activationVersion == enemy.ActivationVersion && Time.time < record.nextHitTime) return;
+        if (hitRecords.TryGetValue(enemy, out HitRecord record) && record.activationVersion == enemy.ActivationVersion && Time.time < record.nextHitTime) return;
         hitRecords[enemy] = new HitRecord
         {
             activationVersion = enemy.ActivationVersion,

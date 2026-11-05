@@ -824,10 +824,9 @@ GameObject:
   - component: {fileID: 774257180}
   - component: {fileID: 774257185}
   - component: {fileID: 774257184}
-  - component: {fileID: 1800000100}
   - component: {fileID: 2110000103}
   - component: {fileID: 2130000000}
-  - component: {fileID: 2240000100}
+  - component: {fileID: 2240000200}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -1860,30 +1859,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1726122395}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &1800000100
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 774257179}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 635f0e23c2314619acfe65f1fc860300, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isOwned: 1
-  icon: {fileID: 0}
-  level: 1
-  damage: 10
-  projectileCount: 1
-  knockback: 1
-  targetCamera: {fileID: 330585545}
-  projectilePrefab: {fileID: 11400000, guid: 34d23ba512954b75a01e058c47817d64, type: 3}
-  cooldown: 1.2
-  projectileSpeed: 12
-  burstInterval: 0.1
-  penetrationCount: 1
 --- !u!1 &2100000000
 GameObject:
   m_ObjectHideFlags: 0
@@ -2764,12 +2739,9 @@ MonoBehaviour:
   playerHPBar: {fileID: 2140000015}
   pauseUI: {fileID: 8020395981}
   playerExperience: {fileID: 2130000000}
-  startingWeapon: {fileID: 1800000100}
-  weapons:
-  - {fileID: 1800000100}
-  - {fileID: 2240000100}
+  weaponManager: {fileID: 2240000200}
   levelUpUI: {fileID: 12000000005}
---- !u!114 &2240000100
+--- !u!114 &2240000200
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2778,21 +2750,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 774257179}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb97bd5d5aac4b55b721c82ffe086c8a, type: 3}
+  m_Script: {fileID: 11500000, guid: 263b8d3cbfcd495cb4ce94dd0042ecf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isOwned: 0
-  icon: {fileID: 0}
-  level: 1
-  damage: 10
-  projectileCount: 1
-  knockback: 1
-  projectilePrefab: {fileID: 11400000, guid: 9cda6c2b0bae4b2d863727a27565e7db, type: 3}
-  cooldown: 3
-  duration: 3
-  orbitRadius: 2
-  rotationSpeed: 180
-  hitboxDelay: 1.7
+  startingWeapon: {fileID: 11400000, guid: 1ad1e090c5ac4fb08c379dfa009d6cb2, type: 3}
+  weaponPrefabs:
+  - {fileID: 11400000, guid: 1ad1e090c5ac4fb08c379dfa009d6cb2, type: 3}
+  - {fileID: 11400000, guid: c923cae2fe954704b25e04eec7981964, type: 3}
 --- !u!1 &5020395979
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public abstract class Weapon : MonoBehaviour
 {
-    [SerializeField] private bool isOwned = true;
+    private bool isOwned;
     [SerializeField] private Sprite icon;
     [SerializeField, Range(1, 8)] private int level = 1;
     [SerializeField, Min(0)] protected int damage = 10;

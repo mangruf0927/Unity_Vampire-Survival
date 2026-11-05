@@ -18,8 +18,7 @@ public class GameManager : MonoBehaviour, IObserver
     [SerializeField] private PauseUI pauseUI;
 
     [SerializeField] private PlayerExperience playerExperience;
-    [SerializeField] private Weapon startingWeapon;
-    [SerializeField] private Weapon[] weapons;
+    [SerializeField] private WeaponManager weaponManager;
     [SerializeField] private LevelUpUI levelUpUI;
 
     private readonly List<Weapon> choices = new();
@@ -32,7 +31,6 @@ public class GameManager : MonoBehaviour, IObserver
     private void Awake()
     {
         Time.timeScale = 1f;
-        if (startingWeapon != null) startingWeapon.Acquire();
     }
 
     private void Start()
@@ -100,10 +98,7 @@ public class GameManager : MonoBehaviour, IObserver
         if (State != GameState.ChoosingUpgrade || isLeaving || index < 0 || index >= choices.Count) return;
         if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)) return;
         Weapon weapon = choices[index];
-        if (weapon == null || !weapon.CanUpgrade) return;
-
-        if (weapon.IsOwned) weapon.LevelUp();
-        else weapon.Acquire();
+        if (weaponManager == null || !weaponManager.AcquireOrUpgrade(weapon)) return;
         pendingChoices--;
         choices.Clear();
         if (levelUpUI != null) levelUpUI.Hide();
@@ -120,11 +115,7 @@ public class GameManager : MonoBehaviour, IObserver
     {
         if (pendingChoices <= 0 || levelUpUI == null) return false;
         choices.Clear();
-        for (int i = 0; weapons != null && i < weapons.Length && choices.Count < levelUpUI.Capacity; i++)
-        {
-            Weapon weapon = weapons[i];
-            if (weapon != null && weapon.CanUpgrade && !choices.Contains(weapon)) choices.Add(weapon);
-        }
+        if (weaponManager != null) weaponManager.FillChoices(choices, levelUpUI.Capacity);
         if (choices.Count == 0)
         {
             pendingChoices = 0;

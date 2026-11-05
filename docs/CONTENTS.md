@@ -34,6 +34,14 @@
 
 플레이어 이동 → 적 생성 및 추적 → 플레이어 자동 공격 → 적 처치 → 경험치 획득 → 레벨업 → 무기 또는 장신구 획득·강화 → 생존
 
+### 시작 화면 — 현재 구현 범위
+
+- StartScene의 StartCanvas/StartPrompt에 “시작하려면 아무 키나 누르세요”를 표시한다. 현재 환경의 한글 폰트를 사용하는 uGUI Text이며 운영체제 폰트 후보를 사용한다. 폰트를 프로젝트에 복사하지 않는다.
+- StartScreenUI가 기본 0.7초 간격으로 문구를 켜고 끈다. Blink Interval은 Inspector에서 수정할 수 있다.
+- Input System의 Keyboard.anyKey가 새로 눌리면 GameScene을 로드한다. 마우스·게임패드 입력은 이번 키보드 시작 기능에 포함하지 않는다. 씬 전환 요청은 한 번만 실행한다.
+- 시작 화면 진입 시 Time.timeScale을 1로 설정한다. StartScene과 GameScene을 빌드 씬 목록에 등록하고, StartScene을 첫 씬으로 둔다. 기존 SampleScene 등록은 유지한다.
+- 게임 오버·게임 클리어·나가기 버튼은 아직 구현하지 않는다. 향후 같은 프레임의 사망/10분 도달은 클리어 우선으로 처리하기로 확정했다.
+
 ## 3. 플레이어 — 확정 기획
 
 - WASD 또는 방향키로 이동한다.

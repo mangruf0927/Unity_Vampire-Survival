@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public abstract class Weapon : MonoBehaviour
+public abstract class Weapon : MonoBehaviour, ILevelUpOption
 {
     private bool isOwned;
     [SerializeField] private Sprite icon;

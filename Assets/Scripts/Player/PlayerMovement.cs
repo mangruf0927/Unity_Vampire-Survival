@@ -8,6 +8,14 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController characterController;
     private Vector3 moveDirection;
+    private float moveSpeedMultiplier = 1f;
+
+    public float MoveSpeed => moveSpeed * moveSpeedMultiplier;
+
+    public void SetMoveSpeedMultiplier(float multiplier)
+    {
+        moveSpeedMultiplier = Mathf.Max(0f, multiplier);
+    }
 
     public Vector3 LastMoveDirection { get; private set; } = Vector3.forward;
 
@@ -42,7 +50,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Move()
     {
-        characterController.Move(moveDirection * moveSpeed * Time.deltaTime);
+        characterController.Move(moveDirection * MoveSpeed * Time.deltaTime);
     }
 
     private void Rotate()

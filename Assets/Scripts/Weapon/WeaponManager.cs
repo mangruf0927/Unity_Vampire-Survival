@@ -10,7 +10,10 @@ public class WeaponManager : MonoBehaviour
     [SerializeField] private Transform attackOrigin;
     [SerializeField] private Camera gameCamera;
 
+    [SerializeField, Min(0)] private int maximumWeapons = 3;
     private readonly Dictionary<Weapon, Weapon> ownedWeapons = new();
+
+    public int OwnedCount => ownedWeapons.Count;
 
     private void Awake()
     {
@@ -39,29 +42,18 @@ public class WeaponManager : MonoBehaviour
         return weapon;
     }
 
-    public void FillChoices(List<Weapon> choices, int maximumCount)
+    public void AddChoices(List<ILevelUpOption> choices)
     {
-        choices.Clear();
-        if (weaponPrefabs == null || maximumCount <= 0) return;
+        if (weaponPrefabs == null) return;
         for (int i = 0; i < weaponPrefabs.Length; i++)
         {
             Weapon prefab = weaponPrefabs[i];
             if (prefab == null) continue;
             Weapon owned = GetOwnedWeapon(prefab);
+            if (owned == null && OwnedCount >= maximumWeapons) continue;
             Weapon choice = owned != null ? owned : prefab;
             if (choice.CanUpgrade && !choices.Contains(choice)) choices.Add(choice);
         }
-
-        if (choices.Count <= maximumCount) return;
-
-        for (int i = 0; i < maximumCount; i++)
-        {
-            int index = Random.Range(i, choices.Count);
-            Weapon swap = choices[i];
-            choices[i] = choices[index];
-            choices[index] = swap;
-        }
-        choices.RemoveRange(maximumCount, choices.Count - maximumCount);
     }
 
     public bool AcquireOrUpgrade(Weapon choice)
@@ -81,6 +73,7 @@ public class WeaponManager : MonoBehaviour
             }
             else
             {
+                if (OwnedCount >= maximumWeapons) return false;
                 Weapon instance = Instantiate(prefab, transform);
                 instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
                 instance.Initialize(attackOrigin, gameCamera, GetAttackDirection());

@@ -827,6 +827,7 @@ GameObject:
   - component: {fileID: 2110000103}
   - component: {fileID: 2130000000}
   - component: {fileID: 2240000200}
+  - component: {fileID: 2240000300}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -2858,6 +2859,7 @@ MonoBehaviour:
   pauseUI: {fileID: 8020395981}
   playerExperience: {fileID: 2130000000}
   weaponManager: {fileID: 2240000200}
+  accessoryManager: {fileID: 2240000300}
   levelUpUI: {fileID: 12000000005}
 --- !u!114 &2240000200
 MonoBehaviour:
@@ -2880,6 +2882,7 @@ MonoBehaviour:
   playerMovement: {fileID: 774257184}
   attackOrigin: {fileID: 774257183}
   gameCamera: {fileID: 330585545}
+  maximumWeapons: 3
 --- !u!1 &5020395979
 GameObject:
   m_ObjectHideFlags: 0
@@ -4712,7 +4715,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uBB34\uAE30\uB97C \uD558\uB098 \uC120\uD0DD\uD558\uC138\uC694"
+  m_text: "\ubb34\uae30 \ub610\ub294 \uc7a5\uc2e0\uad6c\ub97c \ud558\ub098 \uc120\ud0dd\ud558\uc138\uc694"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a6b8fe7792971400598fd4d3091c16ca, type: 2}
   m_sharedMaterial: {fileID: -4777489117767584994, guid: a6b8fe7792971400598fd4d3091c16ca, type: 2}
@@ -4907,7 +4910,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2230000002}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: ChooseWeapon
+        m_MethodName: ChooseOption
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5530,7 +5533,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2230000002}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: ChooseWeapon
+        m_MethodName: ChooseOption
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6485,6 +6488,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2240000300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774257179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 190e224005f24b7bac1059372eeaafe0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  accessoryPrefabs:
+  - {fileID: 11400000, guid: 12a20b4653254fb094efb81deac7de93, type: 3}
+  maximumAccessories: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

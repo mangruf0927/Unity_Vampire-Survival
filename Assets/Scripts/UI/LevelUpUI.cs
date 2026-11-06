@@ -28,7 +28,7 @@ public class LevelUpUI : MonoBehaviour
         Hide();
     }
 
-    public void Show(IReadOnlyList<Weapon> choices)
+    public void Show(IReadOnlyList<ILevelUpOption> choices)
     {
         if (selectionPanel == null) return;
         int count = Mathf.Min(choices.Count, Capacity);
@@ -39,14 +39,14 @@ public class LevelUpUI : MonoBehaviour
             bool visible = i < count;
             card.button.gameObject.SetActive(visible);
             if (!visible) continue;
-            Weapon weapon = choices[i];
-            card.title.text = weapon.DisplayName;
-            card.status.text = weapon.IsOwned ? "Lv." + (weapon.Level + 1) : "신규 !";
-            card.description.text = weapon.GetChoiceDescription();
+            ILevelUpOption option = choices[i];
+            card.title.text = option.DisplayName;
+            card.status.text = option.IsOwned ? "Lv." + (option.Level + 1) : "신규 !";
+            card.description.text = option.GetChoiceDescription();
             if (card.icon != null)
             {
-                card.icon.sprite = weapon.Icon;
-                card.icon.enabled = weapon.Icon != null;
+                card.icon.sprite = option.Icon;
+                card.icon.enabled = option.Icon != null;
             }
             RectTransform rect = (RectTransform)card.button.transform;
             rect.anchoredPosition = new Vector2(0f, ((count - 1) * 0.5f - i) * cardSpacing);

@@ -19,9 +19,10 @@ public class GameManager : MonoBehaviour, IObserver
 
     [SerializeField] private PlayerExperience playerExperience;
     [SerializeField] private WeaponManager weaponManager;
+    [SerializeField] private AccessoryManager accessoryManager;
     [SerializeField] private LevelUpUI levelUpUI;
 
-    private readonly List<Weapon> choices = new();
+    private readonly List<ILevelUpOption> choices = new();
     private int lastPlayerLevel = 1;
     private int pendingChoices;
     private bool isLeaving;
@@ -93,12 +94,16 @@ public class GameManager : MonoBehaviour, IObserver
         }
     }
 
-    public void ChooseWeapon(int index)
+    public void ChooseOption(int index)
     {
         if (State != GameState.ChoosingUpgrade || isLeaving || index < 0 || index >= choices.Count) return;
         if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)) return;
-        Weapon weapon = choices[index];
-        if (weaponManager == null || !weaponManager.AcquireOrUpgrade(weapon)) return;
+        bool applied = false;
+        if (choices[index] is Weapon weapon)
+            applied = weaponManager != null && weaponManager.AcquireOrUpgrade(weapon);
+        else if (choices[index] is Accessory accessory)
+            applied = accessoryManager != null && accessoryManager.AcquireOrUpgrade(accessory);
+        if (!applied) return;
         pendingChoices--;
         choices.Clear();
         if (levelUpUI != null) levelUpUI.Hide();
@@ -115,7 +120,21 @@ public class GameManager : MonoBehaviour, IObserver
     {
         if (pendingChoices <= 0 || levelUpUI == null) return false;
         choices.Clear();
-        if (weaponManager != null) weaponManager.FillChoices(choices, levelUpUI.Capacity);
+        if (weaponManager != null) weaponManager.AddChoices(choices);
+        if (accessoryManager != null) accessoryManager.AddChoices(choices);
+        // 두 종류의 후보를 모두 모은 뒤 한 번만 추첨한다.
+        int capacity = levelUpUI.Capacity;
+        if (choices.Count > capacity)
+        {
+            for (int i = 0; i < capacity; i++)
+            {
+                int index = Random.Range(i, choices.Count);
+                ILevelUpOption swap = choices[i];
+                choices[i] = choices[index];
+                choices[index] = swap;
+            }
+            choices.RemoveRange(capacity, choices.Count - capacity);
+        }
         if (choices.Count == 0)
         {
             pendingChoices = 0;

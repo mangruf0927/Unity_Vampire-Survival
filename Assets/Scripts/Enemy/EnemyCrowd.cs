@@ -9,6 +9,9 @@ public static class EnemyCrowd
 
     private static readonly List<EnemyMovement> activeEnemies = new();
     internal static int ActiveCount => activeEnemies.Count;
+    internal static int ActiveSwarmCount { get; private set; }
+    internal static int RegularCount => ActiveCount - ActiveSwarmCount;
+    internal static void RegisterSwarm() => ActiveSwarmCount++;
     internal static EnemyMovement GetActiveEnemy(int index) => activeEnemies[index];
     private static readonly Dictionary<Vector2Int, EnemyMovement> grid = new();
 
@@ -21,6 +24,7 @@ public static class EnemyCrowd
     private static void ResetCrowd()
     {
         activeEnemies.Clear();
+        ActiveSwarmCount = 0;
         grid.Clear();
         simulationFrame = -1;
         hitGridFrame = -1;
@@ -34,7 +38,7 @@ public static class EnemyCrowd
 
     public static void Unregister(EnemyMovement enemy)
     {
-        activeEnemies.Remove(enemy);
+        if (activeEnemies.Remove(enemy) && enemy.IsSwarm) ActiveSwarmCount--;
         hitGridFrame = -1;
     }
 
@@ -131,7 +135,7 @@ public static class EnemyCrowd
             EnemyMovement enemy = activeEnemies[i];
 
             if (enemy.Target != null)
-                enemy.Move(enemy.GetTargetDirection(), GetSeparation(enemy), stepDeltaTime);
+                enemy.Move(enemy.GetTargetDirection(), enemy.IsSwarm ? Vector3.zero : GetSeparation(enemy), stepDeltaTime);
             else
                 enemy.velocity = Vector3.zero;
         }
@@ -160,6 +164,7 @@ public static class EnemyCrowd
                     Vector3 offset = enemy.correction / enemy.contactCount;
                     enemy.nextPosition += Vector3.ClampMagnitude(offset, enemy.OverlapCorrectionSpeed * stepDeltaTime);
                 }
+                if (enemy.IsSwarm) enemy.nextPosition = enemy.ClampSwarmPosition(enemy.nextPosition);
 
             }
         }
@@ -171,7 +176,7 @@ public static class EnemyCrowd
 
             enemy.transform.position = enemy.nextPosition;
 
-            Vector3 facingDirection = enemy.targetPosition - enemy.nextPosition;
+            Vector3 facingDirection = enemy.IsSwarm ? enemy.SwarmDirection : enemy.targetPosition - enemy.nextPosition;
             facingDirection.y = 0f;
 
             if (facingDirection.sqrMagnitude > 0.000001f) enemy.Rotate(facingDirection, stepDeltaTime);
@@ -266,18 +271,21 @@ public static class EnemyCrowd
                         if (overlap > 0f)
                         {
                             Vector3 normal = distance > 0.0001f ? away / distance : enemy.GetOverlapDirection(other);
-                            float share = enemy.Target != null && other.Target != null ? 0.5f : 1f;
-                            Vector3 offset = normal * overlap * share;
+                            bool bothMoving = enemy.Target != null && other.Target != null;
+                            float totalWeight = enemy.CorrectionWeight + other.CorrectionWeight;
+                            float enemyShare = bothMoving ? enemy.CorrectionWeight / totalWeight : 1f;
+                            float otherShare = bothMoving ? other.CorrectionWeight / totalWeight : 1f;
+                            Vector3 offset = normal * overlap;
 
                             if (enemy.Target != null)
                             {
-                                enemy.correction += offset;
+                                enemy.correction += offset * enemyShare;
                                 enemy.contactCount++;
                             }
 
                             if (other.Target != null)
                             {
-                                other.correction -= offset;
+                                other.correction -= offset * otherShare;
                                 other.contactCount++;
                             }
                         }

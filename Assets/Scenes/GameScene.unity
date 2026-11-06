@@ -1904,13 +1904,115 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 774257183}
-  gameCamera: {fileID: 330585545}
-  enemyPoolType: 0
-  spawnInterval: 1
-  minimumEnemies: 15
-  maximumEnemies: 50
-  spawnHeight: 1
+  spawnCamera: {fileID: 330585545}
+  timeSystem: {fileID: 2150000002}
+  stages:
+  - startTime: 0
+    enemies:
+    - poolType: 0
+      weight: 1
+    spawnInterval: 1
+    minimumEnemies: 15
+    maximumEnemies: 50
+  - startTime: 60
+    enemies:
+    - poolType: 0
+      weight: 6
+    - poolType: 2
+      weight: 4
+    spawnInterval: 0.9
+    minimumEnemies: 25
+    maximumEnemies: 70
+  - startTime: 120
+    enemies:
+    - poolType: 0
+      weight: 5
+    - poolType: 2
+      weight: 5
+    spawnInterval: 0.8
+    minimumEnemies: 40
+    maximumEnemies: 120
+  - startTime: 180
+    enemies:
+    - poolType: 3
+      weight: 7
+    - poolType: 0
+      weight: 3
+    spawnInterval: 0.75
+    minimumEnemies: 50
+    maximumEnemies: 130
+  - startTime: 240
+    enemies:
+    - poolType: 4
+      weight: 4
+    - poolType: 3
+      weight: 6
+    spawnInterval: 0.7
+    minimumEnemies: 60
+    maximumEnemies: 150
+  - startTime: 300
+    enemies:
+    - poolType: 5
+      weight: 3
+    - poolType: 3
+      weight: 7
+    spawnInterval: 0.65
+    minimumEnemies: 70
+    maximumEnemies: 170
+  - startTime: 360
+    enemies:
+    - poolType: 5
+      weight: 4
+    - poolType: 2
+      weight: 6
+    spawnInterval: 0.6
+    minimumEnemies: 85
+    maximumEnemies: 200
+  - startTime: 420
+    enemies:
+    - poolType: 0
+      weight: 6
+    - poolType: 5
+      weight: 4
+    spawnInterval: 0.5
+    minimumEnemies: 95
+    maximumEnemies: 250
+  - startTime: 480
+    enemies:
+    - poolType: 2
+      weight: 3
+    - poolType: 4
+      weight: 3
+    - poolType: 5
+      weight: 4
+    spawnInterval: 0.45
+    minimumEnemies: 110
+    maximumEnemies: 260
+  - startTime: 540
+    enemies:
+    - poolType: 0
+      weight: 3
+    - poolType: 2
+      weight: 2
+    - poolType: 3
+      weight: 2
+    - poolType: 4
+      weight: 2
+    - poolType: 5
+      weight: 1
+    spawnInterval: 0.4
+    minimumEnemies: 130
+    maximumEnemies: 320
+  offscreenCheckInterval: 0.2
   spawnMargin: 2
+  maximumSwarmEnemies: 120
+  swarmCount: 50
+  swarmSpeed: 16
+  swarmPushStrength: 5
+  swarmSpacing: 1.3
+  swarmMaxOffset: 0.25
+  swarmRecoverySpeed: 4
+  spawnHeight: 1
 --- !u!114 &2110000103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1976,6 +2078,22 @@ MonoBehaviour:
     parent: {fileID: 0}
   - poolType: 1
     prefab: {fileID: 100000, guid: acb8ec55882d4b38bc93586d0bfcfa24, type: 3}
+    size: 15
+    parent: {fileID: 0}
+  - poolType: 2
+    prefab: {fileID: 1800000000, guid: cdeaee35c6fe4e9193e132002b3695a3, type: 3}
+    size: 15
+    parent: {fileID: 0}
+  - poolType: 3
+    prefab: {fileID: 1800000000, guid: d1d4cde9f77a4f5ea55915847bcb686a, type: 3}
+    size: 15
+    parent: {fileID: 0}
+  - poolType: 4
+    prefab: {fileID: 1800000000, guid: 71e1eeabef854254a5be21e9d405b39a, type: 3}
+    size: 15
+    parent: {fileID: 0}
+  - poolType: 5
+    prefab: {fileID: 1800000000, guid: 27d457fd891b411f9592410534961470, type: 3}
     size: 15
     parent: {fileID: 0}
 --- !u!114 &2130000000
@@ -2365,7 +2483,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e73ca4c71393a4b2595b53f1188990a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startTime: 0
+  startTime: 124
 --- !u!114 &2150000010
 MonoBehaviour:
   m_ObjectHideFlags: 0

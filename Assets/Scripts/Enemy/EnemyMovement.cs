@@ -19,6 +19,15 @@ public class EnemyMovement : MonoBehaviour
     private Vector3 knockbackVelocity;
     private float knockbackRemaining;
     private float offscreenSince = -1f;
+    private bool isSwarm;
+    private Vector3 swarmStart;
+    private Vector3 swarmDirection;
+    private bool swarmHasEnteredScreen;
+    private float swarmProgress;
+    private float swarmSpeed;
+    private float swarmPushStrength;
+    private float swarmMaxOffset;
+    private float swarmRecoverySpeed;
 
     private Transform cachedDamageTarget;
     private IDamageable damageTarget;
@@ -35,20 +44,70 @@ public class EnemyMovement : MonoBehaviour
     internal int enemyId;
     internal float sidePreference;
 
+    internal bool IsSwarm => isSwarm;
+    internal Vector3 SwarmDirection => swarmDirection;
+    internal float CorrectionWeight => isSwarm ? 1f / swarmPushStrength : 1f;
     internal int ActivationVersion { get; private set; }
     internal Transform Target => target;
     internal float BodyRadius => bodyRadius;
     internal float PlayerRadius => playerRadius;
     internal float SeparationRange => separationRange;
-    internal float OverlapCorrectionSpeed => overlapCorrectionSpeed;
+    internal float OverlapCorrectionSpeed => overlapCorrectionSpeed * CorrectionWeight;
 
     public void SetTarget(Transform target)
     {
         this.target = target;
     }
 
+    public void ConfigureSwarm(Vector3 start, Vector3 direction, float speed,
+        float pushStrength, float maxOffset, float recoverySpeed)
+    {
+        if (!isSwarm)
+        {
+            isSwarm = true;
+            EnemyCrowd.RegisterSwarm();
+        }
+        swarmStart = start;
+        direction.y = 0f;
+        swarmDirection = direction.normalized;
+        swarmHasEnteredScreen = false;
+        swarmProgress = 0f;
+        swarmSpeed = Mathf.Max(0.01f, speed);
+        swarmPushStrength = Mathf.Max(1f, pushStrength);
+        swarmMaxOffset = Mathf.Max(0f, maxOffset);
+        swarmRecoverySpeed = Mathf.Max(0f, recoverySpeed);
+        transform.rotation = Quaternion.LookRotation(swarmDirection, Vector3.up);
+    }
+
+    private void MoveSwarm(float stepDeltaTime)
+    {
+        Vector3 offset = framePosition - (swarmStart + swarmDirection * swarmProgress);
+        offset.y = 0f;
+        offset = Vector3.MoveTowards(offset, Vector3.zero, swarmRecoverySpeed * stepDeltaTime);
+        if (knockbackRemaining > 0f)
+        {
+            float duration = Mathf.Min(stepDeltaTime, knockbackRemaining);
+            offset += knockbackVelocity * duration;
+            knockbackRemaining = Mathf.Max(0f, knockbackRemaining - duration);
+        }
+        swarmProgress += swarmSpeed * stepDeltaTime;
+        nextPosition = swarmStart + swarmDirection * swarmProgress + Vector3.ClampMagnitude(offset, swarmMaxOffset);
+        velocity = swarmDirection * swarmSpeed;
+    }
+
+    internal Vector3 ClampSwarmPosition(Vector3 position)
+    {
+        Vector3 ideal = swarmStart + swarmDirection * swarmProgress;
+        Vector3 offset = position - ideal;
+        offset.y = 0f;
+        return ideal + Vector3.ClampMagnitude(offset, swarmMaxOffset);
+    }
+
     private void OnEnable()
     {
+        isSwarm = false;
+        swarmHasEnteredScreen = false;
+        swarmProgress = 0f;
         ActivationVersion++;
         offscreenSince = -1f;
         cachedDamageTarget = null;
@@ -66,11 +125,18 @@ public class EnemyMovement : MonoBehaviour
         knockbackRemaining = 0f;
         knockbackVelocity = Vector3.zero;
         EnemyCrowd.Unregister(this);
+        isSwarm = false;
         velocity = Vector3.zero;
     }
 
     internal bool ShouldReturnOffscreen(bool inside, float now)
     {
+        if (isSwarm)
+        {
+            if (inside) swarmHasEnteredScreen = true;
+            return swarmHasEnteredScreen && !inside;
+        }
+
         if (inside)
         {
             offscreenSince = -1f;
@@ -125,6 +191,11 @@ public class EnemyMovement : MonoBehaviour
 
     internal void Move(Vector3 direction, Vector3 separation, float stepDeltaTime)
     {
+        if (isSwarm)
+        {
+            MoveSwarm(stepDeltaTime);
+            return;
+        }
         if (knockbackRemaining > 0f)
         {
             float duration = Mathf.Min(stepDeltaTime, knockbackRemaining);

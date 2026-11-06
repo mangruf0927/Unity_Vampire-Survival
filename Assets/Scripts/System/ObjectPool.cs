@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PoolTypeEnums { Bat = 0, ExperienceGem = 1 }
+public enum PoolTypeEnums { Bat = 0, ExperienceGem = 1, Zombie = 2, Skeleton = 3, Ghost = 4, Mudman = 5 }
 
 [System.Serializable]
 public class PoolData

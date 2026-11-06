@@ -45,8 +45,7 @@ public class WhipSlash : MonoBehaviour
 
     private void UpdateSlash()
     {
-        transform.SetPositionAndRotation(origin.position + direction * (length * 0.5f),
-            Quaternion.LookRotation(direction, Vector3.up));
+        transform.SetPositionAndRotation(origin.position + direction * (length * 0.5f), Quaternion.LookRotation(direction, Vector3.up));
         transform.localScale = new Vector3(width, 0.12f, length);
 
         float radius = width * 0.5f;

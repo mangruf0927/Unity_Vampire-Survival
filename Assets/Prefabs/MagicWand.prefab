@@ -46,7 +46,6 @@ MonoBehaviour:
   damage: 10
   projectileCount: 1
   knockback: 1
-  targetCamera: {fileID: 0}
   projectilePrefab: {fileID: 11400000, guid: 34d23ba512954b75a01e058c47817d64, type: 3}
   cooldown: 1.2
   projectileSpeed: 12

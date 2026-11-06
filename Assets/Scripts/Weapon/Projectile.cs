@@ -1,19 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MagicProjectile : MonoBehaviour
+public class Projectile : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float hitRadius = 0.125f;
-    private int damage;
+    private float damage;
     private int hitsRemaining;
     private float knockback;
     private readonly HashSet<EnemyMovement> hitEnemies = new();
 
     private Vector3 direction;
     private float speed;
+    private float hitRadiusMultiplier = 1f;
     private Camera targetCamera;
 
-    public void Initialize(Vector3 direction, float speed, Camera targetCamera, int damage, int penetrationCount, float knockback)
+    public void Initialize(Vector3 direction, float speed, Camera targetCamera, float damage, int penetrationCount, float knockback, float areaMultiplier = 1f)
     {
         this.direction = direction;
         this.speed = speed;
@@ -21,12 +22,14 @@ public class MagicProjectile : MonoBehaviour
         this.damage = damage;
         hitsRemaining = Mathf.Max(1, penetrationCount);
         this.knockback = knockback;
+        hitRadiusMultiplier = Mathf.Max(0f, areaMultiplier);
         hitEnemies.Clear();
     }
 
     private void LateUpdate()
     {
         if (Time.deltaTime <= 0f) return;
+
         if (targetCamera == null)
         {
             Destroy(gameObject);
@@ -36,21 +39,30 @@ public class MagicProjectile : MonoBehaviour
         Vector3 start = transform.position;
         Vector3 end = start + direction * speed * Time.deltaTime;
 
-        while (EnemyCrowd.TryGetProjectileHit(start, end, hitRadius, out EnemyMovement hitEnemy, hitEnemies))
+        if (HandleProjectileHits(start, end)) return;
+
+        transform.position = end;
+        if (!IsInsideView(targetCamera, end)) Destroy(gameObject);
+    }
+
+    private bool HandleProjectileHits(Vector3 start, Vector3 end)
+    {
+        while (EnemyCrowd.TryGetProjectileHit(start, end, hitRadius * hitRadiusMultiplier, out EnemyMovement enemy, hitEnemies))
         {
-            hitEnemies.Add(hitEnemy);
-            hitEnemy.ApplyKnockback(direction, knockback);
-            if (hitEnemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(damage);
-            hitsRemaining--;
-            if (hitsRemaining <= 0)
+            hitEnemies.Add(enemy);
+            enemy.ApplyKnockback(direction, knockback);
+
+            if (enemy.TryGetComponent(out IDamageable damageable))
+                damageable.TakeDamage(damage);
+
+            if (--hitsRemaining <= 0)
             {
                 Destroy(gameObject);
-                return;
+                return true;
             }
         }
 
-        transform.position = end;
-        if (!IsInsideView(targetCamera, transform.position)) Destroy(gameObject);
+        return false;
     }
 
     internal static bool IsInsideView(Camera camera, Vector3 position)

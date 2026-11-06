@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class KingBible : Weapon
+public class KingBibleWeapon : Weapon
 {
     [SerializeField] private BibleProjectile projectilePrefab;
     [SerializeField, Min(0.01f)] private float cooldown = 3f;
@@ -24,7 +24,7 @@ public class KingBible : Weapon
     private float angle;
     private Vector3 previousCenter;
     private int activeCount;
-    private int activeDamage;
+    private float activeDamage;
     private float activeKnockback;
     private float activeRadius;
     private float activeSpeed;
@@ -84,7 +84,7 @@ public class KingBible : Weapon
         }
 
         float elapsed = Mathf.Min(deltaTime, remainingDuration);
-        Vector3 center = transform.position;
+        Vector3 center = AttackOrigin.position;
 
         float travel = Vector3.Distance(previousCenter, center) + activeRadius * activeSpeed * Mathf.Deg2Rad * elapsed;
         int steps = Mathf.Max(1, Mathf.CeilToInt(travel / 0.1f));
@@ -126,7 +126,7 @@ public class KingBible : Weapon
         activeSpeed = RotationSpeed;
         activeHitboxDelay = Mathf.Max(0.01f, hitboxDelay);
         remainingDuration = Duration;
-        previousCenter = transform.position;
+        previousCenter = AttackOrigin.position;
         angle = 0f;
         attacking = true;
 
@@ -159,7 +159,7 @@ public class KingBible : Weapon
             activationVersion = enemy.ActivationVersion,
             nextHitTime = Time.time + activeHitboxDelay
         };
-        Vector3 away = enemy.transform.position - transform.position;
+        Vector3 away = enemy.transform.position - AttackOrigin.position;
         enemy.ApplyKnockback(away, activeKnockback);
         if (enemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(activeDamage);
     }

@@ -38,7 +38,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
         for (int i = 0; i < snapshot.Length; i++) snapshot[i].Notify();
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(float damage)
     {
         if (isDead || damage <= 0f || Time.timeScale <= 0f || Time.time < nextDamageTime) return;
 

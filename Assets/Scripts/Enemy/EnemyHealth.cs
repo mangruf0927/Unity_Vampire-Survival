@@ -17,7 +17,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         isDead = false;
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(float damage)
     {
         if (isDead || damage <= 0f) return;
 

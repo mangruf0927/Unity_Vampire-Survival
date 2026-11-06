@@ -1,9 +1,8 @@
 using UnityEngine;
 
-public class MagicWand : Weapon
+public class MagicWandWeapon : Weapon
 {
-    [SerializeField] private Camera targetCamera;
-    [SerializeField] private MagicProjectile projectilePrefab;
+    [SerializeField] private Projectile projectilePrefab;
     [SerializeField, Min(0.01f)] private float cooldown = 1.2f;
     [SerializeField, Min(0.01f)] private float projectileSpeed = 12f;
 
@@ -38,12 +37,12 @@ public class MagicWand : Weapon
 
     private void Awake()
     {
-        if (targetCamera == null) targetCamera = Camera.main;
-        if (targetCamera == null || projectilePrefab == null) enabled = false;
+        if (projectilePrefab == null) enabled = false;
     }
 
     protected override void UpdateAttack(float deltaTime)
     {
+        if (TargetCamera == null) return;
         burstRemaining -= deltaTime;
         if (shotsRemaining == 0 && cooldownRemaining <= 0f)
         {
@@ -65,11 +64,11 @@ public class MagicWand : Weapon
         EnemyMovement target = FindNearestVisibleEnemy();
         if (target == null) return;
 
-        Vector3 direction = target.transform.position - transform.position;
+        Vector3 direction = target.transform.position - AttackOrigin.position;
         if (direction.sqrMagnitude < 0.000001f) return;
 
-        MagicProjectile projectile = Instantiate(projectilePrefab, transform.position, Quaternion.LookRotation(direction, Vector3.up));
-        projectile.Initialize(direction.normalized, projectileSpeed, targetCamera, Damage, PenetrationCount, Knockback);
+        Projectile projectile = Instantiate(projectilePrefab, AttackOrigin.position, Quaternion.LookRotation(direction, Vector3.up));
+        projectile.Initialize(direction.normalized, projectileSpeed, TargetCamera, Damage, PenetrationCount, Knockback);
     }
 
 
@@ -77,7 +76,7 @@ public class MagicWand : Weapon
     {
         EnemyMovement nearest = null;
         float nearestDistance = float.PositiveInfinity;
-        Vector3 origin = transform.position;
+        Vector3 origin = AttackOrigin.position;
         for (int i = 0; i < EnemyCrowd.ActiveCount; i++)
         {
             EnemyMovement enemy = EnemyCrowd.GetActiveEnemy(i);
@@ -86,7 +85,7 @@ public class MagicWand : Weapon
             Vector3 position = enemy.transform.position;
             float distance = (position - origin).sqrMagnitude;
             if (distance >= nearestDistance) continue;
-            if (!MagicProjectile.IsInsideView(targetCamera, position)) continue;
+            if (!Projectile.IsInsideView(TargetCamera, position)) continue;
             nearestDistance = distance;
             nearest = enemy;
         }

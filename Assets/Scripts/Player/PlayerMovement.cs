@@ -9,9 +9,14 @@ public class PlayerMovement : MonoBehaviour
     private CharacterController characterController;
     private Vector3 moveDirection;
 
+    public Vector3 LastMoveDirection { get; private set; } = Vector3.forward;
+
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
+        Vector3 initialDirection = transform.forward;
+        initialDirection.y = 0f;
+        LastMoveDirection = initialDirection.sqrMagnitude > 0.000001f ? initialDirection.normalized : Vector3.forward;
     }
 
     public void OnMove(InputValue value)
@@ -19,6 +24,7 @@ public class PlayerMovement : MonoBehaviour
         Vector2 moveInput = Vector2.ClampMagnitude(value.Get<Vector2>(), 1f);
         moveDirection = new(moveInput.x, 0f, moveInput.y);
         moveDirection = Vector3.ClampMagnitude(moveDirection, 1f);
+        if (moveDirection.sqrMagnitude > 0.000001f) LastMoveDirection = moveDirection.normalized;
     }
 
     private void Update()

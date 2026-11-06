@@ -6,11 +6,30 @@ public class WeaponManager : MonoBehaviour
     [SerializeField] private Weapon startingWeapon;
     [SerializeField] private Weapon[] weaponPrefabs;
 
+    [SerializeField] private PlayerMovement playerMovement;
+    [SerializeField] private Transform attackOrigin;
+    [SerializeField] private Camera gameCamera;
+
     private readonly Dictionary<Weapon, Weapon> ownedWeapons = new();
 
     private void Awake()
     {
+        if (playerMovement == null) playerMovement = GetComponent<PlayerMovement>();
+        if (attackOrigin == null) attackOrigin = transform;
+        if (gameCamera == null) gameCamera = Camera.main;
         if (startingWeapon != null) AcquireOrUpgrade(startingWeapon);
+    }
+
+    private Vector3 GetAttackDirection()
+    {
+        return playerMovement != null ? playerMovement.LastMoveDirection : attackOrigin.forward;
+    }
+
+    private void Update()
+    {
+        Vector3 direction = GetAttackDirection();
+        foreach (Weapon weapon in ownedWeapons.Values)
+            if (weapon != null) weapon.SetAttackDirection(direction);
     }
 
     public Weapon GetOwnedWeapon(Weapon prefab)
@@ -64,6 +83,7 @@ public class WeaponManager : MonoBehaviour
             {
                 Weapon instance = Instantiate(prefab, transform);
                 instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                instance.Initialize(attackOrigin, gameCamera, GetAttackDirection());
                 instance.Acquire();
                 ownedWeapons[prefab] = instance;
             }

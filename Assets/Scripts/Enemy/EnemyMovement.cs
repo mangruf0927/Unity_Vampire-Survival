@@ -10,7 +10,7 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float separationRange = 1.5f;
     [SerializeField, Min(0f)] private float separationStrength = 2f;
     [SerializeField, Min(0f)] private float overlapCorrectionSpeed = 3f;
-    [SerializeField, Min(0)] private int damage = 10;
+    [SerializeField, Min(0)] private float damage = 10f;
     [SerializeField, Min(0.01f)] private float offscreenReturnDelay = 5f;
 
     [SerializeField, Min(0f)] private float knockbackDistance = 1f;

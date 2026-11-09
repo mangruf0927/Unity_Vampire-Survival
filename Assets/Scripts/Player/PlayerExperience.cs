@@ -11,6 +11,7 @@ public class PlayerExperience : MonoBehaviour, ISubject
 
     private int level = 1;
     private int currentExperience;
+    private float attractionRangeMultiplier = 1f;
     private readonly List<IObserver> observers = new();
 
     public int Level => level;
@@ -29,7 +30,14 @@ public class PlayerExperience : MonoBehaviour, ISubject
 
     private void UpdateAttractionRange()
     {
-        if (attractionCollider != null) attractionCollider.radius = Mathf.Max(0.01f, attractionRange);
+        if (attractionCollider != null)
+            attractionCollider.radius = Mathf.Max(0.01f, attractionRange * attractionRangeMultiplier);
+    }
+
+    public void SetAttractionRangeMultiplier(float multiplier)
+    {
+        attractionRangeMultiplier = Mathf.Max(0f, multiplier);
+        UpdateAttractionRange();
     }
 
     public void TryAttractGem(Collider sensor, ExperienceGem gem)

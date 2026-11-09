@@ -711,3 +711,12 @@
 - Attractorb 프리팹을 GameScene의 AccessoryManager에 등록했다. 기존 무기·장신구 선택 UI, 장신구 최대 3개 제한, 신규 획득·재선택 강화·최대 레벨 제외 규칙을 그대로 사용한다.
 - 보석 이동 속도, 추적 지속, 플레이어 몸체 접촉 시 경험치 지급 및 풀 반환은 변경하지 않는다. 범위는 보석 Collider와 겹치는 시점에 감지하므로 보석 중심과의 거리와 약간 차이가 있다.
 - 테스트: 레벨업 선택지에서 신규 획득 후 Player 자식 감지 SphereCollider 반경을 확인한다. Play 중 생성된 Attractorb 컴포넌트의 Level Up (Play Mode) 메뉴로 최대 레벨까지 확인하고, 최대 레벨에서 선택지 제외 및 3개 보유 제한을 확인한다. 범위 안 보석이 끌려오되 몸체 접촉 전에는 경험치를 주지 않는지 확인한다.
+
+### 보유 아이템 HUD — 구현
+
+- OwnedItemsHUD를 HUDCanvas 왼쪽 상단 경험치 바 아래에 배치한다. 위쪽 무기 3칸, 아래쪽 장신구 3칸이며 미획득 슬롯은 어두운 배경만 표시한다. 레벨과 텍스트는 표시하지 않는다.
+- WeaponManager와 AccessoryManager는 획득 순서의 읽기 전용 목록을 제공하고 신규 획득 시 OwnedItemsChanged 이벤트를 보낸다. HUD는 활성화 시 구독하고 비활성화 시 해제한다. 시작 무기는 Start에서도 초기 표시하며, 강화로 슬롯이 추가되지는 않는다. 매 프레임 검색은 하지 않는다.
+- 보유 아이템의 기존 Icon 필드를 우선 사용한다. Icon이 없으면 프로젝트 내부의 ItemPlaceholder.png 임시 마름모 이미지(무기 파랑, 장신구 금색)를 표시한다. 실제 아이콘은 각 무기·장신구 프리팹의 Icon에 Sprite를 연결하면 선택 UI와 HUD가 함께 사용한다. 런타임에 Icon만 교체하는 기능은 추가하지 않는다.
+- 테스트: 시작 시 무기 첫 칸만 표시되는지, 신규 획득이 일시 정지된 선택 UI에서도 즉시 반영되는지, 재강화 시 슬롯이 늘지 않는지, 각 3개 보유 시 슬롯을 초과하지 않는지 확인한다. HUD 재활성화와 해상도 변경, 선택·일시 정지 팝업이 HUD 위에 나타나는지도 확인한다.
+
+- 임시 Sprite는 Assets/UI/ItemPlaceholder.png를 Single Sprite로 임포트해 연결한다. Unity 내장 Sprite를 참조하지 않는다. 실제·임시 Sprite 참조가 모두 누락되면 해당 아이콘 Image를 숨겨 MissingReferenceException을 방지한다.

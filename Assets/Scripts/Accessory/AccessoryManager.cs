@@ -7,6 +7,10 @@ public class AccessoryManager : MonoBehaviour
     [SerializeField, Min(0)] private int maximumAccessories = 3;
     private readonly Dictionary<Accessory, Accessory> ownedAccessories = new();
 
+    private readonly List<Accessory> acquisitionOrder = new();
+    public IReadOnlyList<Accessory> OwnedAccessories => acquisitionOrder;
+    public event System.Action OwnedItemsChanged;
+
     public int OwnedCount => ownedAccessories.Count;
 
     public Accessory GetOwnedAccessory(Accessory prefab)
@@ -52,6 +56,8 @@ public class AccessoryManager : MonoBehaviour
                 instance.Initialize(transform);
                 instance.Acquire();
                 ownedAccessories[prefab] = instance;
+                acquisitionOrder.Add(instance);
+                OwnedItemsChanged?.Invoke();
             }
             return true;
         }

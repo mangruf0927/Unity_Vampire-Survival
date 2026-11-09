@@ -15,6 +15,10 @@ public class WeaponManager : MonoBehaviour
     private float damageMultiplier = 1f;
     private float cooldownMultiplier = 1f;
 
+    private readonly List<Weapon> acquisitionOrder = new();
+    public IReadOnlyList<Weapon> OwnedWeapons => acquisitionOrder;
+    public event System.Action OwnedItemsChanged;
+
     public int OwnedCount => ownedWeapons.Count;
 
     public void SetCooldownMultiplier(float multiplier)
@@ -97,6 +101,8 @@ public class WeaponManager : MonoBehaviour
                 instance.SetCooldownMultiplier(cooldownMultiplier);
                 instance.Acquire();
                 ownedWeapons[prefab] = instance;
+                acquisitionOrder.Add(instance);
+                OwnedItemsChanged?.Invoke();
             }
             return true;
         }

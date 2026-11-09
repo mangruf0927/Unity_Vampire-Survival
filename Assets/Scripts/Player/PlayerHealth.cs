@@ -33,7 +33,6 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
 
     public void NotifyObservers()
     {
-        // 결과 UI가 HP 바를 끄면서 구독을 해제해도 현재 알림 순서는 유지한다.
         IObserver[] snapshot = observers.ToArray();
         for (int i = 0; i < snapshot.Length; i++) snapshot[i].Notify();
     }
@@ -45,6 +44,14 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
         currentHealth = Mathf.Max(0f, currentHealth - damage);
         nextDamageTime = Time.time + Mathf.Max(0.01f, damageInterval);
         if (currentHealth <= 0f) Die();
+        NotifyObservers();
+    }
+
+    public void IncreaseMaxHealth(float increaseRate)
+    {
+        if (isDead || increaseRate <= 0f) return;
+        maxHealth = Mathf.Max(1, Mathf.RoundToInt(maxHealth * (1f + increaseRate)));
+
         NotifyObservers();
     }
 

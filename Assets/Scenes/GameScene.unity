@@ -2873,7 +2873,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 263b8d3cbfcd495cb4ce94dd0042ecf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startingWeapon: {fileID: 11400000, guid: 59f802462d6744d580888ddd6e2958b6, type: 3}
+  startingWeapon: {fileID: 11400000, guid: 1ad1e090c5ac4fb08c379dfa009d6cb2, type: 3}
   weaponPrefabs:
   - {fileID: 11400000, guid: 1ad1e090c5ac4fb08c379dfa009d6cb2, type: 3}
   - {fileID: 11400000, guid: c923cae2fe954704b25e04eec7981964, type: 3}
@@ -2883,6 +2883,22 @@ MonoBehaviour:
   attackOrigin: {fileID: 774257183}
   gameCamera: {fileID: 330585545}
   maximumWeapons: 3
+--- !u!114 &2240000300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774257179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 190e224005f24b7bac1059372eeaafe0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  accessoryPrefabs:
+  - {fileID: 11400000, guid: 12a20b4653254fb094efb81deac7de93, type: 3}
+  - {fileID: 11400000, guid: 75d9ee80da164253ad3ec4692f6205ef, type: 3}
+  maximumAccessories: 3
 --- !u!1 &5020395979
 GameObject:
   m_ObjectHideFlags: 0
@@ -4715,7 +4731,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\ubb34\uae30 \ub610\ub294 \uc7a5\uc2e0\uad6c\ub97c \ud558\ub098 \uc120\ud0dd\ud558\uc138\uc694"
+  m_text: "\uBB34\uAE30 \uB610\uB294 \uC7A5\uC2E0\uAD6C\uB97C \uD558\uB098 \uC120\uD0DD\uD558\uC138\uC694"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a6b8fe7792971400598fd4d3091c16ca, type: 2}
   m_sharedMaterial: {fileID: -4777489117767584994, guid: a6b8fe7792971400598fd4d3091c16ca, type: 2}
@@ -6488,21 +6504,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2240000300
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 774257179}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 190e224005f24b7bac1059372eeaafe0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  accessoryPrefabs:
-  - {fileID: 11400000, guid: 12a20b4653254fb094efb81deac7de93, type: 3}
-  maximumAccessories: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

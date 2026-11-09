@@ -10,6 +10,7 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     [SerializeField, Min(0f)] protected float knockback = 1f;
 
     private bool upgradesInitialized;
+    private float damageMultiplier = 1f;
     protected float cooldownRemaining;
 
     protected Transform AttackOrigin { get; private set; }
@@ -35,10 +36,15 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public bool CanUpgrade => !isOwned || Level < 8;
     public abstract string DisplayName { get; }
     public abstract string GetChoiceDescription();
-    public virtual float Damage => damage;
+    public virtual float Damage => damage * damageMultiplier;
     public virtual int ProjectileCount => projectileCount;
     public float Knockback => knockback;
     public abstract float Cooldown { get; }
+
+    public void SetDamageMultiplier(float multiplier)
+    {
+        damageMultiplier = Mathf.Max(0f, multiplier);
+    }
 
     protected virtual void OnEnable()
     {

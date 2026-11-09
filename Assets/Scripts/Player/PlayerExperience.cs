@@ -5,6 +5,9 @@ public class PlayerExperience : MonoBehaviour, ISubject
 {
     [SerializeField, Min(1)] private int firstLevelRequirement = 5;
     [SerializeField, Min(0)] private int experienceIncreasePerLevel = 10;
+    [SerializeField] private SphereCollider attractionCollider;
+    [SerializeField, Min(0.01f)] private float attractionRange = 1f;
+    [SerializeField, Min(0f)] private float attractionSpeed = 10f;
 
     private int level = 1;
     private int currentExperience;
@@ -13,6 +16,29 @@ public class PlayerExperience : MonoBehaviour, ISubject
     public int Level => level;
     public int CurrentExperience => currentExperience;
     public int RequiredExperience => Mathf.Max(1, firstLevelRequirement + (level - 1) * experienceIncreasePerLevel);
+
+    private void Awake()
+    {
+        UpdateAttractionRange();
+    }
+
+    private void OnValidate()
+    {
+        UpdateAttractionRange();
+    }
+
+    private void UpdateAttractionRange()
+    {
+        if (attractionCollider != null) attractionCollider.radius = Mathf.Max(0.01f, attractionRange);
+    }
+
+    public void TryAttractGem(Collider sensor, ExperienceGem gem)
+    {
+        if (!isActiveAndEnabled || Time.timeScale <= 0f || attractionCollider == null
+            || sensor != attractionCollider || gem == null) return;
+
+        gem.AttractTo(this, attractionSpeed);
+    }
 
     public void AddObserver(IObserver observer)
     {
@@ -46,7 +72,6 @@ public class PlayerExperience : MonoBehaviour, ISubject
             currentExperience = 0;
             level++;
         }
-        // 연속 레벨업도 최종 상태를 한 번만 알린다.
         NotifyObservers();
     }
 }

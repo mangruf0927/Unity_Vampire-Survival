@@ -14,7 +14,7 @@ public class KnifeWeapon : Weapon
     private int shotsRemaining;
 
     public override string DisplayName => "Knife";
-    public override float Cooldown => Mathf.Max(0.01f, cooldown);
+    protected override float BaseCooldown => cooldown;
     public float BurstInterval => Mathf.Max(0.01f, burstInterval);
     public int PenetrationCount => penetrationCount;
 

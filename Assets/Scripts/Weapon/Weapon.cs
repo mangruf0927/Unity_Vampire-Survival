@@ -11,6 +11,7 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
 
     private bool upgradesInitialized;
     private float damageMultiplier = 1f;
+    private float cooldownMultiplier = 1f;
     protected float cooldownRemaining;
 
     protected Transform AttackOrigin { get; private set; }
@@ -39,7 +40,13 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public virtual float Damage => damage * damageMultiplier;
     public virtual int ProjectileCount => projectileCount;
     public float Knockback => knockback;
-    public abstract float Cooldown { get; }
+    public float Cooldown => Mathf.Max(0.01f, BaseCooldown * cooldownMultiplier);
+    protected abstract float BaseCooldown { get; }
+
+    public void SetCooldownMultiplier(float multiplier)
+    {
+        cooldownMultiplier = Mathf.Max(0f, multiplier);
+    }
 
     public void SetDamageMultiplier(float multiplier)
     {

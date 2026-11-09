@@ -2899,6 +2899,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 12a20b4653254fb094efb81deac7de93, type: 3}
   - {fileID: 11400000, guid: 75d9ee80da164253ad3ec4692f6205ef, type: 3}
   - {fileID: 11400000, guid: 1199b9400a21491dac4b54b7dc63a734, type: 3}
+  - {fileID: 11400000, guid: 79492616e08f4ebe884b1f2702e9b879, type: 3}
   maximumAccessories: 3
 --- !u!1 &5020395979
 GameObject:

@@ -17,7 +17,7 @@ public class WhipWeapon : Weapon
     private Vector3 burstRight;
 
     public override string DisplayName => "Whip";
-    public override float Cooldown => Mathf.Max(0.01f, cooldown);
+    protected override float BaseCooldown => cooldown;
     public float AreaMultiplier => areaMultiplier;
 
     private void Awake()

@@ -43,7 +43,7 @@ public class KingBibleWeapon : Weapon
         return "최대 레벨";
     }
 
-    public override float Cooldown => Mathf.Max(0.01f, cooldown);
+    protected override float BaseCooldown => cooldown;
     public float Duration => duration;
     public float OrbitRadius => orbitRadius * radiusMultiplier;
     public float RotationSpeed => rotationSpeed * speedMultiplier;

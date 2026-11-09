@@ -13,8 +13,16 @@ public class WeaponManager : MonoBehaviour
     [SerializeField, Min(0)] private int maximumWeapons = 3;
     private readonly Dictionary<Weapon, Weapon> ownedWeapons = new();
     private float damageMultiplier = 1f;
+    private float cooldownMultiplier = 1f;
 
     public int OwnedCount => ownedWeapons.Count;
+
+    public void SetCooldownMultiplier(float multiplier)
+    {
+        cooldownMultiplier = Mathf.Max(0f, multiplier);
+        foreach (Weapon weapon in ownedWeapons.Values)
+            if (weapon != null) weapon.SetCooldownMultiplier(cooldownMultiplier);
+    }
 
     public void SetDamageMultiplier(float multiplier)
     {
@@ -86,6 +94,7 @@ public class WeaponManager : MonoBehaviour
                 instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
                 instance.Initialize(attackOrigin, gameCamera, GetAttackDirection());
                 instance.SetDamageMultiplier(damageMultiplier);
+                instance.SetCooldownMultiplier(cooldownMultiplier);
                 instance.Acquire();
                 ownedWeapons[prefab] = instance;
             }

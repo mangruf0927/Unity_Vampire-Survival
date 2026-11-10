@@ -1643,7 +1643,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!64 &1558053709
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2094,6 +2094,10 @@ MonoBehaviour:
     prefab: {fileID: 1800000000, guid: 27d457fd891b411f9592410534961470, type: 3}
     size: 15
     parent: {fileID: 0}
+  - poolType: 6
+    prefab: {fileID: 100000, guid: dffc22d9bbd744a19be6504634039a73, type: 3}
+    size: 9
+    parent: {fileID: 2250000001}
 --- !u!114 &2130000000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2980,6 +2984,55 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!1 &2250000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2250000001}
+  - component: {fileID: 2250000002}
+  m_Layer: 0
+  m_Name: MapGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2250000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2250000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2250000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2250000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f89a9add0cf2474dbe1279f1c1c7b00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 774257183}
+  gameCamera: {fileID: 330585545}
+  chunkSize: {x: 32, y: 32}
+  keepRadius: 1
+  viewPadding: 8
 --- !u!1 &5020395979
 GameObject:
   m_ObjectHideFlags: 0
@@ -7569,6 +7622,7 @@ SceneRoots:
   - {fileID: 260620867}
   - {fileID: 774257183}
   - {fileID: 1608504778}
+  - {fileID: 2250000001}
   - {fileID: 2120000001}
   - {fileID: 2100000001}
   - {fileID: 2150000001}

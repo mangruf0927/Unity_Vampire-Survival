@@ -141,8 +141,12 @@ public static class EnemyCrowd
                 enemy.velocity = Vector3.zero;
 
             if (!enemy.IsSwarm)
-                enemy.nextPosition = EnemyObstacleCollision.Move(enemy.framePosition,
-                    enemy.nextPosition - enemy.framePosition, enemy.BodyRadius);
+            {
+                Vector3 requested = enemy.nextPosition - enemy.framePosition;
+                enemy.nextPosition = EnemyObstacleCollision.Move(enemy.framePosition, requested, enemy.BodyRadius);
+                if (enemy.Target != null)
+                    enemy.RecordObstacleMovement(requested, enemy.nextPosition - enemy.framePosition, stepDeltaTime);
+            }
         }
 
         for (int pass = 0; pass < CorrectionPasses; pass++)

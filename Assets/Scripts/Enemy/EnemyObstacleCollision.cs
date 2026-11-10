@@ -9,6 +9,19 @@ public static class EnemyObstacleCollision
     private const int MaximumPasses = 3;
     private static readonly Collider[] overlaps = new Collider[32];
 
+    public static bool Cast(Vector3 start, Vector3 displacement, float radius, out RaycastHit hit)
+    {
+        float distance = displacement.magnitude;
+        if (distance <= 0.00001f)
+        {
+            hit = default;
+            return false;
+        }
+        return Physics.CapsuleCast(start + Vector3.down * HalfSegmentHeight,
+            start + Vector3.up * HalfSegmentHeight, radius, displacement / distance, out hit,
+            distance + Skin, ObstacleMask, QueryTriggerInteraction.Ignore);
+    }
+
     public static Vector3 ResolveOverlap(Vector3 position, float radius)
     {
         for (int pass = 0; pass < MaximumPasses; pass++)

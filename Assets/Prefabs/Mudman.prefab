@@ -111,6 +111,9 @@ MonoBehaviour:
   separationRange: 1.6
   separationStrength: 1.5
   overlapCorrectionSpeed: 3
+  obstacleLookAhead: 1.8
+  avoidanceCheckInterval: 0.15
+  obstacleClearance: 0.15
   dataId: 5
 --- !u!114 &1900000202
 MonoBehaviour:

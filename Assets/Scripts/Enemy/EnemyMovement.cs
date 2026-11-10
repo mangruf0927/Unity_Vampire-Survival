@@ -15,6 +15,17 @@ public class EnemyMovement : MonoBehaviour
     private float damage = 10f;
     private float offscreenReturnDelay = 5f;
 
+    [SerializeField, Min(0.1f)] private float obstacleLookAhead = 1.8f;
+    [SerializeField, Min(0.01f)] private float avoidanceCheckInterval = 0.15f;
+    [SerializeField, Min(0.01f)] private float obstacleClearance = 0.15f;
+
+    private bool avoidingObstacle;
+    private Vector3 avoidanceDirection;
+    private bool canAvoidObstacles;
+    private float avoidanceSide;
+    private float avoidanceCheckRemaining;
+    private float obstacleBlockedTime;
+
     private float knockbackDistance = 1f;
     private float knockbackDuration = 0.15f;
 
@@ -130,6 +141,8 @@ public class EnemyMovement : MonoBehaviour
         velocity = Vector3.zero;
         knockbackRemaining = 0f;
         knockbackVelocity = Vector3.zero;
+        ResetObstacleAvoidance();
+        avoidanceCheckRemaining = Mathf.Max(0.01f, avoidanceCheckInterval) * ((enemyId & 7) / 8f);
         EnemyCrowd.Register(this);
     }
 
@@ -190,6 +203,7 @@ public class EnemyMovement : MonoBehaviour
         direction.y = 0f;
         if (strength <= 0f || knockbackDistance <= 0f || direction.sqrMagnitude <= 0.000001f) return;
         // 새 명중은 밀림을 무한히 누적하지 않고 방향과 지속 시간을 갱신한다.
+        ResetObstacleAvoidance();
         knockbackRemaining = Mathf.Max(0.01f, knockbackDuration);
         knockbackVelocity = direction.normalized * (knockbackDistance * strength / knockbackRemaining);
         velocity = Vector3.zero;
@@ -204,6 +218,7 @@ public class EnemyMovement : MonoBehaviour
 
     internal void Move(Vector3 direction, Vector3 separation, float stepDeltaTime)
     {
+        canAvoidObstacles = false;
         if (isSwarm)
         {
             MoveSwarm(stepDeltaTime);
@@ -221,18 +236,89 @@ public class EnemyMovement : MonoBehaviour
         float remainingDistance = Mathf.Max(0f, direction.magnitude - bodyRadius - playerRadius);
         if (remainingDistance <= 0.001f)
         {
+            ResetObstacleAvoidance();
             velocity = Vector3.zero;
             nextPosition = framePosition;
             return;
         }
 
+        canAvoidObstacles = true;
+        UpdateObstacleAvoidance(direction, stepDeltaTime);
         float chaseSpeed = Mathf.Min(moveSpeed, remainingDistance / stepDeltaTime);
         Vector3 desiredVelocity = direction.normalized * chaseSpeed + separation * (separationStrength * moveSpeed);
+        if (avoidingObstacle) desiredVelocity += avoidanceDirection * (moveSpeed * 1.5f);
         desiredVelocity = Vector3.ClampMagnitude(desiredVelocity, moveSpeed);
         velocity = Vector3.MoveTowards(velocity, desiredVelocity, moveSpeed * 8f * stepDeltaTime);
 
         Vector3 movement = Vector3.ClampMagnitude(velocity * stepDeltaTime, remainingDistance);
         nextPosition = framePosition + movement;
+    }
+
+    internal void RecordObstacleMovement(Vector3 requested, Vector3 actual, float deltaTime)
+    {
+        if (!canAvoidObstacles || isSwarm) return;
+        // 군중 때문에 느려진 것이 아니라, 장애물 충돌로 실제 이동이 크게 줄었는지 확인한다.
+        bool blocked = requested.sqrMagnitude > 0.00000001f
+            && actual.sqrMagnitude < requested.sqrMagnitude * 0.25f;
+        obstacleBlockedTime = blocked ? obstacleBlockedTime + deltaTime : 0f;
+    }
+
+    private void UpdateObstacleAvoidance(Vector3 targetDirection, float deltaTime)
+    {
+        avoidanceCheckRemaining -= deltaTime;
+        if (!avoidingObstacle && obstacleBlockedTime < 0.15f) return;
+        if (avoidanceCheckRemaining > 0f) return;
+        avoidanceCheckRemaining = Mathf.Max(0.01f, avoidanceCheckInterval);
+
+        float distance = Mathf.Max(0.1f, obstacleLookAhead);
+        Vector3 probe = Vector3.ClampMagnitude(targetDirection, distance);
+        if (!EnemyObstacleCollision.Cast(framePosition, probe, bodyRadius, out RaycastHit hit))
+        {
+            ResetObstacleAvoidance();
+            return;
+        }
+
+        Vector3 normal = hit.normal;
+        normal.y = 0f;
+        if (normal.sqrMagnitude <= 0.00001f) return;
+        normal.Normalize();
+        Vector3 tangent = Vector3.Cross(Vector3.up, normal);
+        float side = avoidingObstacle ? avoidanceSide : sidePreference;
+        Vector3 first = (tangent * (side * distance) + normal * obstacleClearance).normalized;
+        Vector3 second = (tangent * (-side * distance) + normal * obstacleClearance).normalized;
+        float firstSpace = GetFreeDistance(first, distance);
+        float secondSpace = GetFreeDistance(second, distance);
+
+        // 이동 중에는 방향을 유지하고, 선택한 쪽도 막혔을 때만 반대편을 시도한다.
+        bool changeSide = !avoidingObstacle
+            ? secondSpace > firstSpace + 0.05f
+            : obstacleBlockedTime >= 0.5f && firstSpace < 0.05f && secondSpace > 0.1f;
+        if (changeSide)
+        {
+            side = -side;
+            first = second;
+            firstSpace = secondSpace;
+            obstacleBlockedTime = 0f;
+        }
+        avoidanceSide = side;
+        avoidingObstacle = true;
+        // 양쪽 모두 막혔다면 회피를 강제하지 않고 기존 추적과 분리에 맡긴다.
+        avoidanceDirection = firstSpace > 0.02f ? first : Vector3.zero;
+    }
+
+    private float GetFreeDistance(Vector3 direction, float distance)
+    {
+        return EnemyObstacleCollision.Cast(framePosition, direction * distance, bodyRadius, out RaycastHit hit)
+            ? hit.distance : distance;
+    }
+
+    private void ResetObstacleAvoidance()
+    {
+        avoidingObstacle = false;
+        avoidanceDirection = Vector3.zero;
+        obstacleBlockedTime = 0f;
+        avoidanceCheckRemaining = 0f;
+        canAvoidObstacles = false;
     }
 
     internal Vector3 GetOverlapDirection(EnemyMovement other)

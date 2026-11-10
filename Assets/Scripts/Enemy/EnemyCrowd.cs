@@ -122,7 +122,8 @@ public static class EnemyCrowd
         for (int i = 0; i < activeEnemies.Count; i++)
         {
             EnemyMovement enemy = activeEnemies[i];
-            enemy.framePosition = enemy.transform.position;
+            enemy.framePosition = enemy.IsSwarm ? enemy.transform.position
+                : EnemyObstacleCollision.ResolveOverlap(enemy.transform.position, enemy.BodyRadius);
             enemy.nextPosition = enemy.framePosition;
 
             if (enemy.Target != null) enemy.targetPosition = enemy.Target.position;
@@ -138,6 +139,10 @@ public static class EnemyCrowd
                 enemy.Move(enemy.GetTargetDirection(), enemy.IsSwarm ? Vector3.zero : GetSeparation(enemy), stepDeltaTime);
             else
                 enemy.velocity = Vector3.zero;
+
+            if (!enemy.IsSwarm)
+                enemy.nextPosition = EnemyObstacleCollision.Move(enemy.framePosition,
+                    enemy.nextPosition - enemy.framePosition, enemy.BodyRadius);
         }
 
         for (int pass = 0; pass < CorrectionPasses; pass++)
@@ -162,7 +167,9 @@ public static class EnemyCrowd
                 if (enemy.contactCount > 0)
                 {
                     Vector3 offset = enemy.correction / enemy.contactCount;
-                    enemy.nextPosition += Vector3.ClampMagnitude(offset, enemy.OverlapCorrectionSpeed * stepDeltaTime);
+                    Vector3 movement = Vector3.ClampMagnitude(offset, enemy.OverlapCorrectionSpeed * stepDeltaTime);
+                    enemy.nextPosition = enemy.IsSwarm ? enemy.nextPosition + movement
+                        : EnemyObstacleCollision.Move(enemy.nextPosition, movement, enemy.BodyRadius);
                 }
                 if (enemy.IsSwarm) enemy.nextPosition = enemy.ClampSwarmPosition(enemy.nextPosition);
 

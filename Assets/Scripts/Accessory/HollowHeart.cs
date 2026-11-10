@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class HollowHeart : Accessory
 {
-    [SerializeField, Min(0f)] private float healthBonusPerLevel = 0.2f;
+    private float healthBonusPerLevel => BonusPerLevel;
     private PlayerHealth playerHealth;
 
     public override string DisplayName => "Hollow Heart";

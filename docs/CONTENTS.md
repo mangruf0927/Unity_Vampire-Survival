@@ -720,3 +720,79 @@
 - 테스트: 시작 시 무기 첫 칸만 표시되는지, 신규 획득이 일시 정지된 선택 UI에서도 즉시 반영되는지, 재강화 시 슬롯이 늘지 않는지, 각 3개 보유 시 슬롯을 초과하지 않는지 확인한다. HUD 재활성화와 해상도 변경, 선택·일시 정지 팝업이 HUD 위에 나타나는지도 확인한다.
 
 - 임시 Sprite는 Assets/UI/ItemPlaceholder.png를 Single Sprite로 임포트해 연결한다. Unity 내장 Sprite를 참조하지 않는다. 실제·임시 Sprite 참조가 모두 누락되면 해당 아이콘 Image를 숨겨 MissingReferenceException을 방지한다.
+
+
+### JSON 기반 능력치 — 현재 기준
+
+이 절은 앞선 Inspector 능력치 수정 안내를 대체한다. 전투·성장 능력치는 아래 JSON에서 수정하며 현재 수치와 강화 규칙을 유지했다. 이번 범위에 맵 생성, 캐릭터 선택, 사운드는 포함하지 않는다.
+
+#### 기존 로더 정리
+
+- JsonDataLoader → DataManager → DataTable<T> 구조와 IGameData의 정수 ID 조회를 재사용한다. DataManager의 비어 있던 테이블 등록을 채우고, Newtonsoft.Json.Linq.JToken을 가리던 임시 JToken 클래스를 제거했다.
+- 기존 DataTable에서 참조만 하던 IValidatable을 정의하고 데이터 유효성 검사에 사용한다. 테이블·ID 중복, 미등록 테이블, 필수 테이블·필드 누락, 잘못된 숫자·강화 결과, 알 수 없는 레코드 필드를 오류로 처리한다. 오류가 있는 테이블을 일부만 적용하거나 기본값으로 조용히 대체하지 않는다.
+- Assets/Scripts/Data/DataTable/ 아래의 종류별 파일은 적·무기·무기 강화·장신구·플레이어·보석의 단순 데이터 형식을 정의한다. 새 씬 매니저나 데이터용 MonoBehaviour는 추가하지 않는다. Newtonsoft JSON은 프로젝트에 추가된 기존 패키지를 사용한다.
+
+#### 위치와 ID
+
+- 실제 경로는 **Assets/Resources/JSON/**이다. 기존 외부 이미지용 Assets/Resource(단수)와 다르다. Resources 아래 TextAsset이므로 빌드에도 포함된다.
+- 각 파일은 `{ "tableName": "테이블명", "records": [ ... ] }` 형식이다. 같은 테이블을 여러 파일로 나누거나 같은 테이블 안에서 ID를 중복하지 않는다. ID는 테이블별로 독립적이다.
+
+| 파일 / tableName | ID 연결 | JSON 관리 항목 |
+| --- | --- | --- |
+| Enemies.json / Enemies | 1 박쥐, 2 좀비, 3 스켈레톤, 4 유령, 5 머드맨 | 최대 체력, 이동·회전 속도, 접촉 피해, 보석 드롭 확률, 화면 밖 반환 대기 시간, 넉백 거리·시간 |
+| Weapons.json / Weapons | 1 Magic Wand, 2 Knife, 3 King Bible, 4 Whip | 이름·최초 획득 설명, 기본 피해·투사체 수·넉백·쿨타임, 무기별 연사 간격·투사체 속도·관통·범위 배율·지속시간·회전 반경·회전 속도·재피격 간격·베기 크기, 2~8레벨 강화 수치 |
+| Accessories.json / Accessories | 1 Wings, 2 Hollow Heart, 3 Spinach, 4 Empty Tome, 5 Attractorb | 레벨당 증가·감소율 bonusPerLevel |
+| Players.json / Players | 1 현재 기본 플레이어 | 최대 체력, 공통 피해 간격, 이동·회전 속도, 첫 필요 경험치·레벨별 증가량, 기본 끌어당김 범위·속도 |
+| ExperienceGems.json / ExperienceGems | 1 현재 기본 보석 | 보석 1개당 경험치 |
+
+- 적의 Data Id는 EnemyMovement에만 지정하고 EnemyHealth도 같은 ID를 사용한다. 무기·장신구·보석 프리팹의 Data Id로 각 테이블 레코드를 연결했다. 현재 플레이어의 세 컴포넌트는 Players ID 1을 사용한다. 캐릭터 선택에 따른 ID 변경은 이후 구현 범위다.
+- 무기는 공통 데이터 형식을 사용하지만 JSON에는 해당 무기가 쓰는 항목만 기재한다. 예를 들어 orbitRadius는 성경, slashLength는 채찍, penetrationCount는 지팡이·단검에서 사용한다. 다른 무기 전용 항목을 추가해도 공격 방식이 바뀌지는 않는다.
+
+#### 초기화와 기존 동작 유지
+
+- DataManager는 플레이 진입 시 캐시를 초기화하고 씬 Awake 이전에 한 번 읽는다. GameScene 직접 실행도 지원한다. 각 조회에도 LoadAll 보호가 있어 초기화 순서에 의존하지 않는다. StartScene에서 GameScene으로 전환할 때 다시 읽지 않는다.
+- 플레이어 체력은 JSON 최대 체력을 적용한 뒤 현재 체력을 초기화한다. 적과 보석도 최초 Awake에서 읽으며, 적의 OnEnable 체력 복원과 보석의 획득·추적 상태 초기화는 유지한다. 풀 재사용 때 파일을 다시 읽지 않는다.
+- 무기는 Acquire에서 레벨 1 능력치를 인스턴스에 복사한다. 공통 LevelUp → UpgradeWeapon 흐름은 유지하고, 각 override가 JSON 강화량을 적용한다. 원본 데이터나 프리팹 에셋을 강화하지 않는다.
+- upgrades는 level 2~8 순서의 7개 항목이며 값은 이전 레벨에 더할 변화량이다. 예: `{ "level": 3, "cooldown": -0.2 }`. 생략한 변화량은 0이다. 회전 속도 +30%는 speedMultiplier 0.3, 공격 범위 +25%는 areaMultiplier 0.25다.
+- 무기 카드의 다음 레벨 설명은 같은 강화 수치에서 생성하므로 JSON 변경과 실제 강화 효과가 일치한다. 장신구 카드도 JSON bonusPerLevel에서 수치를 표시한다.
+- 장신구 공식은 그대로다. 검은 심장은 매 단계 현재 최대 체력에 적용 후 반올림하며 회복하지 않는다. 시금치·날개·오브는 기본값 기준 합산, 빈 책은 쿨타임에만 적용한다. 무기 최대 8레벨, 장신구 최대 5레벨, 각각 보유 3개 규칙은 유지한다.
+- 기존 공격 타이밍·관통·넉백·군중 이동 알고리즘, 명중 판정, 피해 간격, 적 사망·스폰·풀 반환을 변경하지 않는다.
+
+#### Inspector에 유지하는 항목
+
+- 프리팹·아이콘·대상·카메라·UI·바닥 레이어 같은 Unity 참조, 몸체·명중 반경과 군중 분리·겹침 보정 설정은 유지한다.
+- EnemySpawner 시간대별 생성 간격·최소/최대 수·가중치, 이벤트 박쥐 시간·속도·수량·대형 설정, 풀 준비 수, UI 배치, 카메라 설정은 이번 JSON 이관 범위에 포함하지 않는다.
+- JSON으로 옮긴 능력치의 SerializeField와 씬·프리팹의 오래된 저장값을 제거했다. 이제 해당 능력치는 JSON이 기준이며 Inspector 값과 우선순위가 충돌하지 않는다.
+- 실행 중 파일 재읽기는 지원하지 않는다. JSON 수정 후 Unity 임포트가 끝나면 Play를 새로 시작한다. 배포 빌드의 외부 JSON 수정 기능은 추가하지 않는다.
+
+#### 확인 방법
+
+- Enemies ID 1의 maxHealth를 15로 임시 변경하고 실행해 기본 지팡이 피해 10에 두 번 맞아 죽는지 확인한 뒤 5로 복원한다. 같은 적의 풀 재사용 시에도 최대 체력으로 시작해야 한다.
+- Weapons ID 1의 2레벨 projectileCount 변화량을 2로 변경하면 카드 설명은 +2개, 강화 결과는 총 3개여야 한다. 확인 후 1로 복원한다.
+- 장신구 bonusPerLevel 변경이 카드 설명·획득·반복 강화에 반영되고 원본 레코드는 변경되지 않는지 확인한다. JSON 변경 없이 새 플레이를 시작하면 강화 전 기본값으로 돌아와야 한다.
+- 전체 스크립트를 Unity 참조로 컴파일했다. 임시 C# 테스트에서 실제 데이터 로더·JSON·무기 및 장신구 코드를 사용해 기존 레벨 1~8 수치, JSON 수정 반영, 체력 초기화·풀 재사용, 오류 처리와 플레이 캐시 초기화를 검사했다. 실제 Physics·씬 플레이 및 빌드 동작은 Unity에서 추가 확인한다.
+
+
+### JSON 데이터 클래스 파일 분리 — 현재 구조
+
+- 중복 정의되어 있던 EnemyData를 Data/DataTable/EnemyData.cs 하나로 통합했다. 기존 JSON의 maxHealth·damage 등 필드와 float 자료형, 적 ID 1~5를 유지한다. 이전 프로젝트의 MaxHp·AttackDamage·순찰·경계 필드와 1101~1200 ID 제한은 사용하지 않는다.
+- GameBalanceData.cs를 제거하고 EnemyData, WeaponData, WeaponUpgradeData, AccessoryData, PlayerData, ExperienceGemData를 각각 동명의 .cs 파일로 분리했다. 기존 클래스를 옮긴 것으로 새 데이터 계층이나 매니저는 추가하지 않는다.
+- DataManager → DataTable<T>의 등록·로딩·조회 구조와 IGameData·IValidatable 계약은 유지한다. 프로젝트에서 정의가 빠져 있던 IValidatable은 IGameData.cs에 복구했다. 각 데이터의 Validate는 문제 필드·ID(무기 강화는 레벨)·잘못된 값을 로그로 알리고 false를 반환한다. 공통 테이블은 기존처럼 잘못된 데이터 로딩을 중단한다. 허용 범위와 정상 데이터의 동작은 유지한다.
+- ILevelUpOption은 무기·장신구 혼합 선택과 공통 UI 표시를 위해 유지한다. JSON 레코드와 실제 보유·강화 가능한 무기/장신구 인스턴스는 역할이 다르므로 서로 대체하지 않는다.
+- ID는 전체 데이터가 아니라 **같은 테이블 안에서만 고유**해야 한다. Enemies.Get(1), Weapons.Get(1), Accessories.Get(1)은 서로 다른 항목이다. 기존 JSON 숫자와 프리팹 Data Id 연결을 변경하지 않았다. PoolTypeEnums의 숫자와도 독립적이다.
+- 종류별 파일 분리 후 전체 스크립트 컴파일과 기존 JSON 로딩·무기 레벨별 강화·장신구 효과·체력 초기화·풀 재사용·오류 처리 임시 회귀 검사 196개를 통과했다. 실제 씬 플레이와 Physics는 Unity에서 별도 확인한다.
+
+
+### Validate 숫자 검사 간소화
+
+- 작은 정적 DataValidation 도우미에서 양수·0 이상·범위·유한한 수 검사와 숫자 오류 안내를 공유한다. 각 데이터 Validate는 검사할 필드 목록을 &&로 연결하며 첫 실패에서 중단한다. NaN·무한대와 기존 경계값 처리, 필드·ID·현재 값 오류 안내는 유지한다.
+- ID·필수 문자열·무기 강화 배열의 수·레벨 순서·강화 후 누적 능력치 검증은 각 데이터 클래스에 유지한다. GetDescription, GetUpgrade, JSON 키·수치·로딩과 무기 강화 로직은 변경하지 않는다.
+- 전체 Unity 참조 컴파일 및 임시 회귀 검사 240개를 통과했다. 기존 JSON 로딩·무기 1~8레벨 강화와 설명·장신구 효과·초기화 검사에 숫자 경계값(NaN, 양/음의 무한대, 음수, 0, 양수, 범위 경계)을 추가했다. Unity 실제 플레이는 별도 확인한다.
+
+
+### Validate 검증 범위 축소 — 최신 기준
+
+- 사용자 결정에 따라 Validate는 데이터 ID의 양수 여부와 무기 강화 배열 존재·개수(7개)·null 항목·레벨 순서(2~8)만 검사한다. WeaponUpgradeData 자체의 Validate는 레벨 범위만 검사한다.
+- 능력치의 NaN·Infinity·양수/음수·세부 범위와 무기 강화 누적 결과 검증을 제거했다. 더 이상 참조하지 않는 DataValidation.cs와 메타 파일도 제거했다. 이전 숫자 검증 안내는 이 기준으로 대체한다.
+- 필수 JSON 데이터의 JsonProperty(Required = Required.Always)는 유지하고, AccessoryData의 Id와 bonusPerLevel에도 복구했다. 무기별 선택 항목의 기본값과 생략한 강화량 0 처리는 유지한다.
+- 공통 테이블의 중복 ID·빈 테이블 검사, 테이블 등록·조회·로딩과 GetDescription/GetUpgrade 및 실제 무기 강화 코드는 유지한다. 잘못된 능력치 수치는 이제 로딩 시 Validate가 거부하지 않으므로 JSON 편집 시 작성자가 확인한다.

@@ -4,10 +4,12 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
 {
     private bool isOwned;
     [SerializeField] private Sprite icon;
+    [SerializeField, Min(1)] private int dataId = 1;
+    protected WeaponData Data => DataManager.Instance.Weapons.Get(dataId);
     [SerializeField, Range(1, 8)] private int level = 1;
-    [SerializeField, Min(0)] protected float damage = 10f;
-    [SerializeField, Min(1)] protected int projectileCount = 1;
-    [SerializeField, Min(0f)] protected float knockback = 1f;
+    protected float damage = 10f;
+    protected int projectileCount = 1;
+    protected float knockback = 1f;
 
     private bool upgradesInitialized;
     private float damageMultiplier = 1f;
@@ -35,8 +37,13 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public Sprite Icon => icon;
     public int Level => isOwned ? Mathf.Clamp(level, 1, 8) : 0;
     public bool CanUpgrade => !isOwned || Level < 8;
-    public abstract string DisplayName { get; }
-    public abstract string GetChoiceDescription();
+    public string DisplayName => Data.displayName;
+    public string GetChoiceDescription()
+    {
+        if (!IsOwned) return Data.acquisitionDescription;
+        WeaponUpgradeData upgrade = Data.GetUpgrade(Level + 1);
+        return upgrade != null ? upgrade.GetDescription(Data.speedLabel) : "최대 레벨";
+    }
     public virtual float Damage => damage * damageMultiplier;
     public virtual int ProjectileCount => projectileCount;
     public float Knockback => knockback;
@@ -63,6 +70,11 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public void Acquire()
     {
         if (isOwned) return;
+        WeaponData data = Data;
+        damage = data.damage;
+        projectileCount = data.projectileCount;
+        knockback = data.knockback;
+        ApplyWeaponData(data);
         isOwned = true;
         level = 1;
         InitializeUpgrades();
@@ -85,7 +97,14 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
         for (int i = 2; i <= Level; i++) UpgradeWeapon(i);
     }
 
-    protected virtual void UpgradeWeapon(int level) { }
+    protected abstract void ApplyWeaponData(WeaponData data);
+
+    protected virtual void UpgradeWeapon(int level)
+    {
+        WeaponUpgradeData upgrade = Data.GetUpgrade(level);
+        damage += upgrade.damage;
+        projectileCount += upgrade.projectileCount;
+    }
 
     protected virtual void LateUpdate()
     {

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Wings : Accessory
 {
-    [SerializeField, Min(0f)] private float speedBonusPerLevel = 0.1f;
+    private float speedBonusPerLevel => BonusPerLevel;
     private PlayerMovement playerMovement;
 
     public override string DisplayName => "Wings";

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Spinach : Accessory
 {
-    [SerializeField, Min(0f)] private float damageBonusPerLevel = 0.1f;
+    private float damageBonusPerLevel => BonusPerLevel;
     private WeaponManager weaponManager;
 
     public override string DisplayName => "Spinach";

@@ -42,4 +42,4 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   icon: {fileID: 0}
-  speedBonusPerLevel: 0.1
+  dataId: 1

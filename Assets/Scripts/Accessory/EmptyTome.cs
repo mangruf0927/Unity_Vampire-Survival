@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EmptyTome : Accessory
 {
-    [SerializeField, Min(0f)] private float cooldownReductionPerLevel = 0.08f;
+    private float cooldownReductionPerLevel => BonusPerLevel;
     private WeaponManager weaponManager;
 
     public override string DisplayName => "Empty Tome";

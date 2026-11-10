@@ -43,11 +43,5 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   icon: {fileID: 0}
   level: 1
-  damage: 10
-  projectileCount: 1
-  knockback: 1
   projectilePrefab: {fileID: 11400000, guid: 34d23ba512954b75a01e058c47817d64, type: 3}
-  cooldown: 1.2
-  projectileSpeed: 12
-  burstInterval: 0.1
-  penetrationCount: 1
+  dataId: 1

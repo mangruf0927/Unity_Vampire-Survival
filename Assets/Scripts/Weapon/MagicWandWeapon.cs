@@ -3,33 +3,30 @@ using UnityEngine;
 public class MagicWandWeapon : Weapon
 {
     [SerializeField] private Projectile projectilePrefab;
-    [SerializeField, Min(0.01f)] private float cooldown = 1.2f;
-    [SerializeField, Min(0.01f)] private float projectileSpeed = 12f;
+    private float cooldown = 1.2f;
+    private float projectileSpeed = 12f;
 
-    [SerializeField, Min(0.01f)] private float burstInterval = 0.1f;
-    [SerializeField, Min(1)] private int penetrationCount = 1;
-
-    public override string DisplayName => "Magic Wand";
-    public override string GetChoiceDescription()
-    {
-        if (!IsOwned) return "화면 안의 가장 가까운 적을 향해 마법 투사체를 발사합니다.";
-        int nextLevel = Level + 1;
-        if (nextLevel == 2 || nextLevel == 4 || nextLevel == 6) return "투사체를 1개 더 발사합니다.";
-        if (nextLevel == 3) return "쿨타임이 0.2초 감소합니다.";
-        if (nextLevel == 5 || nextLevel == 8) return "피해량이 10 증가합니다.";
-        if (nextLevel == 7) return "관통 수가 1 증가합니다.";
-        return "최대 레벨";
-    }
+    private float burstInterval = 0.1f;
+    private int penetrationCount = 1;
 
     protected override float BaseCooldown => cooldown;
     public int PenetrationCount => penetrationCount;
 
+    protected override void ApplyWeaponData(WeaponData data)
+    {
+        cooldown = data.cooldown;
+        projectileSpeed = data.projectileSpeed;
+        burstInterval = data.burstInterval;
+        penetrationCount = data.penetrationCount;
+    }
+
     protected override void UpgradeWeapon(int level)
     {
-        if (level == 2 || level == 4 || level == 6) projectileCount++;
-        if (level == 3) cooldown -= 0.2f;
-        if (level == 5 || level == 8) damage += 10;
-        if (level == 7) penetrationCount++;
+        base.UpgradeWeapon(level);
+        WeaponUpgradeData upgrade = Data.GetUpgrade(level);
+        cooldown += upgrade.cooldown;
+        burstInterval += upgrade.burstInterval;
+        penetrationCount += upgrade.penetrationCount;
     }
 
     private float burstRemaining;
@@ -70,7 +67,6 @@ public class MagicWandWeapon : Weapon
         Projectile projectile = Instantiate(projectilePrefab, AttackOrigin.position, Quaternion.LookRotation(direction, Vector3.up));
         projectile.Initialize(direction.normalized, projectileSpeed, TargetCamera, Damage, PenetrationCount, Knockback);
     }
-
 
     private EnemyMovement FindNearestVisibleEnemy()
     {

@@ -2,11 +2,17 @@ using UnityEngine;
 
 public class ExperienceGem : MonoBehaviour
 {
-    [SerializeField, Min(1)] private int experienceValue = 1;
+    [SerializeField, Min(1)] private int dataId = 1;
+    private int experienceValue;
 
     private bool collected;
     private PlayerExperience attractionTarget;
     private float attractionSpeed;
+
+    private void Awake()
+    {
+        experienceValue = DataManager.Instance.Gems.Get(dataId).experienceValue;
+    }
 
     private void OnEnable()
     {

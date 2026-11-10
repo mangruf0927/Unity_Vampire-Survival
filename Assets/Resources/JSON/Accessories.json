@@ -1,0 +1,25 @@
+{
+  "tableName": "Accessories",
+  "records": [
+    {
+      "Id": 1,
+      "bonusPerLevel": 0.1
+    },
+    {
+      "Id": 2,
+      "bonusPerLevel": 0.2
+    },
+    {
+      "Id": 3,
+      "bonusPerLevel": 0.1
+    },
+    {
+      "Id": 4,
+      "bonusPerLevel": 0.08
+    },
+    {
+      "Id": 5,
+      "bonusPerLevel": 0.2
+    }
+  ]
+}

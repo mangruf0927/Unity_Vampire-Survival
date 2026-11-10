@@ -946,8 +946,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3df4eae54c6b49f1a5911a4f64bf78f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
-  rotationSpeed: 720
 --- !u!114 &774257185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2027,8 +2025,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21837c57607848a1a13eff0e4418a24e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  damageInterval: 1
 --- !u!1 &2120000000
 GameObject:
   m_ObjectHideFlags: 0
@@ -2110,11 +2106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3936eca6bdc74a739627d549ae037f4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  firstLevelRequirement: 5
-  experienceIncreasePerLevel: 10
   attractionCollider: {fileID: 2240000402}
-  attractionRange: 1
-  attractionSpeed: 10
 --- !u!1 &2140000000
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,16 @@
+{
+  "tableName": "Players",
+  "records": [
+    {
+      "Id": 1,
+      "maxHealth": 100.0,
+      "damageInterval": 1.0,
+      "moveSpeed": 5.0,
+      "rotationSpeed": 720.0,
+      "firstLevelRequirement": 5,
+      "experienceIncreasePerLevel": 10,
+      "attractionRange": 1.0,
+      "attractionSpeed": 10.0
+    }
+  ]
+}

@@ -3,6 +3,8 @@ using UnityEngine;
 public abstract class Accessory : MonoBehaviour, ILevelUpOption
 {
     [SerializeField] private Sprite icon;
+    [SerializeField, Min(1)] private int dataId = 1;
+    protected float BonusPerLevel => DataManager.Instance.Accessories.Get(dataId).bonusPerLevel;
     private bool isOwned;
     private int level;
 

@@ -3,11 +3,11 @@ using UnityEngine;
 public class WhipWeapon : Weapon
 {
     [SerializeField] private WhipSlash slashPrefab;
-    [SerializeField, Min(0.01f)] private float cooldown = 1.35f;
-    [SerializeField, Min(0.01f)] private float burstInterval = 0.1f;
-    [SerializeField, Min(0.01f)] private float slashLength = 3f;
-    [SerializeField, Min(0.01f)] private float slashWidth = 0.7f;
-    [SerializeField, Min(0.01f)] private float slashDuration = 0.15f;
+    private float cooldown = 1.35f;
+    private float burstInterval = 0.1f;
+    private float slashLength = 3f;
+    private float slashWidth = 0.7f;
+    private float slashDuration = 0.15f;
 
     private float areaMultiplier = 1f;
     private float burstRemaining;
@@ -16,7 +16,6 @@ public class WhipWeapon : Weapon
     private float nextSide;
     private Vector3 burstRight;
 
-    public override string DisplayName => "Whip";
     protected override float BaseCooldown => cooldown;
     public float AreaMultiplier => areaMultiplier;
 
@@ -25,20 +24,23 @@ public class WhipWeapon : Weapon
         if (slashPrefab == null) enabled = false;
     }
 
-    public override string GetChoiceDescription()
+    protected override void ApplyWeaponData(WeaponData data)
     {
-        if (!IsOwned) return "화면 좌우로 길게 베어 범위 안의 적들을 관통 공격합니다.";
-        int nextLevel = Level + 1;
-        if (nextLevel == 2) return "공격을 1회 더 가합니다.";
-        if (nextLevel == 4 || nextLevel == 6) return "피해량이 5, 공격 범위가 10% 증가합니다.";
-        return Level < 8 ? "피해량이 5 증가합니다." : "최대 레벨";
+        cooldown = data.cooldown;
+        burstInterval = data.burstInterval;
+        slashLength = data.slashLength;
+        slashWidth = data.slashWidth;
+        slashDuration = data.slashDuration;
+        areaMultiplier = data.areaMultiplier;
     }
 
     protected override void UpgradeWeapon(int level)
     {
-        if (level == 2) projectileCount++;
-        if (level >= 3 && level <= 8) damage += 5f;
-        if (level == 4 || level == 6) areaMultiplier += 0.1f;
+        base.UpgradeWeapon(level);
+        WeaponUpgradeData upgrade = Data.GetUpgrade(level);
+        cooldown += upgrade.cooldown;
+        burstInterval += upgrade.burstInterval;
+        areaMultiplier += upgrade.areaMultiplier;
     }
 
     protected override void UpdateAttack(float deltaTime)

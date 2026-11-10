@@ -3,11 +3,11 @@ using UnityEngine;
 
 public class PlayerExperience : MonoBehaviour, ISubject
 {
-    [SerializeField, Min(1)] private int firstLevelRequirement = 5;
-    [SerializeField, Min(0)] private int experienceIncreasePerLevel = 10;
+    private int firstLevelRequirement = 5;
+    private int experienceIncreasePerLevel = 10;
     [SerializeField] private SphereCollider attractionCollider;
-    [SerializeField, Min(0.01f)] private float attractionRange = 1f;
-    [SerializeField, Min(0f)] private float attractionSpeed = 10f;
+    private float attractionRange = 1f;
+    private float attractionSpeed = 10f;
 
     private int level = 1;
     private int currentExperience;
@@ -20,6 +20,12 @@ public class PlayerExperience : MonoBehaviour, ISubject
 
     private void Awake()
     {
+        PlayerData data = DataManager.Instance.Players.Get(1);
+        firstLevelRequirement = data.firstLevelRequirement;
+        experienceIncreasePerLevel = data.experienceIncreasePerLevel;
+        attractionRange = data.attractionRange;
+        attractionSpeed = data.attractionSpeed;
+
         UpdateAttractionRange();
     }
 

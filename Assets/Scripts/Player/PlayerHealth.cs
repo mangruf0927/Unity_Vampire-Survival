@@ -3,8 +3,8 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
 {
-    [SerializeField, Min(0.01f)] private float maxHealth = 100f;
-    [SerializeField, Min(0.01f)] private float damageInterval = 1f;
+    private float maxHealth = 100f;
+    private float damageInterval = 1f;
 
     private float currentHealth;
     private float nextDamageTime;
@@ -17,6 +17,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
 
     private void Awake()
     {
+        PlayerData data = DataManager.Instance.Players.Get(1);
+        maxHealth = data.maxHealth;
+        damageInterval = data.damageInterval;
+
         currentHealth = maxHealth;
         NotifyObservers();
     }

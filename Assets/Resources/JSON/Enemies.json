@@ -1,0 +1,60 @@
+{
+  "tableName": "Enemies",
+  "records": [
+    {
+      "Id": 1,
+      "maxHealth": 5.0,
+      "moveSpeed": 3.0,
+      "rotationSpeed": 540.0,
+      "damage": 10.0,
+      "gemDropChance": 0.6,
+      "offscreenReturnDelay": 5.0,
+      "knockbackDistance": 1,
+      "knockbackDuration": 0.15
+    },
+    {
+      "Id": 2,
+      "maxHealth": 20.0,
+      "moveSpeed": 1.6,
+      "rotationSpeed": 540.0,
+      "damage": 10.0,
+      "gemDropChance": 0.6,
+      "offscreenReturnDelay": 12.0,
+      "knockbackDistance": 0.8,
+      "knockbackDuration": 0.15
+    },
+    {
+      "Id": 3,
+      "maxHealth": 30.0,
+      "moveSpeed": 2.2,
+      "rotationSpeed": 540.0,
+      "damage": 12.0,
+      "gemDropChance": 0.6,
+      "offscreenReturnDelay": 12.0,
+      "knockbackDistance": 1.0,
+      "knockbackDuration": 0.15
+    },
+    {
+      "Id": 4,
+      "maxHealth": 15.0,
+      "moveSpeed": 4.0,
+      "rotationSpeed": 540.0,
+      "damage": 8.0,
+      "gemDropChance": 0.6,
+      "offscreenReturnDelay": 12.0,
+      "knockbackDistance": 1.2,
+      "knockbackDuration": 0.15
+    },
+    {
+      "Id": 5,
+      "maxHealth": 90.0,
+      "moveSpeed": 1.2,
+      "rotationSpeed": 540.0,
+      "damage": 18.0,
+      "gemDropChance": 0.6,
+      "offscreenReturnDelay": 12.0,
+      "knockbackDistance": 0.35,
+      "knockbackDuration": 0.15
+    }
+  ]
+}

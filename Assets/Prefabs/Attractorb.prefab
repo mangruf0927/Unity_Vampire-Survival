@@ -42,4 +42,4 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   icon: {fileID: 0}
-  attractionRangeBonusPerLevel: 0.2
+  dataId: 5

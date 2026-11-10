@@ -3,18 +3,20 @@ using UnityEngine;
 public class EnemyMovement : MonoBehaviour
 {
     [SerializeField] private Transform target;
-    [SerializeField, Min(0f)] private float moveSpeed = 3f;
-    [SerializeField, Min(0f)] private float rotationSpeed = 360f;
+    [SerializeField, Min(1)] private int dataId = 1;
+    public int DataId => dataId;
+    private float moveSpeed = 3f;
+    private float rotationSpeed = 360f;
     [SerializeField, Min(0.01f)] private float bodyRadius = 0.5f;
     [SerializeField, Min(0f)] private float playerRadius = 0.5f;
     [SerializeField, Min(0f)] private float separationRange = 1.5f;
     [SerializeField, Min(0f)] private float separationStrength = 2f;
     [SerializeField, Min(0f)] private float overlapCorrectionSpeed = 3f;
-    [SerializeField, Min(0)] private float damage = 10f;
-    [SerializeField, Min(0.01f)] private float offscreenReturnDelay = 5f;
+    private float damage = 10f;
+    private float offscreenReturnDelay = 5f;
 
-    [SerializeField, Min(0f)] private float knockbackDistance = 1f;
-    [SerializeField, Min(0.01f)] private float knockbackDuration = 0.15f;
+    private float knockbackDistance = 1f;
+    private float knockbackDuration = 0.15f;
 
     private Vector3 knockbackVelocity;
     private float knockbackRemaining;
@@ -101,6 +103,17 @@ public class EnemyMovement : MonoBehaviour
         Vector3 offset = position - ideal;
         offset.y = 0f;
         return ideal + Vector3.ClampMagnitude(offset, swarmMaxOffset);
+    }
+
+    private void Awake()
+    {
+        EnemyData data = DataManager.Instance.Enemies.Get(dataId);
+        moveSpeed = data.moveSpeed;
+        rotationSpeed = data.rotationSpeed;
+        damage = data.damage;
+        offscreenReturnDelay = data.offscreenReturnDelay;
+        knockbackDistance = data.knockbackDistance;
+        knockbackDuration = data.knockbackDuration;
     }
 
     private void OnEnable()

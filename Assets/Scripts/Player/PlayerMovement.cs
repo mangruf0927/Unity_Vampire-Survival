@@ -3,8 +3,8 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField, Min(0f)] private float moveSpeed = 5f;
-    [SerializeField, Min(0f)] private float rotationSpeed = 720f;
+    private float moveSpeed = 5f;
+    private float rotationSpeed = 720f;
 
     private CharacterController characterController;
     private Vector3 moveDirection;
@@ -21,6 +21,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void Awake()
     {
+        PlayerData data = DataManager.Instance.Players.Get(1);
+        moveSpeed = data.moveSpeed;
+        rotationSpeed = data.rotationSpeed;
+
         characterController = GetComponent<CharacterController>();
         Vector3 initialDirection = transform.forward;
         initialDirection.y = 0f;

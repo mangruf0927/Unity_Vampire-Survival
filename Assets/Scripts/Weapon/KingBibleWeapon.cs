@@ -4,11 +4,11 @@ using UnityEngine;
 public class KingBibleWeapon : Weapon
 {
     [SerializeField] private BibleProjectile projectilePrefab;
-    [SerializeField, Min(0.01f)] private float cooldown = 3f;
-    [SerializeField, Min(0.01f)] private float duration = 3f;
-    [SerializeField, Min(0.01f)] private float orbitRadius = 2f;
-    [SerializeField, Min(0f)] private float rotationSpeed = 180f;
-    [SerializeField, Min(0.01f)] private float hitboxDelay = 1.7f;
+    private float cooldown = 3f;
+    private float duration = 3f;
+    private float orbitRadius = 2f;
+    private float rotationSpeed = 180f;
+    private float hitboxDelay = 1.7f;
 
     private struct HitRecord
     {
@@ -32,35 +32,30 @@ public class KingBibleWeapon : Weapon
     private float speedMultiplier = 1f;
     private float radiusMultiplier = 1f;
 
-    public override string DisplayName => "King Bible";
-    public override string GetChoiceDescription()
-    {
-        if (!IsOwned) return "플레이어 주위를 회전하는 성경이 주변 적을 공격합니다.";
-        int nextLevel = Level + 1;
-        if (nextLevel == 2 || nextLevel == 5 || nextLevel == 8) return "투사체를 1개 더 생성합니다.";
-        if (nextLevel == 3 || nextLevel == 6) return "회전 속도가 30%, 공격 범위가 25% 증가합니다.";
-        if (nextLevel == 4 || nextLevel == 7) return "지속시간이 0.5초, 피해량이 10 증가합니다.";
-        return "최대 레벨";
-    }
-
     protected override float BaseCooldown => cooldown;
     public float Duration => duration;
     public float OrbitRadius => orbitRadius * radiusMultiplier;
     public float RotationSpeed => rotationSpeed * speedMultiplier;
 
+    protected override void ApplyWeaponData(WeaponData data)
+    {
+        cooldown = data.cooldown;
+        duration = data.duration;
+        orbitRadius = data.orbitRadius;
+        rotationSpeed = data.rotationSpeed;
+        hitboxDelay = data.hitboxDelay;
+        speedMultiplier = data.speedMultiplier;
+        radiusMultiplier = data.areaMultiplier;
+    }
+
     protected override void UpgradeWeapon(int level)
     {
-        if (level == 2 || level == 5 || level == 8) projectileCount++;
-        if (level == 3 || level == 6)
-        {
-            speedMultiplier += 0.3f;
-            radiusMultiplier += 0.25f;
-        }
-        if (level == 4 || level == 7)
-        {
-            duration += 0.5f;
-            damage += 10;
-        }
+        base.UpgradeWeapon(level);
+        WeaponUpgradeData upgrade = Data.GetUpgrade(level);
+        cooldown += upgrade.cooldown;
+        duration += upgrade.duration;
+        speedMultiplier += upgrade.speedMultiplier;
+        radiusMultiplier += upgrade.areaMultiplier;
     }
 
     private void Awake()

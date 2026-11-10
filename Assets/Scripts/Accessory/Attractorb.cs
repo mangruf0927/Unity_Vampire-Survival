@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Attractorb : Accessory
 {
-    [SerializeField, Min(0f)] private float attractionRangeBonusPerLevel = 0.2f;
+    private float attractionRangeBonusPerLevel => BonusPerLevel;
     private PlayerExperience playerExperience;
 
     public override string DisplayName => "Attractorb";

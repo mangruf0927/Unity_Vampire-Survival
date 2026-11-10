@@ -2,14 +2,21 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour, IDamageable
 {
-    [SerializeField, Min(0.01f)] private float maxHealth = 5f;
-    [SerializeField, Range(0f, 1f)] private float gemDropChance = 0.6f;
+    private float maxHealth = 5f;
+    private float gemDropChance = 0.6f;
     [SerializeField] private LayerMask groundLayers = 1 << 9;
 
     private float currentHealth;
     private bool isDead;
 
     public float CurrentHealth => currentHealth;
+
+    private void Awake()
+    {
+        EnemyData data = DataManager.Instance.Enemies.Get(GetComponent<EnemyMovement>().DataId);
+        maxHealth = data.maxHealth;
+        gemDropChance = data.gemDropChance;
+    }
 
     private void OnEnable()
     {

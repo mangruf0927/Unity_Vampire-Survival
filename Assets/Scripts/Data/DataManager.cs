@@ -8,6 +8,14 @@ public class DataManager
 {
     public static DataManager Instance { get; } = new();
     public bool IsLoaded { get; private set; }
+    public int SelectedPlayerId { get; private set; } = 1;
+    public PlayerData SelectedPlayer => Players.Get(SelectedPlayerId);
+
+    public void SelectPlayer(int id)
+    {
+        Players.Get(id);
+        SelectedPlayerId = id;
+    }
 
     private readonly DataTable<EnemyData> enemies = new();
     private readonly DataTable<WeaponData> weapons = new();
@@ -34,6 +42,7 @@ public class DataManager
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetForPlay()
     {
+        Instance.SelectedPlayerId = 1;
         Instance.IsLoaded = false;
         Instance.ClearTables();
     }

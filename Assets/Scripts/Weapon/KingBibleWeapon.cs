@@ -35,7 +35,7 @@ public class KingBibleWeapon : Weapon
     protected override float BaseCooldown => cooldown;
     public float Duration => duration;
     public float OrbitRadius => orbitRadius * radiusMultiplier;
-    public float RotationSpeed => rotationSpeed * speedMultiplier;
+    public float RotationSpeed => rotationSpeed * speedMultiplier * CharacterProjectileSpeedMultiplier;
 
     protected override void ApplyWeaponData(WeaponData data)
     {

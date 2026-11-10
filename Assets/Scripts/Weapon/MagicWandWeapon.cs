@@ -65,7 +65,7 @@ public class MagicWandWeapon : Weapon
         if (direction.sqrMagnitude < 0.000001f) return;
 
         Projectile projectile = Instantiate(projectilePrefab, AttackOrigin.position, Quaternion.LookRotation(direction, Vector3.up));
-        projectile.Initialize(direction.normalized, projectileSpeed, TargetCamera, Damage, PenetrationCount, Knockback);
+        projectile.Initialize(direction.normalized, projectileSpeed * CharacterProjectileSpeedMultiplier, TargetCamera, Damage, PenetrationCount, Knockback);
     }
 
     private EnemyMovement FindNearestVisibleEnemy()

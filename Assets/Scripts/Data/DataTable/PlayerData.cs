@@ -1,10 +1,20 @@
 using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using UnityEngine;
+
+public enum CharacterAbility { DamagePerLevel, ProjectileSpeedPerLevel, ExtraProjectile }
 
 public class PlayerData : IGameData, IValidatable
 {
     [JsonProperty(Required = Required.Always)] public int Id { get; set; }
+    [JsonProperty(Required = Required.Always)] public string displayName;
+    [JsonProperty(Required = Required.Always)] public int startingWeaponId;
+    [JsonProperty(Required = Required.Always), JsonConverter(typeof(StringEnumConverter))] public CharacterAbility ability;
+    [JsonProperty(Required = Required.Always)] public string abilityDescription;
+    [JsonProperty(Required = Required.Always)] public int abilityLevelInterval;
+    [JsonProperty(Required = Required.Always)] public float abilityBonusPerStep;
+    [JsonProperty(Required = Required.Always)] public float maximumAbilityBonus;
     [JsonProperty(Required = Required.Always)] public float maxHealth;
     [JsonProperty(Required = Required.Always)] public float damageInterval;
     [JsonProperty(Required = Required.Always)] public float moveSpeed;

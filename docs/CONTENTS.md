@@ -38,7 +38,7 @@
 
 - StartScene의 StartCanvas/StartPrompt에 “시작하려면 아무 키나 누르세요”를 표시한다. 현재 환경의 한글 폰트를 사용하는 uGUI Text이며 운영체제 폰트 후보를 사용한다. 폰트를 프로젝트에 복사하지 않는다.
 - StartScreenUI가 기본 0.7초 간격으로 문구를 켜고 끈다. Blink Interval은 Inspector에서 수정할 수 있다.
-- Input System의 Keyboard.anyKey가 새로 눌리면 GameScene을 로드한다. 마우스·게임패드 입력은 이번 키보드 시작 기능에 포함하지 않는다. 씬 전환 요청은 한 번만 실행한다.
+- Input System의 Keyboard.anyKey가 새로 눌리면 StartScene의 캐릭터 선택 패널을 표시하고, 선택 화면의 시작 버튼으로 GameScene을 로드한다. 마우스·게임패드 입력은 이번 키보드 시작 기능에 포함하지 않는다. 씬 전환 요청은 한 번만 실행한다.
 - 시작 화면 진입 시 Time.timeScale을 1로 설정한다. StartScene과 GameScene을 빌드 씬 목록에 등록하고, StartScene을 첫 씬으로 둔다. 기존 SampleScene 등록은 유지한다.
 - 게임 오버·나가기 버튼은 아래 규칙으로 구현한다. 게임 클리어는 10분 생존 시 처리한다. 같은 프레임의 사망/10분 도달은 클리어 우선으로 처리하기로 확정했다.
 
@@ -742,10 +742,10 @@
 | Enemies.json / Enemies | 1 박쥐, 2 좀비, 3 스켈레톤, 4 유령, 5 머드맨 | 최대 체력, 이동·회전 속도, 접촉 피해, 보석 드롭 확률, 화면 밖 반환 대기 시간, 넉백 거리·시간 |
 | Weapons.json / Weapons | 1 Magic Wand, 2 Knife, 3 King Bible, 4 Whip | 이름·최초 획득 설명, 기본 피해·투사체 수·넉백·쿨타임, 무기별 연사 간격·투사체 속도·관통·범위 배율·지속시간·회전 반경·회전 속도·재피격 간격·베기 크기, 2~8레벨 강화 수치 |
 | Accessories.json / Accessories | 1 Wings, 2 Hollow Heart, 3 Spinach, 4 Empty Tome, 5 Attractorb | 레벨당 증가·감소율 bonusPerLevel |
-| Players.json / Players | 1 현재 기본 플레이어 | 최대 체력, 공통 피해 간격, 이동·회전 속도, 첫 필요 경험치·레벨별 증가량, 기본 끌어당김 범위·속도 |
+| Players.json / Players | 1 안토니오, 2 이멜다, 3 젠나로 | 최대 체력, 공통 피해 간격, 이동·회전 속도, 첫 필요 경험치·레벨별 증가량, 기본 끌어당김 범위·속도 |
 | ExperienceGems.json / ExperienceGems | 1 현재 기본 보석 | 보석 1개당 경험치 |
 
-- 적의 Data Id는 EnemyMovement에만 지정하고 EnemyHealth도 같은 ID를 사용한다. 무기·장신구·보석 프리팹의 Data Id로 각 테이블 레코드를 연결했다. 현재 플레이어의 세 컴포넌트는 Players ID 1을 사용한다. 캐릭터 선택에 따른 ID 변경은 이후 구현 범위다.
+- 적의 Data Id는 EnemyMovement에만 지정하고 EnemyHealth도 같은 ID를 사용한다. 무기·장신구·보석 프리팹의 Data Id로 각 테이블 레코드를 연결했다. 플레이어의 세 컴포넌트는 DataManager.SelectedPlayer를 사용한다. 선택한 ID의 기본 수치를 적용하며 GameScene 직접 실행의 기본값은 안토니오(ID 1)다.
 - 무기는 공통 데이터 형식을 사용하지만 JSON에는 해당 무기가 쓰는 항목만 기재한다. 예를 들어 orbitRadius는 성경, slashLength는 채찍, penetrationCount는 지팡이·단검에서 사용한다. 다른 무기 전용 항목을 추가해도 공격 방식이 바뀌지는 않는다.
 
 #### 초기화와 기존 동작 유지
@@ -847,3 +847,27 @@
 - 선택한 좌우 방향을 유지하며 0.5초 이상 실제로 막히고 현재 방향 공간이 거의 없으며 반대쪽이 열려 있을 때만 바꾼다. 전방 직접 추적이 열리면 회피 상태를 초기화한다. 감지 거리 1.8, 판단 간격 0.15, Clearance 0.15의 기존 Inspector 값은 유지한다.
 - 플레이어 접촉 정지와 넉백은 회피보다 먼저 처리한다. 넉백·풀 재사용 때 회피 상태를 초기화하며, 이벤트 박쥐의 이동·충돌 통과 규칙은 변경하지 않는다. A*와 새 클래스는 추가하지 않는다.
 - 전체 스크립트 컴파일과 실제 군중/이동 코드를 사용한 모의 물리 검사 42개를 통과했다. 단독·인접 장애물 우회, 기존 미끄러짐 중 비활성 유지, 막힘 전 비활성, 장애물 제거 후 복귀, 군중 분리만 있는 상황의 비활성, 접촉 정지·넉백·풀 초기화·이벤트 박쥐·Y 유지·일시 정지를 확인했다. 실제 Unity Physics와 밀집 플레이는 별도 확인한다.
+
+
+### 캐릭터 선택과 고유 능력 — 구현
+
+- StartScene에서 아무 키를 누르면 시작 문구를 숨기고 캐릭터 선택 패널을 표시한다. 별도 선택 씬을 만들지 않는다. 중앙의 카드 3개에서 선택한 뒤 시작 버튼으로 GameScene을 연다. 카드에는 한글 이름·시작 무기·고유 능력 설명을 TMP로 표시한다. 선택 배경을 금색으로 강조하고 화면이 좁으면 패널을 축소한다.
+- 캐릭터 전용 에셋이 없어 Assets/UI/CharacterPlaceholder.png 실루엣을 만들었다. 카드는 녹색/보라색/파란색으로 구분하며 실제 플레이어도 같은 색상을 사용한다. 기존 플레이어 루트·CharacterController·HUD·카메라·적 타깃을 재사용하고 캐릭터 프리팹 생성·팩토리·영구 저장 시스템은 추가하지 않는다.
+- 새로운 동작 클래스는 CharacterSelectionUI와 PlayerCharacter 두 개다. 전자는 카드 표시·선택·시작을, 후자는 경험치 옵저버 구독·고유 능력 갱신·기존 Renderer 색상 적용을 담당한다. MaterialPropertyBlock을 사용해 공유 재질 에셋을 변경하지 않는다. StartScreenUI의 클래스 이름도 파일/씬 식별자와 일치시켰다.
+- Players.json의 ID 1/2/3은 안토니오/이멜다/젠나로다. 기존 기본 능력치는 모두 유지하고 displayName, startingWeaponId, ability, abilityDescription, abilityLevelInterval, abilityBonusPerStep, maximumAbilityBonus를 필수 필드로 추가했다. ability는 문자열 enum이며 UI의 시작 무기 이름도 Weapons 테이블에서 조회한다.
+- 선택 ID는 기존 DataManager.SelectedPlayerId에만 보관한다. SelectPlayer가 선택 테이블 ID를 확인하며 SelectedPlayer로 데이터를 제공한다. Play 진입 시 1로 초기화하고, 선택 UI를 새로 열 때 첫 카드 안토니오를 선택한다. 선택한 ID는 GameScene 전환 동안 유지한다. GameScene 직접 실행도 안토니오로 동작한다.
+- PlayerHealth/PlayerMovement/PlayerExperience는 선택한 PlayerData에서 초기 수치를 읽는다. WeaponManager는 JSON startingWeaponId와 등록된 프리팹의 DataId를 비교해 시작 무기를 레벨 1로 생성한다. 예전 Inspector startingWeapon 필드는 제거했다. 무기 보유 최대 3개, 장신구 최대 3개와 레벨업 선택 구조는 유지한다.
+
+| 캐릭터 | 시작 무기 ID | 고유 능력 |
+| --- | --- | --- |
+| 안토니오 | 4 / Whip | 플레이어 LV10/20/30/40/50에 피해 배율 1.1/1.2/1.3/1.4/1.5, 이후 1.5 유지 |
+| 이멜다 | 1 / Magic Wand | 플레이어 LV5/10/15에 투사체 속도 배율 1.1/1.2/1.3, 이후 1.3 유지 |
+| 젠나로 | 2 / Knife | 시작부터 모든 보유·추후 획득 무기의 최종 투사체 수 +1, 강화·레벨업으로 중복 가산하지 않음 |
+
+- 안토니오 피해는 무기 강화 후 피해량 × 시금치 배율 × 캐릭터 피해 배율이다. 예: 피해량 10, 시금치 LV3, 안토니오 LV10이면 14.3이다. 서로의 배율을 덮어쓰지 않는다.
+- 이멜다는 지팡이·단검의 발사 속도와 성경의 회전 속도에 적용한다. 성경의 무기 자체 속도 강화 후 캐릭터 배율을 곱한다. 채찍의 연사 간격·베기 표시 시간은 변경하지 않는다.
+- 젠나로의 +1은 지팡이·단검·성경·채찍 모두 적용한다. LV1에서 각각 2개/2개/2개/2회, 무기 LV8에서 각각 5개/7개/5개/3회다. 기본 데이터나 무기 강화 기록을 직접 변경하지 않는다.
+- PlayerCharacter는 PlayerExperience의 기존 IObserver 알림에서 현재 최종 레벨로 보너스를 계산하므로 연속 레벨업에도 누락·중복이 없다. WeaponManager가 배율/추가 개수를 보관하고 보유 및 신규 무기에 전달한다. 컴포넌트 Awake/OnEnable 순서에 관계없이 초기 공격 전 적용된다.
+- 이미 발사한 투사체, 시작한 연사의 예약 개수, 진행 중인 성경의 확정 능력치는 기존 스냅샷을 유지한다. 이후 발사/연사/공격 시작 시 새 보너스를 반영한다. 새 게임에서는 무기 레벨·장신구·캐릭터 성장 보너스가 초기화된다.
+- 검증: 전체 스크립트 Unity 참조 컴파일, 실제 JSON·선택 UI·캐릭터·무기 관리/무기 코드를 사용하는 임시 검사 170개를 통과했다. 세 시작 무기, 양쪽 컴포넌트 초기화 순서, 레벨 경계/상한, 시금치 곱연산, 이멜다 실제 지팡이·단검 발사 속도/성경 회전 강화, 젠나로 네 무기와 신규 획득, UI 선택/중복 씬 전환 방지/좁은 화면 크기/Play 초기화를 확인했다. 씬의 카드 3개·시작 버튼·EventSystem·GraphicRaycaster·플레이어 연결도 검사했다. 실제 Unity UI 렌더링과 입력은 추가 플레이 테스트가 필요하다.
+- Unity 테스트: StartScene에서 아무 키 → 카드 선택 강조 → 시작을 확인한다. 각 캐릭터의 색상·시작 무기, 초기 HUD 1개 표시, 일반 레벨업 선택을 확인한다. Players JSON의 경험치 요구량을 임시로 낮춰 안토니오 9→10/49→50, 이멜다 4→5/14→15의 배율과 상한을 확인한 뒤 복원한다. 젠나로로 채찍·성경을 획득해 +1과 균등 배치/반대 방향 추가 베기를 확인한다. 종료 후 다시 선택·시작하면 이전 성장값이 남지 않는지도 확인한다.

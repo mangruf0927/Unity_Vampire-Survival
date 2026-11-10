@@ -20,7 +20,7 @@ public class PlayerExperience : MonoBehaviour, ISubject
 
     private void Awake()
     {
-        PlayerData data = DataManager.Instance.Players.Get(1);
+        PlayerData data = DataManager.Instance.SelectedPlayer;
         firstLevelRequirement = data.firstLevelRequirement;
         experienceIncreasePerLevel = data.experienceIncreasePerLevel;
         attractionRange = data.attractionRange;

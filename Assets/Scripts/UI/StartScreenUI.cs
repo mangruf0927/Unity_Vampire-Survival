@@ -2,13 +2,12 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
-public class StartScreen : MonoBehaviour
+public class StartScreenUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI startText;
     [SerializeField, Min(0.01f)] private float blinkInterval = 0.8f;
-    [SerializeField] private string nextSceneName = "GameScene";
+    [SerializeField] private CharacterSelectionUI characterSelectionUI;
 
     private float blinkTimer;
     private bool isStarting;
@@ -33,7 +32,8 @@ public class StartScreen : MonoBehaviour
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
         {
             isStarting = true;
-            SceneManager.LoadScene(nextSceneName);
+            if (startText != null) startText.gameObject.SetActive(false);
+            if (characterSelectionUI != null) characterSelectionUI.Show();
             return;
         }
 

@@ -17,7 +17,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
 
     private void Awake()
     {
-        PlayerData data = DataManager.Instance.Players.Get(1);
+        PlayerData data = DataManager.Instance.SelectedPlayer;
         maxHealth = data.maxHealth;
         damageInterval = data.damageInterval;
 

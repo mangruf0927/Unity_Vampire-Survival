@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class WeaponManager : MonoBehaviour
 {
-    [SerializeField] private Weapon startingWeapon;
     [SerializeField] private Weapon[] weaponPrefabs;
 
     [SerializeField] private PlayerMovement playerMovement;
@@ -14,6 +13,18 @@ public class WeaponManager : MonoBehaviour
     private readonly Dictionary<Weapon, Weapon> ownedWeapons = new();
     private float damageMultiplier = 1f;
     private float cooldownMultiplier = 1f;
+    private float characterDamageMultiplier = 1f;
+    private float characterSpeedMultiplier = 1f;
+    private int characterProjectileBonus;
+
+    public void SetCharacterBonuses(float damage, float speed, int count)
+    {
+        characterDamageMultiplier = damage;
+        characterSpeedMultiplier = speed;
+        characterProjectileBonus = count;
+        foreach (Weapon weapon in ownedWeapons.Values)
+            if (weapon != null) weapon.SetCharacterBonuses(damage, speed, count);
+    }
 
     private readonly List<Weapon> acquisitionOrder = new();
     public IReadOnlyList<Weapon> OwnedWeapons => acquisitionOrder;
@@ -40,7 +51,18 @@ public class WeaponManager : MonoBehaviour
         if (playerMovement == null) playerMovement = GetComponent<PlayerMovement>();
         if (attackOrigin == null) attackOrigin = transform;
         if (gameCamera == null) gameCamera = Camera.main;
-        if (startingWeapon != null) AcquireOrUpgrade(startingWeapon);
+        int startingId = DataManager.Instance.SelectedPlayer.startingWeaponId;
+        if (weaponPrefabs != null)
+        {
+            for (int i = 0; i < weaponPrefabs.Length; i++)
+            {
+                Weapon prefab = weaponPrefabs[i];
+                if (prefab == null || prefab.DataId != startingId) continue;
+                AcquireOrUpgrade(prefab);
+                return;
+            }
+        }
+        Debug.LogError($"시작 무기 ID {startingId}를 Weapon Prefabs에 등록해 주세요.", this);
     }
 
     private Vector3 GetAttackDirection()
@@ -99,6 +121,7 @@ public class WeaponManager : MonoBehaviour
                 instance.Initialize(attackOrigin, gameCamera, GetAttackDirection());
                 instance.SetDamageMultiplier(damageMultiplier);
                 instance.SetCooldownMultiplier(cooldownMultiplier);
+                instance.SetCharacterBonuses(characterDamageMultiplier, characterSpeedMultiplier, characterProjectileBonus);
                 instance.Acquire();
                 ownedWeapons[prefab] = instance;
                 acquisitionOrder.Add(instance);

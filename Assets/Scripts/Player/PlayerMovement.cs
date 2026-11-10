@@ -21,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Awake()
     {
-        PlayerData data = DataManager.Instance.Players.Get(1);
+        PlayerData data = DataManager.Instance.SelectedPlayer;
         moveSpeed = data.moveSpeed;
         rotationSpeed = data.rotationSpeed;
 

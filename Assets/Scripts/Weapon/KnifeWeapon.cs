@@ -67,7 +67,7 @@ public class KnifeWeapon : Weapon
         Projectile projectile = Instantiate(projectilePrefab, AttackOrigin.position,
             Quaternion.LookRotation(direction, Vector3.up));
         projectile.transform.localScale *= areaMultiplier;
-        projectile.Initialize(direction, projectileSpeed * speedMultiplier, TargetCamera,
+        projectile.Initialize(direction, projectileSpeed * speedMultiplier * CharacterProjectileSpeedMultiplier, TargetCamera,
             Damage, PenetrationCount, Knockback, areaMultiplier);
     }
 }

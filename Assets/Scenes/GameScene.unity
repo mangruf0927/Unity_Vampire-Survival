@@ -828,6 +828,7 @@ GameObject:
   - component: {fileID: 2130000000}
   - component: {fileID: 2240000200}
   - component: {fileID: 2240000300}
+  - component: {fileID: 2260000000}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -2874,7 +2875,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 263b8d3cbfcd495cb4ce94dd0042ecf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startingWeapon: {fileID: 11400000, guid: 1ad1e090c5ac4fb08c379dfa009d6cb2, type: 3}
   weaponPrefabs:
   - {fileID: 11400000, guid: 1ad1e090c5ac4fb08c379dfa009d6cb2, type: 3}
   - {fileID: 11400000, guid: c923cae2fe954704b25e04eec7981964, type: 3}
@@ -7611,6 +7611,24 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2260000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774257179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc715cf06685463abdf43f0bd3c480b1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  playerExperience: {fileID: 2130000000}
+  weaponManager: {fileID: 2240000200}
+  characterRenderer: {fileID: 774257181}
+  antonioColor: {r: 0.35, g: 0.7, b: 0.4, a: 1}
+  imeldaColor: {r: 0.65, g: 0.4, b: 0.9, a: 1}
+  gennaroColor: {r: 0.4, g: 0.65, b: 0.95, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

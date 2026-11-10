@@ -5,6 +5,7 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     private bool isOwned;
     [SerializeField] private Sprite icon;
     [SerializeField, Min(1)] private int dataId = 1;
+    public int DataId => dataId;
     protected WeaponData Data => DataManager.Instance.Weapons.Get(dataId);
     [SerializeField, Range(1, 8)] private int level = 1;
     protected float damage = 10f;
@@ -14,6 +15,16 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     private bool upgradesInitialized;
     private float damageMultiplier = 1f;
     private float cooldownMultiplier = 1f;
+    private float characterDamageMultiplier = 1f;
+    private int characterProjectileBonus;
+    protected float CharacterProjectileSpeedMultiplier { get; private set; } = 1f;
+
+    public void SetCharacterBonuses(float damageBonus, float speedBonus, int projectileBonus)
+    {
+        characterDamageMultiplier = damageBonus;
+        CharacterProjectileSpeedMultiplier = speedBonus;
+        characterProjectileBonus = projectileBonus;
+    }
     protected float cooldownRemaining;
 
     protected Transform AttackOrigin { get; private set; }
@@ -44,8 +55,8 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
         WeaponUpgradeData upgrade = Data.GetUpgrade(Level + 1);
         return upgrade != null ? upgrade.GetDescription(Data.speedLabel) : "최대 레벨";
     }
-    public virtual float Damage => damage * damageMultiplier;
-    public virtual int ProjectileCount => projectileCount;
+    public virtual float Damage => damage * damageMultiplier * characterDamageMultiplier;
+    public virtual int ProjectileCount => projectileCount + characterProjectileBonus;
     public float Knockback => knockback;
     public float Cooldown => Mathf.Max(0.01f, BaseCooldown * cooldownMultiplier);
     protected abstract float BaseCooldown { get; }

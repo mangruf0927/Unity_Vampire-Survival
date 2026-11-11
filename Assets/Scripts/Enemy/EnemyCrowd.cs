@@ -59,7 +59,14 @@ public static class EnemyCrowd
 
     internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, HashSet<EnemyMovement> ignoredEnemies = null)
     {
+        return TryGetProjectileHit(start, end, hitRadius, out hitEnemy, out _, ignoredEnemies);
+    }
+
+    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius,
+        out EnemyMovement hitEnemy, out float firstHitTime, HashSet<EnemyMovement> ignoredEnemies = null)
+    {
         hitEnemy = null;
+        firstHitTime = float.PositiveInfinity;
         if (hitGridFrame != Time.frameCount)
         {
             RefreshGrid(true);
@@ -74,7 +81,6 @@ public static class EnemyCrowd
 
         Vector3 segment = end - start;
         float lengthSquared = segment.sqrMagnitude;
-        float firstHitTime = float.PositiveInfinity;
 
         for (int x = min.x; x <= max.x; x++)
         {

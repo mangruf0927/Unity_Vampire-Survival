@@ -19,6 +19,8 @@ public class KingBibleWeapon : Weapon
     private readonly List<BibleProjectile> projectiles = new();
     private readonly Dictionary<EnemyMovement, HitRecord> hitRecords = new();
     private readonly List<EnemyMovement> expiredRecords = new();
+    private readonly Dictionary<Torch, HitRecord> torchHitRecords = new();
+    private readonly List<Torch> expiredTorches = new();
     private bool attacking;
     private float remainingDuration;
     private float angle;
@@ -160,6 +162,19 @@ public class KingBibleWeapon : Weapon
         if (enemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(activeDamage);
     }
 
+    internal void TryHit(Torch torch)
+    {
+        if (!torch.isActiveAndEnabled) return;
+        if (torchHitRecords.TryGetValue(torch, out HitRecord record)
+            && record.activationVersion == torch.ActivationVersion && Time.time < record.nextHitTime) return;
+        torchHitRecords[torch] = new HitRecord
+        {
+            activationVersion = torch.ActivationVersion,
+            nextHitTime = Time.time + activeHitboxDelay
+        };
+        torch.TakeDamage(activeDamage);
+    }
+
     private void RemoveExpiredRecords()
     {
         expiredRecords.Clear();
@@ -169,5 +184,12 @@ public class KingBibleWeapon : Weapon
                 expiredRecords.Add(pair.Key);
         }
         for (int i = 0; i < expiredRecords.Count; i++) hitRecords.Remove(expiredRecords[i]);
+        expiredTorches.Clear();
+        foreach (KeyValuePair<Torch, HitRecord> pair in torchHitRecords)
+        {
+            if (pair.Key == null || !pair.Key.isActiveAndEnabled || pair.Value.nextHitTime <= Time.time)
+                expiredTorches.Add(pair.Key);
+        }
+        for (int i = 0; i < expiredTorches.Count; i++) torchHitRecords.Remove(expiredTorches[i]);
     }
 }

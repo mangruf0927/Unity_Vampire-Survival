@@ -8,6 +8,7 @@ public class Projectile : MonoBehaviour
     private int hitsRemaining;
     private float knockback;
     private readonly HashSet<EnemyMovement> hitEnemies = new();
+    private readonly Dictionary<Torch, int> hitTorches = new();
 
     private Vector3 direction;
     private float speed;
@@ -24,6 +25,7 @@ public class Projectile : MonoBehaviour
         this.knockback = knockback;
         hitRadiusMultiplier = Mathf.Max(0f, areaMultiplier);
         hitEnemies.Clear();
+        hitTorches.Clear();
     }
 
     private void LateUpdate()
@@ -47,13 +49,24 @@ public class Projectile : MonoBehaviour
 
     private bool HandleProjectileHits(Vector3 start, Vector3 end)
     {
-        while (EnemyCrowd.TryGetProjectileHit(start, end, hitRadius * hitRadiusMultiplier, out EnemyMovement enemy, hitEnemies))
+        while (true)
         {
-            hitEnemies.Add(enemy);
-            enemy.ApplyKnockback(direction, knockback);
-
-            if (enemy.TryGetComponent(out IDamageable damageable))
-                damageable.TakeDamage(damage);
+            float radius = hitRadius * hitRadiusMultiplier;
+            bool hasEnemy = EnemyCrowd.TryGetProjectileHit(start, end, radius,
+                out EnemyMovement enemy, out float enemyTime, hitEnemies);
+            bool hasTorch = Torch.TryGetHit(start, end, radius, out Torch torch, out float torchTime, hitTorches);
+            if (!hasEnemy && !hasTorch) break;
+            if (hasEnemy && (!hasTorch || enemyTime <= torchTime))
+            {
+                hitEnemies.Add(enemy);
+                enemy.ApplyKnockback(direction, knockback);
+                if (enemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(damage);
+            }
+            else
+            {
+                hitTorches[torch] = torch.ActivationVersion;
+                torch.TakeDamage(damage);
+            }
 
             if (--hitsRemaining <= 0)
             {

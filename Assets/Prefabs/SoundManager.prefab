@@ -86,5 +86,8 @@ MonoBehaviour:
   - soundName: UIClick
     audioClip: {fileID: 0}
     minimumInterval: 0.05
+  - soundName: TorchBreak
+    audioClip: {fileID: 0}
+    minimumInterval: 0.05
   channels: 16
   sfxVolume: 1

@@ -9,6 +9,7 @@ public class SoundManager : Singleton<SoundManager>
     public const string KnifeAttack = "KnifeAttack";
     public const string KingBibleAttack = "KingBibleAttack";
     public const string WhipAttack = "WhipAttack";
+    public const string TorchBreak = "TorchBreak";
     public const string EnemyHit = "EnemyHit";
     public const string EnemyDeath = "EnemyDeath";
     public const string PlayerHit = "PlayerHit";

@@ -4,6 +4,7 @@ using UnityEngine;
 public class WhipSlash : MonoBehaviour
 {
     private readonly HashSet<EnemyMovement> hitEnemies = new();
+    private readonly Dictionary<Torch, int> hitTorches = new();
     private Transform origin;
     private Vector3 direction;
     private float damage;
@@ -23,6 +24,7 @@ public class WhipSlash : MonoBehaviour
         this.width = width;
         remainingDuration = duration;
         hitEnemies.Clear();
+        hitTorches.Clear();
         UpdateSlash();
     }
 
@@ -56,6 +58,11 @@ public class WhipSlash : MonoBehaviour
             hitEnemies.Add(enemy);
             enemy.ApplyKnockback(direction, knockback);
             if (enemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(damage);
+        }
+        while (Torch.TryGetHit(start, end, radius, out Torch torch, out _, hitTorches))
+        {
+            hitTorches[torch] = torch.ActivationVersion;
+            torch.TakeDamage(damage);
         }
     }
 }

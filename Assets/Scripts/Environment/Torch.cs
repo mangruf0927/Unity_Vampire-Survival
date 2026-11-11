@@ -5,6 +5,12 @@ public class Torch : MonoBehaviour, IDamageable
 {
     [SerializeField, Min(0.01f)] private float maxHealth = 1f;
     [SerializeField, Min(0.01f)] private float hitRadius = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float noDropChance = 0.5f;
+    [SerializeField, Min(0f)] private float chickenWeight = 60f;
+    [SerializeField, Min(0f)] private float vacuumWeight = 25f;
+    [SerializeField, Min(0f)] private float clockWeight = 15f;
+    [SerializeField] private LayerMask groundLayers = 1 << 9;
+    private float groundHeight;
     private static readonly List<Torch> activeTorches = new();
     private Renderer[] renderers;
     private float currentHealth;
@@ -29,6 +35,9 @@ public class Torch : MonoBehaviour, IDamageable
     {
         currentHealth = maxHealth;
         broken = false;
+        // 바닥 청크가 회수되어도 마지막 배치 높이를 드롭에 사용할 수 있다.
+        groundHeight = renderers.Length > 0 ? renderers[0].bounds.min.y : transform.position.y;
+        for (int i = 1; i < renderers.Length; i++) groundHeight = Mathf.Min(groundHeight, renderers[i].bounds.min.y);
         ActivationVersion++;
         activeTorches.Add(this);
     }
@@ -44,8 +53,36 @@ public class Torch : MonoBehaviour, IDamageable
         currentHealth = Mathf.Max(0f, currentHealth - damage);
         if (currentHealth > 0f) return;
         broken = true;
+        DropItem();
         SoundManager.Instance?.PlaySFX(SoundManager.TorchBreak);
         ObjectPool.Instance.TryReturnToPool(gameObject);
+    }
+
+    private void DropItem()
+    {
+        if (noDropChance >= 1f || (noDropChance > 0f && Random.value < noDropChance)) return;
+        float chicken = Mathf.Max(0f, chickenWeight);
+        float vacuum = Mathf.Max(0f, vacuumWeight);
+        float clock = Mathf.Max(0f, clockWeight);
+        float total = chicken + vacuum + clock;
+        if (total <= 0f) return;
+
+        float roll = Random.value * total;
+        PoolTypeEnums type;
+        if (chicken > 0f && roll < chicken) type = PoolTypeEnums.Chicken;
+        else if (vacuum > 0f && roll < chicken + vacuum) type = PoolTypeEnums.Vacuum;
+        else if (clock > 0f) type = PoolTypeEnums.Clock;
+        else type = vacuum > 0f ? PoolTypeEnums.Vacuum : PoolTypeEnums.Chicken;
+
+        if (!ObjectPool.Instance.TryGetPrefab(type, out GameObject prefab)
+            || !prefab.TryGetComponent(out MeshFilter meshFilter) || meshFilter.sharedMesh == null) return;
+        Vector3 position = transform.position;
+        float height = groundHeight;
+        if (Physics.Raycast(position + Vector3.up, Vector3.down, out RaycastHit hit,
+            Mathf.Infinity, groundLayers, QueryTriggerInteraction.Ignore)) height = hit.point.y;
+        float halfHeight = meshFilter.sharedMesh.bounds.extents.y * Mathf.Abs(prefab.transform.localScale.y);
+        position.y = height + halfHeight;
+        ObjectPool.Instance.GetFromPool(type, position, Quaternion.identity);
     }
 
     internal bool IsVisible(Plane[] planes)

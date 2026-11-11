@@ -2103,6 +2103,18 @@ MonoBehaviour:
     prefab: {fileID: 100000, guid: 62c576e4d09e45748cd4010fe0b1e0fe, type: 3}
     size: 12
     parent: {fileID: 0}
+  - poolType: 8
+    prefab: {fileID: 100000, guid: 5e2239b919364d0bb19f4474b33764f0, type: 3}
+    size: 10
+    parent: {fileID: 0}
+  - poolType: 9
+    prefab: {fileID: 100000, guid: cf999e1359a041bd860e8f71f62c938b, type: 3}
+    size: 10
+    parent: {fileID: 0}
+  - poolType: 10
+    prefab: {fileID: 100000, guid: 22cca9d057f441cdbf749f4663595216, type: 3}
+    size: 10
+    parent: {fileID: 0}
 --- !u!114 &2130000000
 MonoBehaviour:
   m_ObjectHideFlags: 0

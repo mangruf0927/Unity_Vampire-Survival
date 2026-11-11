@@ -395,3 +395,10 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   maxHealth: 1
   hitRadius: 0.4
+  noDropChance: 0.5
+  chickenWeight: 60
+  vacuumWeight: 25
+  clockWeight: 15
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 512

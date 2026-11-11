@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class EnemyCrowd
 {
@@ -19,6 +20,18 @@ public static class EnemyCrowd
     private static int hitGridFrame = -1;
     private static float largestRadius;
     private static float stepDeltaTime;
+    private static float frozenUntil;
+    private static int frozenSceneHandle;
+    internal static bool IsFrozen => Time.time < frozenUntil
+        && SceneManager.GetActiveScene().handle == frozenSceneHandle;
+
+    public static void FreezeFor(float duration)
+    {
+        if (duration <= 0f) return;
+        frozenSceneHandle = SceneManager.GetActiveScene().handle;
+        frozenUntil = Time.time + duration;
+        for (int i = 0; i < activeEnemies.Count; i++) activeEnemies[i].ClearFrozenMotion();
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetCrowd()
@@ -28,6 +41,8 @@ public static class EnemyCrowd
         grid.Clear();
         simulationFrame = -1;
         hitGridFrame = -1;
+        frozenUntil = 0f;
+        frozenSceneHandle = 0;
     }
 
     public static void Register(EnemyMovement enemy)
@@ -47,6 +62,7 @@ public static class EnemyCrowd
         if (Time.deltaTime <= 0f || simulationFrame == Time.frameCount) return;
 
         simulationFrame = Time.frameCount;
+        if (IsFrozen) return;
 
         int steps = Mathf.Clamp(Mathf.CeilToInt(Time.deltaTime / (1f / 60f)), 1, 4);
         stepDeltaTime = Time.deltaTime / steps;

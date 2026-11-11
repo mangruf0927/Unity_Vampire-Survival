@@ -181,7 +181,7 @@ public class EnemyMovement : MonoBehaviour
 
     private void ApplyContactDamage()
     {
-        if (Time.deltaTime <= 0f || target == null) return;
+        if (EnemyCrowd.IsFrozen || Time.deltaTime <= 0f || target == null) return;
         if (cachedDamageTarget != target)
         {
             cachedDamageTarget = target;
@@ -200,6 +200,7 @@ public class EnemyMovement : MonoBehaviour
 
     public void ApplyKnockback(Vector3 direction, float strength)
     {
+        if (EnemyCrowd.IsFrozen) return;
         direction.y = 0f;
         if (strength <= 0f || knockbackDistance <= 0f || direction.sqrMagnitude <= 0.000001f) return;
         // 새 명중은 밀림을 무한히 누적하지 않고 방향과 지속 시간을 갱신한다.
@@ -207,6 +208,14 @@ public class EnemyMovement : MonoBehaviour
         knockbackRemaining = Mathf.Max(0.01f, knockbackDuration);
         knockbackVelocity = direction.normalized * (knockbackDistance * strength / knockbackRemaining);
         velocity = Vector3.zero;
+    }
+
+    internal void ClearFrozenMotion()
+    {
+        velocity = Vector3.zero;
+        knockbackRemaining = 0f;
+        knockbackVelocity = Vector3.zero;
+        ResetObstacleAvoidance();
     }
 
     internal Vector3 GetTargetDirection()

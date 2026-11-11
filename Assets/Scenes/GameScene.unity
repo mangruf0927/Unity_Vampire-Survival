@@ -3127,7 +3127,7 @@ MonoBehaviour:
   player: {fileID: 774257183}
   gameCamera: {fileID: 330585545}
   spawnInterval: 3
-  spawnChance: 0.5
+  spawnChance: 1
   maximumTorches: 12
   spawnMargin: 2
   minimumSpacing: 2

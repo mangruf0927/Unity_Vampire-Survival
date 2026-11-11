@@ -13,6 +13,9 @@ GameObject:
   m_Layer: 0
   m_Name: Torch
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &400000
 Transform:
@@ -33,6 +36,27 @@ Transform:
   - {fileID: 100131}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8066e6efa76d4c45b39d287cc7f0ace9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 1
+  hitRadius: 0.4
+  noDropPercent: 50
+  chickenDropPercent: 30
+  vacuumDropPercent: 12.5
+  clockDropPercent: 7.5
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 512
 --- !u!1 &100100
 GameObject:
   m_ObjectHideFlags: 0
@@ -47,6 +71,9 @@ GameObject:
   m_Layer: 0
   m_Name: Base
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &100101
 Transform:
@@ -134,6 +161,9 @@ GameObject:
   m_Layer: 0
   m_Name: Post
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &100111
 Transform:
@@ -221,6 +251,9 @@ GameObject:
   m_Layer: 0
   m_Name: Bowl
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &100121
 Transform:
@@ -308,6 +341,9 @@ GameObject:
   m_Layer: 0
   m_Name: Flame
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &100131
 Transform:
@@ -381,24 +417,3 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 100000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8066e6efa76d4c45b39d287cc7f0ace9, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  maxHealth: 1
-  hitRadius: 0.4
-  noDropChance: 0.5
-  chickenWeight: 60
-  vacuumWeight: 25
-  clockWeight: 15
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 512

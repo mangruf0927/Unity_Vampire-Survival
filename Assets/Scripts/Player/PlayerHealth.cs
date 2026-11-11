@@ -52,6 +52,15 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
         NotifyObservers();
     }
 
+    public void Heal(float amount)
+    {
+        if (isDead || amount <= 0f || Time.timeScale <= 0f) return;
+        float healedHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        if (healedHealth == currentHealth) return;
+        currentHealth = healedHealth;
+        NotifyObservers();
+    }
+
     public void IncreaseMaxHealth(float increaseRate)
     {
         if (isDead || increaseRate <= 0f) return;

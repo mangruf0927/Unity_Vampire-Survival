@@ -1,7 +1,18 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ExperienceGem : MonoBehaviour
 {
+    private static readonly List<ExperienceGem> activeGems = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetGems() => activeGems.Clear();
+
+    public static void AttractAllTo(PlayerExperience player, float speed)
+    {
+        for (int i = 0; i < activeGems.Count; i++) activeGems[i].AttractTo(player, speed);
+    }
+
     [SerializeField, Min(1)] private int dataId = 1;
     private int experienceValue;
 
@@ -16,16 +27,24 @@ public class ExperienceGem : MonoBehaviour
 
     private void OnEnable()
     {
+        activeGems.Add(this);
         collected = false;
         attractionTarget = null;
         attractionSpeed = 0f;
     }
 
+    private void OnDisable()
+    {
+        activeGems.Remove(this);
+        attractionTarget = null;
+    }
+
     public void AttractTo(PlayerExperience player, float speed)
     {
         if (collected || !isActiveAndEnabled || player == null || !player.isActiveAndEnabled) return;
+        // 일반 획득 센서에 닿아도 이미 흡입 중인 속도를 낮추지 않는다.
+        attractionSpeed = attractionTarget == player ? Mathf.Max(attractionSpeed, speed) : Mathf.Max(0f, speed);
         attractionTarget = player;
-        attractionSpeed = Mathf.Max(0f, speed);
     }
 
     private void Update()

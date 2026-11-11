@@ -5,10 +5,11 @@ public class Torch : MonoBehaviour, IDamageable
 {
     [SerializeField, Min(0.01f)] private float maxHealth = 1f;
     [SerializeField, Min(0.01f)] private float hitRadius = 0.4f;
-    [SerializeField, Range(0f, 1f)] private float noDropChance = 0.5f;
-    [SerializeField, Min(0f)] private float chickenWeight = 60f;
-    [SerializeField, Min(0f)] private float vacuumWeight = 25f;
-    [SerializeField, Min(0f)] private float clockWeight = 15f;
+    [Header("Drop probabilities (%) - automatically normalized to 100")]
+    [SerializeField, Range(0f, 100f)] private float noDropPercent = 50f;
+    [SerializeField, Range(0f, 100f)] private float chickenDropPercent = 30f;
+    [SerializeField, Range(0f, 100f)] private float vacuumDropPercent = 12.5f;
+    [SerializeField, Range(0f, 100f)] private float clockDropPercent = 7.5f;
     [SerializeField] private LayerMask groundLayers = 1 << 9;
     private float groundHeight;
     private static readonly List<Torch> activeTorches = new();
@@ -28,6 +29,7 @@ public class Torch : MonoBehaviour, IDamageable
 
     private void Awake()
     {
+        NormalizeDropProbabilities();
         renderers = GetComponentsInChildren<Renderer>();
     }
 
@@ -58,21 +60,45 @@ public class Torch : MonoBehaviour, IDamageable
         ObjectPool.Instance.TryReturnToPool(gameObject);
     }
 
+    private void OnValidate()
+    {
+        NormalizeDropProbabilities();
+    }
+
+    private void NormalizeDropProbabilities()
+    {
+        noDropPercent = Mathf.Clamp(noDropPercent, 0f, 100f);
+        chickenDropPercent = Mathf.Clamp(chickenDropPercent, 0f, 100f);
+        vacuumDropPercent = Mathf.Clamp(vacuumDropPercent, 0f, 100f);
+        clockDropPercent = Mathf.Clamp(clockDropPercent, 0f, 100f);
+        float total = noDropPercent + chickenDropPercent + vacuumDropPercent + clockDropPercent;
+        if (total <= 0f)
+        {
+            noDropPercent = 100f;
+            return;
+        }
+        float scale = 100f / total;
+        noDropPercent *= scale;
+        chickenDropPercent *= scale;
+        vacuumDropPercent *= scale;
+        clockDropPercent *= scale;
+    }
+
     private void DropItem()
     {
-        if (noDropChance >= 1f || (noDropChance > 0f && Random.value < noDropChance)) return;
-        float chicken = Mathf.Max(0f, chickenWeight);
-        float vacuum = Mathf.Max(0f, vacuumWeight);
-        float clock = Mathf.Max(0f, clockWeight);
-        float total = chicken + vacuum + clock;
-        if (total <= 0f) return;
-
+        float total = noDropPercent + chickenDropPercent + vacuumDropPercent + clockDropPercent;
         float roll = Random.value * total;
+        if (roll < noDropPercent || total <= 0f) return;
+        roll -= noDropPercent;
+
         PoolTypeEnums type;
-        if (chicken > 0f && roll < chicken) type = PoolTypeEnums.Chicken;
-        else if (vacuum > 0f && roll < chicken + vacuum) type = PoolTypeEnums.Vacuum;
-        else if (clock > 0f) type = PoolTypeEnums.Clock;
-        else type = vacuum > 0f ? PoolTypeEnums.Vacuum : PoolTypeEnums.Chicken;
+        if (chickenDropPercent > 0f && roll < chickenDropPercent) type = PoolTypeEnums.Chicken;
+        else if (vacuumDropPercent > 0f && roll < chickenDropPercent + vacuumDropPercent) type = PoolTypeEnums.Vacuum;
+        else if (clockDropPercent > 0f) type = PoolTypeEnums.Clock;
+        // Random.value가 1인 경우에도 확률 0인 종류를 선택하지 않는다.
+        else if (vacuumDropPercent > 0f) type = PoolTypeEnums.Vacuum;
+        else if (chickenDropPercent > 0f) type = PoolTypeEnums.Chicken;
+        else return;
 
         if (!ObjectPool.Instance.TryGetPrefab(type, out GameObject prefab)
             || !prefab.TryGetComponent(out MeshFilter meshFilter) || meshFilter.sharedMesh == null) return;

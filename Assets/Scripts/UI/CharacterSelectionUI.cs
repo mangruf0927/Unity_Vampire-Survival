@@ -74,6 +74,8 @@ public class CharacterSelectionUI : MonoBehaviour
         for (int i = 0; i < cards.Length; i++)
             if (cards[i].playerId == playerId) registered = true;
         if (!registered) return;
+        if (DataManager.Instance.SelectedPlayerId != playerId)
+            SoundManager.Instance?.PlaySFX(SoundManager.UIClick, false);
         DataManager.Instance.SelectPlayer(playerId);
         for (int i = 0; i < cards.Length; i++)
             if (cards[i].background != null)

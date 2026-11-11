@@ -3695,10 +3695,29 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1001 &2270000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 827f4f6ff4bc45cbb1680118ecd279e2, type: 3}
+--- !u!4 &2270000001 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: 827f4f6ff4bc45cbb1680118ecd279e2, type: 3}
+  m_PrefabInstance: {fileID: 2270000000}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 2270000001}
   - {fileID: 2210000201}
   - {fileID: 1253580096}
   - {fileID: 616257608}

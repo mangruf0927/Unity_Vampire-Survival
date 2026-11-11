@@ -50,6 +50,7 @@ public class ExperienceGem : MonoBehaviour
         if (!player.isActiveAndEnabled) return;
 
         collected = true;
+        SoundManager.Instance?.PlaySFX(SoundManager.ExperiencePickup);
         player.AddExperience(Mathf.Max(1, experienceValue));
         ObjectPool.Instance.TryReturnToPool(gameObject);
     }

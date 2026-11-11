@@ -66,6 +66,7 @@ public class MagicWandWeapon : Weapon
 
         Projectile projectile = Instantiate(projectilePrefab, AttackOrigin.position, Quaternion.LookRotation(direction, Vector3.up));
         projectile.Initialize(direction.normalized, projectileSpeed * CharacterProjectileSpeedMultiplier, TargetCamera, Damage, PenetrationCount, Knockback);
+        SoundManager.Instance?.PlaySFX(SoundManager.MagicWandAttack);
     }
 
     private EnemyMovement FindNearestVisibleEnemy()

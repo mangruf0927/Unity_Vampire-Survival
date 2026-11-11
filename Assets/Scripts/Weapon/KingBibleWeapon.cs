@@ -113,6 +113,7 @@ public class KingBibleWeapon : Weapon
 
     private void BeginAttack()
     {
+        SoundManager.Instance?.PlaySFX(SoundManager.KingBibleAttack);
         RemoveExpiredRecords();
         activeCount = ProjectileCount;
         activeDamage = Damage;

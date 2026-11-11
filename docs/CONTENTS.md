@@ -871,3 +871,34 @@
 - 이미 발사한 투사체, 시작한 연사의 예약 개수, 진행 중인 성경의 확정 능력치는 기존 스냅샷을 유지한다. 이후 발사/연사/공격 시작 시 새 보너스를 반영한다. 새 게임에서는 무기 레벨·장신구·캐릭터 성장 보너스가 초기화된다.
 - 검증: 전체 스크립트 Unity 참조 컴파일, 실제 JSON·선택 UI·캐릭터·무기 관리/무기 코드를 사용하는 임시 검사 170개를 통과했다. 세 시작 무기, 양쪽 컴포넌트 초기화 순서, 레벨 경계/상한, 시금치 곱연산, 이멜다 실제 지팡이·단검 발사 속도/성경 회전 강화, 젠나로 네 무기와 신규 획득, UI 선택/중복 씬 전환 방지/좁은 화면 크기/Play 초기화를 확인했다. 씬의 카드 3개·시작 버튼·EventSystem·GraphicRaycaster·플레이어 연결도 검사했다. 실제 Unity UI 렌더링과 입력은 추가 플레이 테스트가 필요하다.
 - Unity 테스트: StartScene에서 아무 키 → 카드 선택 강조 → 시작을 확인한다. 각 캐릭터의 색상·시작 무기, 초기 HUD 1개 표시, 일반 레벨업 선택을 확인한다. Players JSON의 경험치 요구량을 임시로 낮춰 안토니오 9→10/49→50, 이멜다 4→5/14→15의 배율과 상한을 확인한 뒤 복원한다. 젠나로로 채찍·성경을 획득해 +1과 균등 배치/반대 방향 추가 베기를 확인한다. 종료 후 다시 선택·시작하면 이전 성장값이 남지 않는지도 확인한다.
+
+
+### BGM·SFX 시스템 — 구현
+
+- 기존 Singleton<T>와 SoundManager를 재사용했다. 별도 오디오 매니저·이벤트 버스·게임 ObjectPool 연결·음원 파일은 추가하지 않는다. AudioSource는 BGM 1개와 SFX 고정 채널을 런타임 자식으로 생성해 재사용한다.
+- Singleton.Awake에서 자기 인스턴스를 등록하고 중복 객체는 초기화 전에 제거한다. 씬 유지도 여기서 담당한다. OnDestroy는 Instance 접근 없이 참조만 비우며 종료/에디터 상태에서 자동 생성을 막는다. SoundManager의 플레이 진입 초기화로 도메인 재사용 시 정적 참조와 종료 플래그를 초기화한다. 기존 destroyOnLoad 설정은 기본 false다.
+- Assets/Prefabs/SoundManager.prefab 하나를 StartScene·GameScene에 실제 프리팹 인스턴스로 배치했다. StartScene에서 생성된 하나가 씬 전환 후 유지되고 중복은 제거된다. GameScene 직접 실행도 같은 설정을 사용한다. 기존 씬별 카메라 AudioListener 한 개씩을 유지하며 SoundManager에는 Listener를 추가하지 않는다.
+- BGM List의 Sound Name은 StartScene, GameScene이다. 시작 화면과 캐릭터 선택은 같은 씬이므로 같은 BGM을 이어서 사용한다. 씬 전환 시 이전 SFX·재생 간격 기록과 BGM을 정리한 뒤 해당 씬의 BGM을 재생한다. 자동 생성이 늦어진 경우 Start에서 현재 씬 BGM도 확인한다. 같은 Clip이 이미 재생 중이면 다시 시작하지 않는다.
+- 모든 Audio Clip은 현재 None으로 비워 두었다. 빈 목록·미등록 이름·미연결 Clip은 재생을 생략하며 요청마다 경고를 출력하지 않는다. 비어 있는 이름·중복 이름 같은 설정 오류는 초기화/Inspector 갱신 때만 경고한다. 이름→Sound Dictionary를 사용해 재생마다 배열 검색과 캡처 람다를 생성하지 않는다.
+- BGM Volume 기본 0.3, SFX Volume 기본 1, Channels 기본 16이다. 채널 개수는 SFX 목록 개수와 독립적이며 0/음수 입력은 최소 1로 초기화한다. 빈 채널부터 재생하고 모두 사용 중이면 새 요청을 생략한다. 재생 중인 소리를 순환 덮어쓰기 하지 않는다. BGM/SFX 모두 2D(spatialBlend=0), playOnAwake=false다.
+- Minimum Interval은 같은 이름의 효과음이 겹쳐 요청되는 간격을 제한하며 unscaledTime을 사용한다. 피격/사망 기본 0.05초, 경험치 획득 0.03초, 무기별 공격 0.03~0.05초, 플레이어 피격 0.1초, 레벨업 0.08초, UI 0.05초다. 모두 프리팹 Inspector에서 수정할 수 있다. 제한은 성공적으로 재생했을 때만 시작한다.
+
+| SFX 이름 | 호출 시점 |
+| --- | --- |
+| MagicWandAttack | 대상이 있어 실제 지팡이 투사체를 발사했을 때 |
+| KnifeAttack | 단검 투사체 발사 |
+| KingBibleAttack | 성경의 새 공격 시작(큐브마다 반복하지 않음) |
+| WhipAttack | 각 베기 생성 |
+| EnemyHit / EnemyDeath | 실제 적 피해 후 생존 / 사망(치명타에는 Death만) |
+| PlayerHit | 공통 피해 간격에 차단되지 않은 실제 피해 |
+| ExperiencePickup | 보석 획득 확정 1회(끌어당김 시작 시에는 재생하지 않음) |
+| LevelUp | 레벨업 선택 화면 표시(경험치만 증가한 알림에는 재생하지 않음) |
+| GameOver / StageCompleted | GameManager 결과 확정 |
+| UIClick | 캐릭터 변경, 일시 정지·계속하기 |
+
+- GameManager가 정지/선택/종료 시 SetGameplayPaused(true)로 전투 효과음을 정지한다. PlaySFX의 gameplaySound 기본값 true는 정지 상태 또는 timeScale=0에서 차단된다. LevelUp·결과·UI는 false로 요청해 게임 시간이 정지해도 재생한다.
+- 일시 정지와 연속 레벨업 선택 동안 BGM은 유지한다. 계속하기/최종 선택 완료 시 전투 SFX 차단을 해제한다. 게임 오버·클리어는 BGM도 정지하고 결과 효과음을 재생한다. 씬 전환 시 이전 효과음은 정리한다. 게임 상태와 전환 판단은 기존 GameManager가 담당한다.
+- 나중에 음원을 연결할 곳은 **공통 SoundManager.prefab Inspector의 BGM List / SFX List > Audio Clip**이다. 미리 등록된 Sound Name을 유지하고 Clip을 연결한 뒤 실행하면 된다. 기존 이름 항목의 Clip은 재생 중인 인스턴스 Inspector에서도 나중에 연결할 수 있다. 새 이름/목록과 볼륨을 Play 중 수정하면 OnValidate에서 사전과 볼륨을 갱신한다. Channels 변경은 Play를 새로 시작한다.
+- 기존 ChangeBGMVolume/ChangeSFXVolume/GetBGMVolume/GetSFXVolume API는 유지하며 0~1로 제한한다. 볼륨 설정 UI나 저장 기능, 믹서·공간 음향·음원 생성은 이번 범위에 포함하지 않는다.
+- 검증: 전체 Unity 참조 컴파일, 실제 Singleton/SoundManager와 모의 AudioSource·씬 이벤트를 사용한 검사 33개를 통과했다. 빈 목록·미연결 음원·채널 0·빈 채널/포화 정책·재생 간격·정지와 UI 예외·나중 Clip 할당·BGM 전환·중복 객체·구독 해제·종료/에디터 생성 방지를 확인했다. 두 씬의 공통 프리팹 참조·유일 ID·Listener 1개·빈 Clip 14개와 기본 채널 16 연결도 검사했다. 실제 Unity 재생과 청취는 하지 않았다.
+- Unity 테스트: 음원이 없는 상태에서 StartScene → 캐릭터 선택 → 전투·레벨업·정지·재개·결과 → 시작 화면 복귀를 확인한다. DontDestroyOnLoad 영역의 SoundManager가 하나이며 자식 BGM Player와 16개 AudioSource의 SFX Player가 중복 생성되지 않는지 확인한다. 이후 Clip을 연결해 씬 BGM, 무기별 공격과 피해/획득·레벨업, 정지 중 BGM 유지/전투 효과음 정지, 결과 BGM 정지를 확인한다.

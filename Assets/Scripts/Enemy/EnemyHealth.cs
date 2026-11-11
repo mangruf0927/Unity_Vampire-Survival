@@ -29,6 +29,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         if (isDead || damage <= 0f) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - damage);
+        SoundManager.Instance?.PlaySFX(currentHealth > 0f ? SoundManager.EnemyHit : SoundManager.EnemyDeath);
         if (currentHealth > 0f) return;
 
         isDead = true;

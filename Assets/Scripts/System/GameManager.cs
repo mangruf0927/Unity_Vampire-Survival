@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour, IObserver
     private void Awake()
     {
         Time.timeScale = 1f;
+        SoundManager.Instance?.SetGameplayPaused(false);
     }
 
     private void Start()
@@ -112,6 +113,7 @@ public class GameManager : MonoBehaviour, IObserver
         if (!ShowNextChoice())
         {
             Time.timeScale = 1f;
+            SoundManager.Instance?.SetGameplayPaused(false);
             if (pauseUI != null) pauseUI.SetPauseAvailable(true);
         }
     }
@@ -142,6 +144,8 @@ public class GameManager : MonoBehaviour, IObserver
         }
         State = GameState.ChoosingUpgrade;
         Time.timeScale = 0f;
+        SoundManager.Instance?.SetGameplayPaused(true);
+        SoundManager.Instance?.PlaySFX(SoundManager.LevelUp, false);
         if (pauseUI != null) pauseUI.SetPauseAvailable(false);
         levelUpUI.Show(choices);
         return true;
@@ -154,6 +158,8 @@ public class GameManager : MonoBehaviour, IObserver
         if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)) return;
         State = GameState.Paused;
         Time.timeScale = 0f;
+        SoundManager.Instance?.SetGameplayPaused(true);
+        SoundManager.Instance?.PlaySFX(SoundManager.UIClick, false);
         if (pauseUI != null) pauseUI.Show();
     }
 
@@ -162,6 +168,8 @@ public class GameManager : MonoBehaviour, IObserver
         if (State != GameState.Paused || isLeaving) return;
         State = GameState.Playing;
         Time.timeScale = 1f;
+        SoundManager.Instance?.SetGameplayPaused(false);
+        SoundManager.Instance?.PlaySFX(SoundManager.UIClick, false);
         if (pauseUI != null) pauseUI.Hide();
     }
 
@@ -185,6 +193,10 @@ public class GameManager : MonoBehaviour, IObserver
         if (levelUpUI != null) levelUpUI.Hide();
         State = result;
         Time.timeScale = 0f;
+        SoundManager.Instance?.SetGameplayPaused(true);
+        SoundManager.Instance?.StopBGM();
+        SoundManager.Instance?.PlaySFX(result == GameState.Completed
+            ? SoundManager.StageCompleted : SoundManager.GameOver, false);
 
         if (pauseUI != null)
         {

@@ -69,5 +69,6 @@ public class KnifeWeapon : Weapon
         projectile.transform.localScale *= areaMultiplier;
         projectile.Initialize(direction, projectileSpeed * speedMultiplier * CharacterProjectileSpeedMultiplier, TargetCamera,
             Damage, PenetrationCount, Knockback, areaMultiplier);
+        SoundManager.Instance?.PlaySFX(SoundManager.KnifeAttack);
     }
 }

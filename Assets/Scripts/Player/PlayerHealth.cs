@@ -46,6 +46,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
         if (isDead || damage <= 0f || Time.timeScale <= 0f || Time.time < nextDamageTime) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - damage);
+        SoundManager.Instance?.PlaySFX(SoundManager.PlayerHit);
         nextDamageTime = Time.time + Mathf.Max(0.01f, damageInterval);
         if (currentHealth <= 0f) Die();
         NotifyObservers();

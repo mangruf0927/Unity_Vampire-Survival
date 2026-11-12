@@ -3,13 +3,13 @@ using UnityEngine;
 public class WhipWeapon : Weapon
 {
     [SerializeField] private WhipSlash slashPrefab;
-    private float cooldown = 1.35f;
-    private float burstInterval = 0.1f;
-    private float slashLength = 3f;
-    private float slashWidth = 0.7f;
-    private float slashDuration = 0.15f;
+    private float cooldown;
+    private float burstInterval;
+    private float slashLength;
+    private float slashWidth;
+    private float slashDuration;
 
-    private float areaMultiplier = 1f;
+    private float areaMultiplier;
     private float burstRemaining;
     private int shotsRemaining;
     private float lastSide = 1f;
@@ -27,11 +27,11 @@ public class WhipWeapon : Weapon
     protected override void ApplyWeaponData(WeaponData data)
     {
         cooldown = data.cooldown;
-        burstInterval = data.burstInterval;
-        slashLength = data.slashLength;
-        slashWidth = data.slashWidth;
-        slashDuration = data.slashDuration;
-        areaMultiplier = data.areaMultiplier;
+        burstInterval = data.burstInterval.Value;
+        slashLength = data.slashLength.Value;
+        slashWidth = data.slashWidth.Value;
+        slashDuration = data.slashDuration.Value;
+        areaMultiplier = data.areaMultiplier.GetValueOrDefault(1f);
     }
 
     protected override void UpgradeWeapon(int level)

@@ -3,12 +3,12 @@ using UnityEngine;
 public class KnifeWeapon : Weapon
 {
     [SerializeField] private Projectile projectilePrefab;
-    private float cooldown = 1f;
-    private float burstInterval = 0.1f;
-    private int penetrationCount = 1;
-    private float projectileSpeed = 12f;
-    private float speedMultiplier = 1f;
-    private float areaMultiplier = 1f;
+    private float cooldown;
+    private float burstInterval;
+    private int penetrationCount;
+    private float projectileSpeed;
+    private float speedMultiplier;
+    private float areaMultiplier;
 
     private float burstRemaining;
     private int shotsRemaining;
@@ -25,11 +25,11 @@ public class KnifeWeapon : Weapon
     protected override void ApplyWeaponData(WeaponData data)
     {
         cooldown = data.cooldown;
-        burstInterval = data.burstInterval;
-        penetrationCount = data.penetrationCount;
-        projectileSpeed = data.projectileSpeed;
-        speedMultiplier = data.speedMultiplier;
-        areaMultiplier = data.areaMultiplier;
+        burstInterval = data.burstInterval.Value;
+        penetrationCount = data.penetrationCount.Value;
+        projectileSpeed = data.projectileSpeed.Value;
+        speedMultiplier = data.speedMultiplier.GetValueOrDefault(1f);
+        areaMultiplier = data.areaMultiplier.GetValueOrDefault(1f);
     }
 
     protected override void UpgradeWeapon(int level)

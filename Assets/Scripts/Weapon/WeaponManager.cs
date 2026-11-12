@@ -51,7 +51,7 @@ public class WeaponManager : MonoBehaviour
         if (playerMovement == null) playerMovement = GetComponent<PlayerMovement>();
         if (attackOrigin == null) attackOrigin = transform;
         if (gameCamera == null) gameCamera = Camera.main;
-        int startingId = DataManager.Instance.SelectedPlayer.startingWeaponId;
+        int startingId = DataManager.Instance.SelectedPlayer.weaponId;
         if (weaponPrefabs != null)
         {
             for (int i = 0; i < weaponPrefabs.Length; i++)

@@ -44,7 +44,7 @@ public class CharacterSelectionUI : MonoBehaviour
             CharacterCard card = cards[i];
             PlayerData data = DataManager.Instance.Players.Get(card.playerId);
             card.characterName.text = data.displayName;
-            card.startingWeapon.text = "시작 무기: " + DataManager.Instance.Weapons.Get(data.startingWeaponId).displayName;
+            card.startingWeapon.text = "시작 무기: " + DataManager.Instance.Weapons.Get(data.weaponId).displayName;
             card.description.text = data.abilityDescription;
         }
         SelectCharacter(cards[0].playerId);

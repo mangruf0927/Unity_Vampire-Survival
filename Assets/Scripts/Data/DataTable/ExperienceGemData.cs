@@ -1,4 +1,3 @@
-using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -14,6 +13,13 @@ public class ExperienceGemData : IGameData, IValidatable
             Debug.LogError($"ExperienceGemData ID가 유효하지 않습니다. ID: {Id}");
             return false;
         }
+
+        if (experienceValue <= 0)
+        {
+            Debug.LogError($"ExperienceGemData experienceValue가 유효하지 않습니다. ID: {Id}, experienceValue: {experienceValue}");
+            return false;
+        }
+
         return true;
     }
 }

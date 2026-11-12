@@ -43,8 +43,8 @@ public class PlayerCharacter : MonoBehaviour, IObserver
         if (weaponManager == null || playerExperience == null || lastLevel == playerExperience.Level) return;
         lastLevel = playerExperience.Level;
         PlayerData data = DataManager.Instance.SelectedPlayer;
-        int steps = data.abilityLevelInterval > 0 ? playerExperience.Level / data.abilityLevelInterval : 1;
-        float bonus = Mathf.Min(data.maximumAbilityBonus, steps * data.abilityBonusPerStep);
+        int steps = data.abilityInterval > 0 ? playerExperience.Level / data.abilityInterval : 1;
+        float bonus = Mathf.Min(data.maxAbilityBonus, steps * data.abilityBonus);
         float damage = 1f;
         float speed = 1f;
         int count = 0;

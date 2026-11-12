@@ -4,11 +4,11 @@ using UnityEngine;
 public class KingBibleWeapon : Weapon
 {
     [SerializeField] private BibleProjectile projectilePrefab;
-    private float cooldown = 3f;
-    private float duration = 3f;
-    private float orbitRadius = 2f;
-    private float rotationSpeed = 180f;
-    private float hitboxDelay = 1.7f;
+    private float cooldown;
+    private float duration;
+    private float orbitRadius;
+    private float rotationSpeed;
+    private float hitboxDelay;
 
     private struct HitRecord
     {
@@ -31,8 +31,8 @@ public class KingBibleWeapon : Weapon
     private float activeRadius;
     private float activeSpeed;
     private float activeHitboxDelay;
-    private float speedMultiplier = 1f;
-    private float radiusMultiplier = 1f;
+    private float speedMultiplier;
+    private float radiusMultiplier;
 
     protected override float BaseCooldown => cooldown;
     public float Duration => duration;
@@ -42,12 +42,12 @@ public class KingBibleWeapon : Weapon
     protected override void ApplyWeaponData(WeaponData data)
     {
         cooldown = data.cooldown;
-        duration = data.duration;
-        orbitRadius = data.orbitRadius;
-        rotationSpeed = data.rotationSpeed;
-        hitboxDelay = data.hitboxDelay;
-        speedMultiplier = data.speedMultiplier;
-        radiusMultiplier = data.areaMultiplier;
+        duration = data.duration.Value;
+        orbitRadius = data.orbitRadius.Value;
+        rotationSpeed = data.rotationSpeed.Value;
+        hitboxDelay = data.hitboxDelay.Value;
+        speedMultiplier = data.speedMultiplier.GetValueOrDefault(1f);
+        radiusMultiplier = data.areaMultiplier.GetValueOrDefault(1f);
     }
 
     protected override void UpgradeWeapon(int level)

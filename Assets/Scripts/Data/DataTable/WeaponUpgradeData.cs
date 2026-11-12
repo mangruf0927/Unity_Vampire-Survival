@@ -1,51 +1,89 @@
 using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
-[Serializable]
 public class WeaponUpgradeData
 {
     [JsonProperty(Required = Required.Always)] public int level;
-    public float damage;
-    public int projectileCount;
-    public float cooldown;
-    public float burstInterval;
-    public int penetrationCount;
-    public float duration;
-    public float speedMultiplier;
-    public float areaMultiplier;
+    [JsonProperty(Required = Required.Always)] public string description;
+
+    [JsonProperty(Required = Required.DisallowNull)] public float damage;
+    [JsonProperty(Required = Required.DisallowNull)] public int projectileCount;
+    [JsonProperty(Required = Required.DisallowNull)] public float cooldown;
+    [JsonProperty(Required = Required.DisallowNull)] public float burstInterval;
+    [JsonProperty(Required = Required.DisallowNull)] public int penetrationCount;
+    [JsonProperty(Required = Required.DisallowNull)] public float duration;
+    [JsonProperty(Required = Required.DisallowNull)] public float speedMultiplier;
+    [JsonProperty(Required = Required.DisallowNull)] public float areaMultiplier;
 
     public bool Validate()
     {
-        if (level < 2 || level > 8) return Invalid("level은 2~8이어야 합니다.");
+        if (level < 2 || level > 8)
+        {
+            Debug.LogError($"WeaponUpgradeData level이 유효하지 않습니다. level: {level}");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            Debug.LogError($"WeaponUpgradeData description이 유효하지 않습니다. level: {level}");
+            return false;
+        }
+
+        if (float.IsNaN(damage) || float.IsInfinity(damage))
+        {
+            Debug.LogError($"WeaponUpgradeData damage가 유효하지 않습니다. level: {level}, damage: {damage}");
+            return false;
+        }
+
+        if (float.IsNaN(cooldown) || float.IsInfinity(cooldown))
+        {
+            Debug.LogError($"WeaponUpgradeData cooldown이 유효하지 않습니다. level: {level}, cooldown: {cooldown}");
+            return false;
+        }
+
+        if (float.IsNaN(burstInterval) || float.IsInfinity(burstInterval))
+        {
+            Debug.LogError($"WeaponUpgradeData burstInterval이 유효하지 않습니다. level: {level}, burstInterval: {burstInterval}");
+            return false;
+        }
+
+        if (float.IsNaN(duration) || float.IsInfinity(duration))
+        {
+            Debug.LogError($"WeaponUpgradeData duration이 유효하지 않습니다. level: {level}, duration: {duration}");
+            return false;
+        }
+
+        if (float.IsNaN(speedMultiplier) || float.IsInfinity(speedMultiplier))
+        {
+            Debug.LogError($"WeaponUpgradeData speedMultiplier가 유효하지 않습니다. level: {level}, speedMultiplier: {speedMultiplier}");
+            return false;
+        }
+
+        if (float.IsNaN(areaMultiplier) || float.IsInfinity(areaMultiplier))
+        {
+            Debug.LogError($"WeaponUpgradeData areaMultiplier가 유효하지 않습니다. level: {level}, areaMultiplier: {areaMultiplier}");
+            return false;
+        }
+
         return true;
     }
 
-    public string GetDescription(string speedLabel)
+    public string GetDescription()
     {
-        List<string> effects = new();
-        AddEffect(effects, "피해량이", damage, "");
-        AddEffect(effects, "투사체 수가", projectileCount, "개");
-        AddEffect(effects, "쿨타임이", cooldown, "초");
-        AddEffect(effects, "연사 간격이", burstInterval, "초");
-        AddEffect(effects, "관통 수가", penetrationCount, "");
-        AddEffect(effects, "지속시간이", duration, "초");
-        AddEffect(effects, speedLabel + "가", speedMultiplier * 100f, "%");
-        AddEffect(effects, "공격 범위가", areaMultiplier * 100f, "%");
-        return effects.Count > 0 ? string.Join("\n", effects) : "능력치 변화 없음";
+        return description
+            .Replace("{damage}", Format(damage))
+            .Replace("{projectileCount}", Format(projectileCount))
+            .Replace("{cooldown}", Format(cooldown))
+            .Replace("{burstInterval}", Format(burstInterval))
+            .Replace("{penetrationCount}", Format(penetrationCount))
+            .Replace("{duration}", Format(duration))
+            .Replace("{speedPercent}", Format(speedMultiplier * 100f))
+            .Replace("{areaPercent}", Format(areaMultiplier * 100f));
     }
 
-    private static void AddEffect(List<string> effects, string name, float value, string unit)
+    private static string Format(float value)
     {
-        if (value == 0f) return;
-        string change = value > 0f ? " 증가합니다." : " 감소합니다.";
-        effects.Add(name + " " + Math.Abs(value).ToString("0.##") + unit + change);
-    }
-
-    private bool Invalid(string message)
-    {
-        Debug.LogError($"WeaponUpgradeData level {level}: {message}");
-        return false;
+        return Math.Abs(value).ToString("0.##");
     }
 }

@@ -15,6 +15,25 @@ public class AccessoryData : IGameData, IValidatable
             Debug.LogError($"Accessory Id is invalid. Id: {Id}");
             return false;
         }
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            Debug.LogError($"Accessory displayName is invalid. Id: {Id}");
+            return false;
+        }
+
+        if (float.IsNaN(bonusPerLevel) || float.IsInfinity(bonusPerLevel) || bonusPerLevel <= 0)
+        {
+            Debug.LogError($"Accessory bonusPerLevel is invalid. Id: {Id}, bonusPerLevel: {bonusPerLevel}");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(choiceDescription))
+        {
+            Debug.LogError($"Accessory choiceDescription is invalid. Id: {Id}");
+            return false;
+        }
+
         return true;
     }
 }

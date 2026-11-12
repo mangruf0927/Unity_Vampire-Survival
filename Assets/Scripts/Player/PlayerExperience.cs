@@ -3,8 +3,8 @@ using UnityEngine;
 
 public class PlayerExperience : MonoBehaviour, ISubject
 {
-    private int firstLevelRequirement = 5;
-    private int experienceIncreasePerLevel = 10;
+    private int initialExp = 5;
+    private int expGrowth = 10;
     [SerializeField] private SphereCollider attractionCollider;
     private float attractionRange = 1f;
     private float attractionSpeed = 10f;
@@ -16,13 +16,13 @@ public class PlayerExperience : MonoBehaviour, ISubject
 
     public int Level => level;
     public int CurrentExperience => currentExperience;
-    public int RequiredExperience => Mathf.Max(1, firstLevelRequirement + (level - 1) * experienceIncreasePerLevel);
+    public int RequiredExperience => Mathf.Max(1, initialExp + (level - 1) * expGrowth);
 
     private void Awake()
     {
         PlayerData data = DataManager.Instance.SelectedPlayer;
-        firstLevelRequirement = data.firstLevelRequirement;
-        experienceIncreasePerLevel = data.experienceIncreasePerLevel;
+        initialExp = data.initialExp;
+        expGrowth = data.expGrowth;
         attractionRange = data.attractionRange;
         attractionSpeed = data.attractionSpeed;
 

@@ -3,11 +3,13 @@ using UnityEngine;
 public class MagicWandWeapon : Weapon
 {
     [SerializeField] private Projectile projectilePrefab;
-    private float cooldown = 1.2f;
-    private float projectileSpeed = 12f;
+    private float cooldown;
+    private float projectileSpeed;
 
-    private float burstInterval = 0.1f;
-    private int penetrationCount = 1;
+    private float burstInterval;
+    private int penetrationCount;
+    private float speedMultiplier;
+    private float areaMultiplier;
 
     protected override float BaseCooldown => cooldown;
     public int PenetrationCount => penetrationCount;
@@ -15,9 +17,11 @@ public class MagicWandWeapon : Weapon
     protected override void ApplyWeaponData(WeaponData data)
     {
         cooldown = data.cooldown;
-        projectileSpeed = data.projectileSpeed;
-        burstInterval = data.burstInterval;
-        penetrationCount = data.penetrationCount;
+        projectileSpeed = data.projectileSpeed.Value;
+        burstInterval = data.burstInterval.Value;
+        penetrationCount = data.penetrationCount.Value;
+        speedMultiplier = data.speedMultiplier.GetValueOrDefault(1f);
+        areaMultiplier = data.areaMultiplier.GetValueOrDefault(1f);
     }
 
     protected override void UpgradeWeapon(int level)
@@ -27,6 +31,8 @@ public class MagicWandWeapon : Weapon
         cooldown += upgrade.cooldown;
         burstInterval += upgrade.burstInterval;
         penetrationCount += upgrade.penetrationCount;
+        speedMultiplier += upgrade.speedMultiplier;
+        areaMultiplier += upgrade.areaMultiplier;
     }
 
     private float burstRemaining;
@@ -65,7 +71,9 @@ public class MagicWandWeapon : Weapon
         if (direction.sqrMagnitude < 0.000001f) return;
 
         Projectile projectile = Instantiate(projectilePrefab, AttackOrigin.position, Quaternion.LookRotation(direction, Vector3.up));
-        projectile.Initialize(direction.normalized, projectileSpeed * CharacterProjectileSpeedMultiplier, TargetCamera, Damage, PenetrationCount, Knockback);
+        projectile.transform.localScale *= areaMultiplier;
+        projectile.Initialize(direction.normalized, projectileSpeed * speedMultiplier * CharacterProjectileSpeedMultiplier,
+            TargetCamera, Damage, PenetrationCount, Knockback, areaMultiplier);
         SoundManager.Instance?.PlaySFX(SoundManager.MagicWandAttack);
     }
 

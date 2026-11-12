@@ -1007,3 +1007,56 @@
 - GameScene의 세 맵 장신구에서 남아 있던 Sprite 자식과 삭제된 player/startOffset/groundHeight/iconRenderer/iconSize 직렬화 데이터를 제거했다. 기존 임시 3D MeshRenderer를 다시 활성화하고 현재 메시의 바닥이 Y=0에 맞도록 루트 Y를 0.5로 조정했다. 실제 3D 모델 제작/교체는 이번 범위에 포함하지 않는다. 선택 UI와 HUD에서 사용하는 실제 장신구 아이콘은 유지한다.
 - 배치와 높이는 이제 씬 Transform에서 직접 지정한다. 시작 플레이어 위치 변경 시 상대 위치를 자동으로 다시 계산하거나 모델의 바닥 높이를 자동 보정하지 않는다. 3D 모델을 교체하면 Transform/자식 메시 위치와 획득용 Trigger를 에디터에서 맞춘다. 청크의 자식으로 두지 않는 원칙과 맵 획득의 보유 제한 우회는 유지한다.
 - 검증: 전체 Unity 참조 컴파일 및 실제 MapAccessory/AccessoryManager를 사용한 모의 검사 19개를 통과했다. 획득 알림 중 재진입 차단, 4/5번째 획득, 보유 장신구 강화·최대 레벨 유지, 센서/정지/사망/비활성 소유자 차단, 잘못된 프리팹 및 성공 후 제거를 확인했다. 씬의 GUID 연결·Sprite 자식/필드 제거·3D 메시 활성화·독립 루트·획득 Trigger 설정도 확인했다. Unity에서는 실제 3D 외형·지면 높이·몸체 접촉 획득을 확인한다.
+
+### JSON 필드·검증·무기 기본값 정리 — 변경
+
+- 모든 JSON 레코드는 대응 Data 클래스의 선언 순서로 키를 정렬했다. 무기 전용 필드와 강화 변화량은 해당 레코드에 필요한 키만 작성하고, 작성된 키끼리의 상대 순서를 클래스와 일치시킨다. 데이터 테이블 구조·ID·기존 밸런스 수치·강화 수치는 유지한다.
+- 사용자가 PlayerData에서 줄인 이름을 기준으로 Players.json과 참조 코드를 함께 변경했다.
+
+| 이전 이름 | 현재 이름 |
+| --- | --- |
+| startingWeaponId | weaponId |
+| abilityLevelInterval | abilityInterval |
+| abilityBonusPerStep | abilityBonus |
+| maximumAbilityBonus | maxAbilityBonus |
+| firstLevelRequirement | initialExp |
+| experienceIncreasePerLevel | expGrowth |
+
+- PlayerCharacter, PlayerExperience, WeaponManager, CharacterSelectionUI에서 현재 이름을 사용한다. WeaponUpgradeData도 현재의 짧은 damage/projectileCount/cooldown/burstInterval/penetrationCount/duration/speedMultiplier/areaMultiplier 이름을 유지한다. 강화 레코드의 값은 기본값이 아니라 이전 레벨에 더하는 변화량이다.
+- 정상적인 EnemyData/AccessoryData/ExperienceGemData의 기존 검증은 유지했다. PlayerData는 주기 능력의 abilityInterval이 양수여야 하지만 ExtraProjectile은 0도 허용하도록 수정했다. DataManager는 로딩 완료 전에 캐릭터 weaponId가 실제 Weapons 테이블에 존재하는지 확인한다.
+- WeaponData에 문자열 enum attackType을 추가했다. 이는 무기 ID와 독립적인 필드 필수 조건을 구분하는 용도이며 새 매니저·상속 데이터 클래스·파일은 추가하지 않는다. 공통 Id/displayName/acquisitionDescription/attackType/damage/projectileCount/knockback/cooldown/upgrades는 Required.Always다.
+
+| attackType | 적용 무기 | 추가 필수 수치 |
+| --- | --- | --- |
+| Projectile | Magic Wand, Knife | burstInterval, projectileSpeed, penetrationCount |
+| Orbit | King Bible | duration, orbitRadius, rotationSpeed, hitboxDelay |
+| Slash | Whip | burstInterval, slashLength, slashWidth, slashDuration |
+
+- 전용 필드는 nullable로 누락 여부를 구분하고, 해당 공격 방식에서 필요한 값만 Validate에서 필수로 검사한다. JSON에 지정된 전용 수치는 양수여야 한다. `Required.DisallowNull`은 키 생략을 허용하되 명시적인 null은 거부한다. 따라서 성경에 투사체 속도/관통 수/연사 간격을 넣거나 채찍에 회전 수치를 넣을 필요가 없다.
+- WeaponData의 공격 기본값 초기화를 제거하고 현재 사용하는 수치를 Weapons.json에 명시했다. 사용하는 무기의 speedMultiplier/areaMultiplier 초기값도 1로 기록했다. 이 두 배율을 생략하면 보정 없음인 1배를 사용한다. 채찍에는 사용하지 않는 speedLabel을 제거했다. speedLabel은 실제 속도 강화 설명이 있을 때만 필수다.
+- 무기 스크립트에 중복으로 선언된 기본 공격 수치도 제거하고 Acquire → ApplyWeaponData에서 검증된 JSON 값을 적용한다. Magic Wand도 Projectile 방식의 속도·범위 배율을 읽고 강화에 반영하도록 맞췄으며 현재 값은 1이라 기존 공격 결과는 유지한다. 캐릭터/장신구 보너스의 중립 배율 1, 런타임 타이머·방향·안전 최소 간격 같은 동작 상수는 그대로다.
+- WeaponUpgradeData의 미지정 변화량 0은 그대로 유지해 변화하지 않는 항목을 매번 JSON에 작성하지 않아도 된다. 명시적 null과 NaN/Infinity를 거부하고, WeaponData가 각 강화 Validate를 호출한다. 2~8레벨의 7개 항목·순서·null 항목 검증, 공격 방식이 사용하지 않는 강화 항목 및 속도 강화 설명의 speedLabel 검증을 유지/추가했다. 쿨타임 감소 같은 음수 변화량은 정상 데이터이므로 허용한다. 강화 누적 전체를 시뮬레이션하는 복잡한 검증 시스템은 추가하지 않는다.
+- 기존 DataTable의 미등록 JSON 키 거부, 필수 필드 누락·중복 ID·빈 테이블·알 수 없는 테이블·중복 테이블·실패 시 테이블 정리 동작을 유지한다. 예전 키의 자동 호환 별칭은 추가하지 않고 프로젝트 JSON과 사용 코드를 모두 현재 이름으로 이관했다. GetUpgrade/GetDescription 및 UI 연결은 유지한다.
+- 검증: 전체 Unity 참조 컴파일, 실제 로더·Data 클래스·무기를 사용하는 JSON/무기 검사 367개, 실제 캐릭터·선택 UI·플레이어·무기를 사용하는 기존 회귀 검사 170개를 통과했다. 모든 공통 필수 필드 누락, 공격 방식별 누락/null/0, 선택 필드 생략, NaN/Infinity, 강화 순서·개수·지원하지 않는 변화량, 무기 1~8레벨 능력치/설명, 젠나로의 간격 0, 잘못된 시작 무기 참조와 로딩 복구를 확인했다. 전체 JSON 키/선언 순서 및 기존 밸런스 값 보존도 비교했다. 실제 Unity 플레이는 별도 확인한다.
+- Unity 확인: StartScene에서 세 캐릭터의 설명·시작 무기를 확인하고 플레이한다. 경험치 요구량 5/15/25…, 각 무기 1~8레벨 강화 설명과 실제 공격 수치, 장신구 표시/효과가 기존대로인지 확인한다. JSON 변경은 다음 Play 실행부터 적용한다.
+
+### 무기 강화 설명 JSON 관리 — 변경
+
+- WeaponData와 WeaponUpgradeData의 분리를 유지한다. 무기의 최초 획득 설명은 기존 acquisitionDescription을 사용하고, 레벨 2~8 강화 설명은 각 upgrades 항목의 `description`에서 읽는다. JSON 키 순서는 WeaponUpgradeData 선언과 같은 level → description → 기존 변화량 순서다.
+- 현재 무기 4종의 강화 항목 28개에 설명을 추가했다. 투사체 추가 문구도 마법 투사체/단검/성경/채찍의 실제 공격에 맞춰 JSON에서 작성한다. 강화 수치·레벨·쿨타임·공격 방식은 변경하지 않는다.
+- description은 Required.Always이고 Validate에서 공백 문구도 거부한다. GetDescription()은 JSON 문구를 읽고 아래 표시자만 단순 Replace로 치환한다. 표시자가 없는 완성 문구도 그대로 사용할 수 있다. 문장·조사·증가/감소 표현은 코드에서 자동 생성하지 않는다.
+
+| 표시자 | 표시하는 값 |
+| --- | --- |
+| {damage} | 피해량 변화량의 절댓값 |
+| {projectileCount} | 투사체 수 변화량의 절댓값 |
+| {cooldown} | 쿨타임 변화량의 절댓값(초) |
+| {burstInterval} | 연사 간격 변화량의 절댓값(초) |
+| {penetrationCount} | 관통 수 변화량의 절댓값 |
+| {duration} | 지속시간 변화량의 절댓값(초) |
+| {speedPercent} | speedMultiplier 변화량 × 100의 절댓값 |
+| {areaPercent} | areaMultiplier 변화량 × 100의 절댓값 |
+
+- 숫자는 기존과 같이 소수 둘째 자리까지 표시한다. 예: cooldown=-0.2, description="쿨타임이 {cooldown}초 감소합니다." → "쿨타임이 0.2초 감소합니다." 증감 방향을 바꾸면 JSON 문구도 함께 수정한다. 표시자 철자는 위 표대로 작성한다. 별도 템플릿 엔진·로컬라이제이션 시스템은 추가하지 않는다.
+- WeaponData와 Weapons.json의 speedLabel 및 관련 검증을 제거했다. Weapon.GetChoiceDescription은 기존 UI 흐름을 유지하며 upgrade.GetDescription()을 호출한다. 선택 UI는 수정하지 않는다.
+- 검증: 전체 Unity 참조 컴파일, 실제 JSON/무기 검사 510개와 기존 캐릭터/강화 회귀 검사 170개를 통과했다. 28개 단계 설명·표시자 치환·음수 감소량·백분율·수치 수정 반영·표시자 없는 문구·필수 설명 누락/null/공백 및 기존 1~8레벨 강화 수치를 확인했다. 실제 Unity에서는 각 무기의 다음 레벨 카드 문구와 수치를 확인한다.

@@ -8,9 +8,9 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public int DataId => dataId;
     protected WeaponData Data => DataManager.Instance.Weapons.Get(dataId);
     [SerializeField, Range(1, 8)] private int level = 1;
-    protected float damage = 10f;
-    protected int projectileCount = 1;
-    protected float knockback = 1f;
+    protected float damage;
+    protected int projectileCount;
+    protected float knockback;
 
     private bool upgradesInitialized;
     private float damageMultiplier = 1f;
@@ -53,7 +53,7 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     {
         if (!IsOwned) return Data.acquisitionDescription;
         WeaponUpgradeData upgrade = Data.GetUpgrade(Level + 1);
-        return upgrade != null ? upgrade.GetDescription(Data.speedLabel) : "최대 레벨";
+        return upgrade != null ? upgrade.GetDescription() : "최대 레벨";
     }
     public virtual float Damage => damage * damageMultiplier * characterDamageMultiplier;
     public virtual int ProjectileCount => projectileCount + characterProjectileBonus;

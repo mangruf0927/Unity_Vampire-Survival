@@ -5,6 +5,7 @@
       "Id": 1,
       "displayName": "Magic Wand",
       "acquisitionDescription": "화면 안의 가장 가까운 적을 향해 마법 투사체를 발사합니다.",
+      "attackType": "Projectile",
       "damage": 10.0,
       "projectileCount": 1,
       "knockback": 1.0,
@@ -12,34 +13,42 @@
       "burstInterval": 0.1,
       "projectileSpeed": 12.0,
       "penetrationCount": 1,
-      "speedLabel": "투사체 속도",
+      "speedMultiplier": 1.0,
+      "areaMultiplier": 1.0,
       "upgrades": [
         {
           "level": 2,
+          "description": "마법 투사체를 {projectileCount}개 더 발사합니다.",
           "projectileCount": 1
         },
         {
           "level": 3,
+          "description": "쿨타임이 {cooldown}초 감소합니다.",
           "cooldown": -0.2
         },
         {
           "level": 4,
+          "description": "마법 투사체를 {projectileCount}개 더 발사합니다.",
           "projectileCount": 1
         },
         {
           "level": 5,
+          "description": "피해량이 {damage} 증가합니다.",
           "damage": 10
         },
         {
           "level": 6,
+          "description": "마법 투사체를 {projectileCount}개 더 발사합니다.",
           "projectileCount": 1
         },
         {
           "level": 7,
+          "description": "관통 수가 {penetrationCount} 증가합니다.",
           "penetrationCount": 1
         },
         {
           "level": 8,
+          "description": "피해량이 {damage} 증가합니다.",
           "damage": 10
         }
       ]
@@ -48,6 +57,7 @@
       "Id": 2,
       "displayName": "Knife",
       "acquisitionDescription": "마지막 이동 방향으로 단검을 일직선으로 발사합니다.",
+      "attackType": "Projectile",
       "damage": 6.5,
       "projectileCount": 1,
       "knockback": 0.5,
@@ -57,38 +67,44 @@
       "penetrationCount": 1,
       "speedMultiplier": 1.0,
       "areaMultiplier": 1.0,
-      "speedLabel": "투사체 속도",
       "upgrades": [
         {
           "level": 2,
+          "description": "단검을 {projectileCount}개 더 발사합니다.",
           "projectileCount": 1
         },
         {
           "level": 3,
-          "projectileCount": 1,
-          "damage": 5
+          "description": "단검을 {projectileCount}개 더 발사합니다.\n피해량이 {damage} 증가합니다.",
+          "damage": 5,
+          "projectileCount": 1
         },
         {
           "level": 4,
+          "description": "단검을 {projectileCount}개 더 발사합니다.\n연사 간격이 {burstInterval}초 감소합니다.",
           "projectileCount": 1,
           "burstInterval": -0.02
         },
         {
           "level": 5,
+          "description": "관통 수가 {penetrationCount} 증가합니다.",
           "penetrationCount": 1
         },
         {
           "level": 6,
+          "description": "단검을 {projectileCount}개 더 발사합니다.\n연사 간격이 {burstInterval}초 감소합니다.",
           "projectileCount": 1,
           "burstInterval": -0.02
         },
         {
           "level": 7,
-          "projectileCount": 1,
-          "damage": 5
+          "description": "단검을 {projectileCount}개 더 발사합니다.\n피해량이 {damage} 증가합니다.",
+          "damage": 5,
+          "projectileCount": 1
         },
         {
           "level": 8,
+          "description": "연사 간격이 {burstInterval}초 감소합니다.\n관통 수가 {penetrationCount} 증가합니다.",
           "burstInterval": -0.02,
           "penetrationCount": 1
         }
@@ -98,46 +114,55 @@
       "Id": 3,
       "displayName": "King Bible",
       "acquisitionDescription": "플레이어 주위를 회전하는 성경이 주변 적을 공격합니다.",
+      "attackType": "Orbit",
       "damage": 10.0,
       "projectileCount": 1,
       "knockback": 1.0,
       "cooldown": 3.0,
+      "speedMultiplier": 1.0,
+      "areaMultiplier": 1.0,
       "duration": 3.0,
       "orbitRadius": 2.0,
       "rotationSpeed": 180.0,
       "hitboxDelay": 1.7,
-      "speedLabel": "회전 속도",
       "upgrades": [
         {
           "level": 2,
+          "description": "회전하는 성경이 {projectileCount}개 증가합니다.",
           "projectileCount": 1
         },
         {
           "level": 3,
+          "description": "회전 속도가 {speedPercent}% 증가합니다.\n공격 범위가 {areaPercent}% 증가합니다.",
           "speedMultiplier": 0.3,
           "areaMultiplier": 0.25
         },
         {
           "level": 4,
-          "duration": 0.5,
-          "damage": 10
+          "description": "피해량이 {damage} 증가합니다.\n지속시간이 {duration}초 증가합니다.",
+          "damage": 10,
+          "duration": 0.5
         },
         {
           "level": 5,
+          "description": "회전하는 성경이 {projectileCount}개 증가합니다.",
           "projectileCount": 1
         },
         {
           "level": 6,
+          "description": "회전 속도가 {speedPercent}% 증가합니다.\n공격 범위가 {areaPercent}% 증가합니다.",
           "speedMultiplier": 0.3,
           "areaMultiplier": 0.25
         },
         {
           "level": 7,
-          "duration": 0.5,
-          "damage": 10
+          "description": "피해량이 {damage} 증가합니다.\n지속시간이 {duration}초 증가합니다.",
+          "damage": 10,
+          "duration": 0.5
         },
         {
           "level": 8,
+          "description": "회전하는 성경이 {projectileCount}개 증가합니다.",
           "projectileCount": 1
         }
       ]
@@ -146,44 +171,52 @@
       "Id": 4,
       "displayName": "Whip",
       "acquisitionDescription": "화면 좌우로 길게 베어 범위 안의 적들을 관통 공격합니다.",
+      "attackType": "Slash",
       "damage": 10.0,
       "projectileCount": 1,
       "knockback": 1.0,
       "cooldown": 1.35,
       "burstInterval": 0.1,
+      "areaMultiplier": 1.0,
       "slashLength": 3.0,
       "slashWidth": 0.7,
       "slashDuration": 0.15,
-      "speedLabel": "투사체 속도",
       "upgrades": [
         {
           "level": 2,
+          "description": "채찍을 {projectileCount}회 더 휘두릅니다.",
           "projectileCount": 1
         },
         {
           "level": 3,
+          "description": "피해량이 {damage} 증가합니다.",
           "damage": 5
         },
         {
           "level": 4,
+          "description": "피해량이 {damage} 증가합니다.\n공격 범위가 {areaPercent}% 증가합니다.",
           "damage": 5,
           "areaMultiplier": 0.1
         },
         {
           "level": 5,
+          "description": "피해량이 {damage} 증가합니다.",
           "damage": 5
         },
         {
           "level": 6,
+          "description": "피해량이 {damage} 증가합니다.\n공격 범위가 {areaPercent}% 증가합니다.",
           "damage": 5,
           "areaMultiplier": 0.1
         },
         {
           "level": 7,
+          "description": "피해량이 {damage} 증가합니다.",
           "damage": 5
         },
         {
           "level": 8,
+          "description": "피해량이 {damage} 증가합니다.",
           "damage": 5
         }
       ]

@@ -79,6 +79,10 @@ public class DataManager
             foreach (string tableName in tableLoaderDictionary.Keys)
                 if (!loadedTables.Contains(tableName))
                     throw new InvalidOperationException($"필수 테이블 누락: {tableName}");
+            currentFile = "Players";
+            foreach (PlayerData player in players.All.Values)
+                if (!weapons.TryGet(player.weaponId, out _))
+                    throw new InvalidOperationException($"Player ID {player.Id}: 시작 무기 ID {player.weaponId}가 없습니다.");
             IsLoaded = true;
         }
         catch (Exception exception)

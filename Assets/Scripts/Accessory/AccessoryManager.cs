@@ -12,6 +12,7 @@ public class AccessoryManager : MonoBehaviour
 
     public IReadOnlyList<Accessory> OwnedAccessories => acquisitionOrder;
     public int OwnedCount => ownedAccessories.Count;
+    public int MaximumAccessories => maximumAccessories;
     public event System.Action OwnedItemsChanged;
 
     public Accessory GetOwnedAccessory(Accessory prefab)
@@ -27,7 +28,7 @@ public class AccessoryManager : MonoBehaviour
 
         foreach (Accessory prefab in accessoryPrefabs)
         {
-            if (prefab == null) return;
+            if (prefab == null) continue;
 
             Accessory owned = GetOwnedAccessory(prefab);
             if (owned == null && OwnedCount >= maximumAccessories) continue;

@@ -31,6 +31,7 @@ public class OwnedItemsHUD : MonoBehaviour
 
     private void Refresh()
     {
+        EnsureAccessorySlots();
         if (weaponIcons != null)
         {
             for (int i = 0; i < weaponIcons.Length; i++)
@@ -47,10 +48,36 @@ public class OwnedItemsHUD : MonoBehaviour
                 Accessory item = accessoryManager != null && i < accessoryManager.OwnedAccessories.Count
                     ? accessoryManager.OwnedAccessories[i] : null;
                 // 기본 3칸은 비어 있어도 유지하고, 추가 슬롯은 획득한 경우에만 표시한다.
+                int baseSlots = accessoryManager != null ? accessoryManager.MaximumAccessories : 3;
                 if (accessoryIcons[i] != null)
-                    accessoryIcons[i].transform.parent.gameObject.SetActive(i < 3 || item != null);
+                    accessoryIcons[i].transform.parent.gameObject.SetActive(i < baseSlots || item != null);
                 SetIcon(accessoryIcons[i], item, accessoryPlaceholderColor);
             }
+        }
+    }
+
+    private void EnsureAccessorySlots()
+    {
+        if (accessoryManager == null || accessoryIcons == null || accessoryIcons.Length == 0) return;
+        int required = Mathf.Max(accessoryManager.MaximumAccessories, accessoryManager.OwnedCount);
+        if (required <= accessoryIcons.Length) return;
+
+        int previousCount = accessoryIcons.Length;
+        Image template = accessoryIcons[previousCount - 1];
+        if (template == null) return;
+        RectTransform templateSlot = (RectTransform)template.transform.parent;
+        float spacing = templateSlot.rect.width + 6f;
+        if (previousCount > 1 && accessoryIcons[previousCount - 2] != null)
+            spacing = templateSlot.anchoredPosition.x
+                - ((RectTransform)accessoryIcons[previousCount - 2].transform.parent).anchoredPosition.x;
+
+        System.Array.Resize(ref accessoryIcons, required);
+        for (int i = previousCount; i < required; i++)
+        {
+            RectTransform slot = Instantiate(templateSlot, templateSlot.parent);
+            slot.name = "AccessorySlot" + (i + 1);
+            slot.anchoredPosition = templateSlot.anchoredPosition + new Vector2(spacing * (i - previousCount + 1), 0f);
+            accessoryIcons[i] = slot.GetChild(template.transform.GetSiblingIndex()).GetComponent<Image>();
         }
     }
 

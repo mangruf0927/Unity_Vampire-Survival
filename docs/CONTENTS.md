@@ -989,3 +989,21 @@
 - 현재 AccessoryManager의 기존 사용자 리팩토링은 유지했다. MapAccessoryPickup에 남아 있던 이전 AcquireFromMap 호출 한 줄을 현재 AcquireOrUpgrade(accessoryPrefab, true) API로 연결해 기존 맵 보유 제한 우회를 유지하고 컴파일 오류를 해결했다.
 - JSON은 기존 DataManager 로딩 경로를 재사용한다. 파일 수정은 다음 Play 실행에서 반영하며 별도 런타임 파일 재로딩 기능은 추가하지 않는다. UI와 HUD의 기존 ILevelUpOption 연결은 유지한다.
 - 검증: 전체 스크립트 Unity 참조 컴파일과 실제 JSON 로더·장신구 5종 코드를 사용한 모의 검사 69개를 통과했다. 이름/설명/보너스 조회, 모든 장신구의 레벨 1~5 효과, 로드된 데이터의 이름·소수 보너스·설명 변경 반영, 필수 필드 누락 차단 및 기존 다른 테이블 로딩을 확인했다. 실제 Unity에서는 레벨업 카드의 이름·설명과 획득/강화 효과, 맵 장신구 획득을 확인한다.
+
+### 실제 장신구 아이콘 및 초과 보유 표시 — 변경
+
+- 장신구 프리팹은 사용자가 옮긴 `Assets/Prefabs/Accessory/` 경로를 사용한다. 기존 GUID를 유지하므로 AccessoryManager와 맵 장신구의 프리팹 참조도 유지된다. Wings/HollowHeart/Spinach/EmptyTome/Attractorb의 Icon에 연결된 실제 Sprite 에셋을 확인했다. 선택 UI와 보유 HUD는 기존 Accessory.Icon 경로를 그대로 사용하며 실제 아이콘이 있으면 흰색으로 원본 색상을 표시한다. 무기나 아이콘 미연결 항목의 기존 임시 이미지 처리는 유지한다.
+- 맵 장신구 세 개에 자식 SpriteRenderer를 연결하고 각 장신구 프리팹과 동일한 실제 아이콘을 표시했다. MapAccessoryPickup은 시작 시 Accessory Prefab.Icon을 읽어 표시하므로 장신구 종류나 프리팹 아이콘을 교체하면 함께 반영된다. 유효 아이콘이 있으면 기존 임시 메시를 숨기고, 아이콘이 없으면 임시 메시를 사용한다. 새 클래스는 추가하지 않았다.
+- 맵 아이콘은 시작 시 고정 카메라의 회전 방향에 맞추고 `Icon Size` 기본 1 월드 단위에 맞춰 비율을 유지한다. 아이콘 크기 변경은 자식에만 적용하여 루트 획득 Sphere Trigger 크기에 영향을 주지 않는다. SpriteRenderer의 실제 최하단을 Ground Height에 맞춘다. 기존 시작 위치 오프셋·독립 루트·1회 획득·최대 레벨이면 유지 규칙은 유지한다.
+- AccessoryManager.MaximumAccessories로 일반 획득 제한을 읽을 수 있게 했다. 레벨업 선택을 통한 신규 획득은 기본 3개 제한이며, 맵 획득은 기존 AcquireOrUpgrade(prefab, true)로 제한을 우회한다. 보유 4·5개 상태에서도 기존 장신구는 강화 후보에 포함되고 최대 레벨이면 제외된다. AddChoices에서 빈 프리팹 하나가 뒤쪽 후보 전체 검색을 중단하던 return을 continue로 수정했다.
+- HUD의 기본 빈 슬롯 수는 하드코딩한 3 대신 AccessoryManager.MaximumAccessories를 따른다. 추가 보유 슬롯은 획득 시에만 표시하며, 준비된 슬롯보다 보유 수가 많으면 기존 슬롯의 배경·아이콘 구성을 복제해 동일 간격으로 오른쪽에 추가한다. 슬롯 생성과 배열 확장은 필요할 때만 하고 매 프레임 검색·생성은 하지 않는다. 무기 슬롯 수는 변경하지 않는다.
+- 검증: 전체 Unity 참조 컴파일 및 실제 Accessory/AccessoryManager/MapAccessoryPickup/OwnedItemsHUD를 사용한 모의 검사 42개를 통과했다. 실제 아이콘 전달·크기 정규화·임시 메시 숨김, 일반 획득 3개 제한·맵 4/5번째 추가·기존 장신구 강화·최대 레벨, 3개 HUD 슬롯에서 5개로 자동 확장·간격·아이콘, 센서/정지/사망 차단 및 빈 프리팹 뒤 후보 처리를 확인했다. 실제 Sprite 파일/단일 Sprite 설정/GUID와 씬의 세 SpriteRenderer 참조·부모·독립 Trigger 루트·유일 ID도 확인했다. 실제 Unity 렌더링·Physics 플레이는 별도 확인한다.
+- Unity 테스트: 레벨업 선택 UI·HUD·맵의 세 장신구가 실제 아이콘으로 보이는지 확인한다. 맵 장신구의 Icon Size를 바꿔 외형 크기만 바뀌고 획득 Collider는 유지되는지 확인한다. 장신구 3종을 선택해 보유한 뒤 맵에서 미보유 장신구를 주워 4·5번째 아이콘이 추가되는지, 이후에도 보유 장신구 강화가 가능하고 최대 레벨 장신구는 맵에 남는지 확인한다. 프리팹의 Icon이나 맵 Accessory Prefab을 교체한 뒤 다시 실행하면 해당 표시가 함께 바뀌어야 한다.
+
+### MapAccessory 3D 오브젝트 구조 검토 — 변경
+
+- 사용자가 `MapAccessoryPickup`을 `MapAccessory`로 이름 변경하고 획득만 담당하도록 단순화한 구조를 유지한다. 스크립트 GUID가 유지되어 기존 씬 연결도 유효하다. Accessory Prefab 하나만 참조하며 카메라·플레이어 지정 참조·아이콘·자동 배치 기능은 추가하지 않는다.
+- 획득 전 `collected=true`로 설정하고 AcquireOrUpgrade가 실패하면 false로 복구하도록 수정했다. 획득 효과와 OwnedItemsChanged 이벤트 안에서 재진입해도 같은 맵 장신구로 중복 획득/강화되지 않는다. 성공 시 즉시 비활성화한 뒤 Destroy해 해당 프레임의 표시/접촉도 종료한다. 최대 레벨이나 미등록/미연결 프리팹이면 기존처럼 맵에 유지한다.
+- GameScene의 세 맵 장신구에서 남아 있던 Sprite 자식과 삭제된 player/startOffset/groundHeight/iconRenderer/iconSize 직렬화 데이터를 제거했다. 기존 임시 3D MeshRenderer를 다시 활성화하고 현재 메시의 바닥이 Y=0에 맞도록 루트 Y를 0.5로 조정했다. 실제 3D 모델 제작/교체는 이번 범위에 포함하지 않는다. 선택 UI와 HUD에서 사용하는 실제 장신구 아이콘은 유지한다.
+- 배치와 높이는 이제 씬 Transform에서 직접 지정한다. 시작 플레이어 위치 변경 시 상대 위치를 자동으로 다시 계산하거나 모델의 바닥 높이를 자동 보정하지 않는다. 3D 모델을 교체하면 Transform/자식 메시 위치와 획득용 Trigger를 에디터에서 맞춘다. 청크의 자식으로 두지 않는 원칙과 맵 획득의 보유 제한 우회는 유지한다.
+- 검증: 전체 Unity 참조 컴파일 및 실제 MapAccessory/AccessoryManager를 사용한 모의 검사 19개를 통과했다. 획득 알림 중 재진입 차단, 4/5번째 획득, 보유 장신구 강화·최대 레벨 유지, 센서/정지/사망/비활성 소유자 차단, 잘못된 프리팹 및 성공 후 제거를 확인했다. 씬의 GUID 연결·Sprite 자식/필드 제거·3D 메시 활성화·독립 루트·획득 Trigger 설정도 확인했다. Unity에서는 실제 3D 외형·지면 높이·몸체 접촉 획득을 확인한다.

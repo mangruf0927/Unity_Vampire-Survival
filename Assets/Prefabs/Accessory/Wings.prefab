@@ -11,8 +11,11 @@ GameObject:
   - component: {fileID: 400000}
   - component: {fileID: 11400000}
   m_Layer: 0
-  m_Name: Attractorb
+  m_Name: Wings
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &400000
 Transform:
@@ -38,8 +41,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d46518db9cec42b987189e50e99a6bb5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  icon: {fileID: 0}
-  dataId: 5
+  m_Script: {fileID: 11500000, guid: 65bc430cfdc242e4a8c6fd85f4309386, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  icon: {fileID: 21300000, guid: d60055d18bb6c4043b57af3e902fd656, type: 3}
+  dataId: 1

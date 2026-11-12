@@ -32,7 +32,7 @@ public class MapAccessoryPickup : MonoBehaviour
             || !owner.isActiveAndEnabled || !other.TryGetComponent(out PlayerHealth health) || health.IsDead) return;
 
         collected = true;
-        if (!owner.AcquireFromMap(accessoryPrefab))
+        if (!owner.AcquireOrUpgrade(accessoryPrefab, true))
         {
             collected = false;
             return;

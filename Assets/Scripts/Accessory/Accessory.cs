@@ -4,7 +4,9 @@ public abstract class Accessory : MonoBehaviour, ILevelUpOption
 {
     [SerializeField] private Sprite icon;
     [SerializeField, Min(1)] private int dataId = 1;
-    protected float BonusPerLevel => DataManager.Instance.Accessories.Get(dataId).bonusPerLevel;
+
+    private AccessoryData Data => DataManager.Instance.Accessories.Get(dataId);
+    protected float BonusPerLevel => Data.bonusPerLevel;
     private bool isOwned;
     private int level;
 
@@ -12,9 +14,13 @@ public abstract class Accessory : MonoBehaviour, ILevelUpOption
     public int Level => level;
     public bool CanUpgrade => !isOwned || level < 5;
     public Sprite Icon => icon;
-    public abstract string DisplayName { get; }
-    public abstract string GetChoiceDescription();
-    public abstract void Initialize(Transform owner);
+
+    public string DisplayName => Data.displayName;
+
+    public string GetChoiceDescription()
+    {
+        return Data.choiceDescription.Replace("{bonusPercent}", (BonusPerLevel * 100f).ToString("0.#"));
+    }
 
     public void Acquire()
     {
@@ -24,13 +30,13 @@ public abstract class Accessory : MonoBehaviour, ILevelUpOption
         ApplyEffect();
     }
 
-    [ContextMenu("Level Up (Play Mode)")]
     public void LevelUp()
     {
-        if (!Application.isPlaying || !isOwned || level >= 5) return;
+        if (!isOwned || level >= 5) return;
         level++;
         ApplyEffect();
     }
 
+    public abstract void Initialize(Transform owner);
     protected abstract void ApplyEffect();
 }

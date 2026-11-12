@@ -980,3 +980,12 @@
 - OwnedItemsHUD에 4·5번째 장신구 슬롯을 추가했다. 최초 세 칸은 빈칸으로 유지하고 추가 두 칸은 해당 개수만큼 획득했을 때만 표시한다. 기존 OwnedItemsChanged 알림으로 즉시 반영하며 아이콘/임시 이미지 표시 방식과 무기 세 칸은 유지한다.
 - 검증: 전체 스크립트 Unity 참조 컴파일과 실제 Accessory/AccessoryManager/MapAccessoryPickup/OwnedItemsHUD를 실행한 모의 검사 33개를 통과했다. 일반 획득 제한, 맵 4·5번째 획득, 기존 장신구 강화·최대 레벨 유지, 선택 후보, HUD 갱신, 시작 위치 기준 배치·바닥 높이, 센서 무시, 정지/사망 차단, 중복 접촉과 새 게임 초기화를 확인했다. 씬의 유일 ID, 세 장신구의 독립 루트·프리팹/플레이어 참조·Trigger 레이어 및 두 HUD 슬롯 연결도 검사했다. 실제 Unity Physics·화면 플레이는 별도로 확인한다.
 - Unity 테스트: GameScene에서 각 방향으로 이동해 세 장신구를 획득한다. 같은 장신구를 미리 선택했다면 +1, 다른 장신구 3개를 보유했다면 4번째로 추가되고 HUD도 늘어나는지 확인한다. 맵의 세 종류 중 한 종류를 남겨 두고 총 4종 보유 후 획득해 5번째도 확인한다. 최대 레벨 장신구는 닿아도 남아 있어야 한다. 획득 후 멀리 이동했다 돌아와 재등장하지 않는지, 미획득 아이템은 청크 재사용 후 남아 있는지, 새 게임에서는 세 개가 다시 배치되는지도 확인한다. Start Offset을 임시로 가까운 값으로 바꾸면 빠르게 테스트할 수 있다.
+
+### 장신구 표시 데이터 JSON 통합 — 리팩토링
+
+- `Accessories.json`의 각 레코드에서 `displayName`, `bonusPerLevel`, `choiceDescription`을 관리한다. 기존 ID와 보너스 수치는 유지하고, 기존 하위 클래스에 있던 이름·선택 설명을 그대로 JSON으로 옮겼다. 세 필드 모두 `JsonProperty(Required = Required.Always)`를 사용한다. 기존 ID 검증을 유지하며 별도 검증 시스템은 추가하지 않는다.
+- 공통 `Accessory`가 Data Id로 레코드를 조회하여 DisplayName, BonusPerLevel, GetChoiceDescription을 제공한다. 설명의 `{bonusPercent}`는 bonusPerLevel × 100 값으로 치환한다. 예를 들어 bonusPerLevel=0.1, choiceDescription="기본 이동 속도의 {bonusPercent}%만큼 이동 속도가 증가합니다."이면 UI에는 10%로 표시된다. 소수 보너스도 기존과 같이 소수 첫째 자리까지 표시한다. 고정 문구만 쓰려면 표시자를 생략할 수 있다.
+- Wings/HollowHeart/Spinach/EmptyTome/Attractorb에는 대상 컴포넌트 연결, 배율 계산, 효과 적용 동작만 남겼다. 레벨 상한 5, 검은 심장의 단계별 반올림·회복 없음, 공격력/쿨타임/이동 속도/흡인 범위의 적용 공식은 변경하지 않는다. 아이콘은 기존 프리팹 Sprite 참조를 유지한다.
+- 현재 AccessoryManager의 기존 사용자 리팩토링은 유지했다. MapAccessoryPickup에 남아 있던 이전 AcquireFromMap 호출 한 줄을 현재 AcquireOrUpgrade(accessoryPrefab, true) API로 연결해 기존 맵 보유 제한 우회를 유지하고 컴파일 오류를 해결했다.
+- JSON은 기존 DataManager 로딩 경로를 재사용한다. 파일 수정은 다음 Play 실행에서 반영하며 별도 런타임 파일 재로딩 기능은 추가하지 않는다. UI와 HUD의 기존 ILevelUpOption 연결은 유지한다.
+- 검증: 전체 스크립트 Unity 참조 컴파일과 실제 JSON 로더·장신구 5종 코드를 사용한 모의 검사 69개를 통과했다. 이름/설명/보너스 조회, 모든 장신구의 레벨 1~5 효과, 로드된 데이터의 이름·소수 보너스·설명 변경 반영, 필수 필드 누락 차단 및 기존 다른 테이블 로딩을 확인했다. 실제 Unity에서는 레벨업 카드의 이름·설명과 획득/강화 효과, 맵 장신구 획득을 확인한다.

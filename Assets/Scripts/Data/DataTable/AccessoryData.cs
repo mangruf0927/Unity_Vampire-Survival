@@ -4,7 +4,9 @@ using UnityEngine;
 public class AccessoryData : IGameData, IValidatable
 {
     [JsonProperty(Required = Required.Always)] public int Id { get; set; }
+    [JsonProperty(Required = Required.Always)] public string displayName;
     [JsonProperty(Required = Required.Always)] public float bonusPerLevel;
+    [JsonProperty(Required = Required.Always)] public string choiceDescription;
 
     public bool Validate()
     {

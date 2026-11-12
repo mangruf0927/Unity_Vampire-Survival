@@ -36,6 +36,16 @@ public class AccessoryManager : MonoBehaviour
 
     public bool AcquireOrUpgrade(Accessory choice)
     {
+        return AcquireOrUpgrade(choice, false);
+    }
+
+    public bool AcquireFromMap(Accessory prefab)
+    {
+        return AcquireOrUpgrade(prefab, true);
+    }
+
+    private bool AcquireOrUpgrade(Accessory choice, bool ignoreLimit)
+    {
         if (choice == null || accessoryPrefabs == null) return false;
         for (int i = 0; i < accessoryPrefabs.Length; i++)
         {
@@ -50,7 +60,7 @@ public class AccessoryManager : MonoBehaviour
             }
             else
             {
-                if (OwnedCount >= maximumAccessories) return false;
+                if (!ignoreLimit && OwnedCount >= maximumAccessories) return false;
                 Accessory instance = Instantiate(prefab, transform);
                 instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
                 instance.Initialize(transform);

@@ -46,6 +46,9 @@ public class OwnedItemsHUD : MonoBehaviour
             {
                 Accessory item = accessoryManager != null && i < accessoryManager.OwnedAccessories.Count
                     ? accessoryManager.OwnedAccessories[i] : null;
+                // 기본 3칸은 비어 있어도 유지하고, 추가 슬롯은 획득한 경우에만 표시한다.
+                if (accessoryIcons[i] != null)
+                    accessoryIcons[i].transform.parent.gameObject.SetActive(i < 3 || item != null);
                 SetIcon(accessoryIcons[i], item, accessoryPlaceholderColor);
             }
         }

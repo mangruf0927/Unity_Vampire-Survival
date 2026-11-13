@@ -1,13 +1,10 @@
 using UnityEngine;
-using Unity.Profiling;
 
 // 물리 기반 비교용 이동. 적끼리의 별도 분리·겹침 보정은 구현하지 않는다.
 [RequireComponent(typeof(Rigidbody), typeof(SphereCollider))]
 public class ColliderCrowdTestEnemy : MonoBehaviour
 {
-    private static readonly ProfilerMarker moveMarker = new("EnemyComparison.Collider.FixedUpdate");
-    private static readonly ProfilerMarker avoidanceMarker = new("EnemyComparison.Collider.Avoidance");
-    private static readonly ProfilerMarker swarmMarker = new("EnemyComparison.Collider.Swarm");
+
     private Rigidbody body;
     private SphereCollider bodyCollider;
     private EnemyCrowdComparison owner;
@@ -90,7 +87,6 @@ public class ColliderCrowdTestEnemy : MonoBehaviour
 
     private void FixedUpdate()
     {
-        using var scope = moveMarker.Auto();
         if (owner == null || target == null) return;
         SetFrozen(owner.IsFrozen);
         if (frozen) return;
@@ -143,7 +139,6 @@ public class ColliderCrowdTestEnemy : MonoBehaviour
     {
         probeTimer -= dt;
         if ((!avoiding && blockedTime < 0.15f) || probeTimer > 0f) return;
-        using var scope = avoidanceMarker.Auto();
         probeTimer = 0.15f;
         if (!LegacyGridEnemyObstacleCollision.Cast(body.position, Vector3.ClampMagnitude(direction, 1.8f), bodyCollider.radius, out RaycastHit hit))
         {
@@ -186,7 +181,6 @@ public class ColliderCrowdTestEnemy : MonoBehaviour
 
     private void MoveSwarm(float dt)
     {
-        using var scope = swarmMarker.Auto();
         Vector3 offset = body.position - (swarmStart + swarmDirection * swarmProgress);
         offset.y = 0f;
         offset = Vector3.MoveTowards(offset, Vector3.zero, swarmRecoverySpeed * dt);

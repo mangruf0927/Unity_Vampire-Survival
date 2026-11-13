@@ -84,8 +84,8 @@ public class EnemySpawner : MonoBehaviour
                 if (!ValidatePool(entry.poolType)) return;
             }
         }
-        if (!ValidatePool(PoolTypeEnums.Bat)) return;
-        ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.Bat, out GameObject swarmPrefab);
+        if (!ValidatePool(PoolTypeEnums.SwarmBat)) return;
+        ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.SwarmBat, out GameObject swarmPrefab);
         swarmBoundsRadius = swarmPrefab.GetComponent<EnemyMovement>().BodyRadius;
 
         swarmPrefab.GetComponentsInChildren<Renderer>(enemyRenderers);
@@ -103,7 +103,13 @@ public class EnemySpawner : MonoBehaviour
 
     private bool ValidatePool(PoolTypeEnums type)
     {
-        if (ObjectPool.Instance.TryGetPrefab(type, out GameObject prefab) && prefab.GetComponent<EnemyMovement>() != null && prefab.GetComponent<EnemyHealth>() != null) return true;
+        if (ObjectPool.Instance.TryGetPrefab(type, out GameObject prefab) && prefab.GetComponent<EnemyHealth>() != null)
+        {
+            bool validMovement = type == PoolTypeEnums.SwarmBat
+                ? prefab.GetComponent<EnemySwarmMovement>() != null
+                : prefab.GetComponent<EnemyDefaultMovement>() != null;
+            if (validMovement) return true;
+        }
         Debug.LogError($"EnemySpawner: {type} 풀과 적 이동·체력 컴포넌트를 확인해 주세요.", this);
         enabled = false;
         return false;
@@ -194,7 +200,7 @@ public class EnemySpawner : MonoBehaviour
         for (int i = EnemyCrowd.ActiveCount - 1; i >= 0; i--)
         {
             EnemyMovement enemy = EnemyCrowd.GetActiveEnemy(i);
-            if (enemy.ShouldReturnOffscreen(IsVisible(enemy.gameObject), Time.time))
+            if (enemy.CheckScreenExit(IsVisible(enemy.gameObject), Time.time))
                 ObjectPool.Instance.TryReturnToPool(enemy.gameObject);
         }
     }
@@ -243,9 +249,9 @@ public class EnemySpawner : MonoBehaviour
         for (int i = 0; i < formationOffsets.Count; i++)
         {
             Vector3 position = center + formationOffsets[i];
-            GameObject bat = Spawn(position, PoolTypeEnums.Bat);
+            GameObject bat = Spawn(position, PoolTypeEnums.SwarmBat);
             if (bat == null) continue;
-            EnemyMovement movement = bat.GetComponent<EnemyMovement>();
+            EnemySwarmMovement movement = bat.GetComponent<EnemySwarmMovement>();
             movement.ConfigureSwarm(position, direction, swarmSpeed,
                 swarmPushStrength, swarmMaxOffset, swarmRecoverySpeed);
         }

@@ -2075,6 +2075,10 @@ MonoBehaviour:
     prefab: {fileID: 1800000000, guid: 31be7d76c9b543469f879c8c2be71238, type: 3}
     size: 15
     parent: {fileID: 0}
+  - poolType: 11
+    prefab: {fileID: 1800000000, guid: 1064d59901b74379b8c92587f3c7d2e8, type: 3}
+    size: 50
+    parent: {fileID: 0}
   - poolType: 1
     prefab: {fileID: 100000, guid: acb8ec55882d4b38bc93586d0bfcfa24, type: 3}
     size: 15

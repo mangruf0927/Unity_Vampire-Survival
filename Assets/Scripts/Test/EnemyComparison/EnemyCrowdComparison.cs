@@ -39,9 +39,7 @@ public partial class EnemyCrowdComparison : MonoBehaviour
     private const int EnemyLayer = 30;
     private const int ObstacleLayer = 11;
     private const float Height = 0.5f;
-    private static readonly ProfilerMarker setupMarker = new("EnemyComparison.Setup");
-    private static readonly ProfilerMarker spawnMarker = new("EnemyComparison.Spawn");
-    private static readonly ProfilerMarker sampleMarker = new("EnemyComparison.RecordFrame");
+
     private readonly GameObject[] active = new GameObject[Capacity + ExtraCapacity];
     private readonly Vector3[] positions = new Vector3[Capacity];
     private readonly float[] frameMs = new float[SampleCapacity];
@@ -242,7 +240,6 @@ public partial class EnemyCrowdComparison : MonoBehaviour
 
     private void PreparePools()
     {
-        using var scope = setupMarker.Auto();
         ObjectPool.Instance.Register(new PoolData { poolType = PoolTypeEnums.Bat, prefab = gridTemplate, size = Capacity + ExtraCapacity }, transform);
         ObjectPool.Instance.Register(new PoolData { poolType = PoolTypeEnums.Zombie, prefab = colliderTemplate, size = Capacity + ExtraCapacity }, transform);
         ownsPools = true;
@@ -345,24 +342,21 @@ public partial class EnemyCrowdComparison : MonoBehaviour
         {
             yield return null;
             if (Time.timeScale <= 0f || Time.deltaTime <= 0f) continue;
-            using (sampleMarker.Auto())
+            float delta = Time.unscaledDeltaTime;
+            elapsed += delta;
+            if (sampleCount >= SampleCapacity) continue;
+            frameMs[sampleCount++] = delta * 1000f;
+            physicsMetrics.Sample(completedFrameFixedSteps);
+            activeCountSum += activeCount;
+            if (mainThreadRecorder.Valid && mainThreadRecorder.Count > 0)
             {
-                float delta = Time.unscaledDeltaTime;
-                elapsed += delta;
-                if (sampleCount >= SampleCapacity) continue;
-                frameMs[sampleCount++] = delta * 1000f;
-                physicsMetrics.Sample(completedFrameFixedSteps);
-                activeCountSum += activeCount;
-                if (mainThreadRecorder.Valid && mainThreadRecorder.Count > 0)
-                {
-                    cpuSumMs += mainThreadRecorder.LastValue * 0.000001f;
-                    cpuSamples++;
-                }
-                if (gcRecorder.Valid && gcRecorder.Count > 0)
-                {
-                    gcSum += gcRecorder.LastValue;
-                    gcSamples++;
-                }
+                cpuSumMs += mainThreadRecorder.LastValue * 0.000001f;
+                cpuSamples++;
+            }
+            if (gcRecorder.Valid && gcRecorder.Count > 0)
+            {
+                gcSum += gcRecorder.LastValue;
+                gcSamples++;
             }
         }
         sampling = false;
@@ -440,7 +434,6 @@ public partial class EnemyCrowdComparison : MonoBehaviour
 
     private void Spawn(int count, CrowdMode selectedMode)
     {
-        using var scope = spawnMarker.Auto();
         EnemyData data = DataManager.Instance.Enemies.Get(1);
         PoolTypeEnums type = selectedMode == CrowdMode.Grid ? PoolTypeEnums.Bat : PoolTypeEnums.Zombie;
         for (int i = 0; i < count; i++)

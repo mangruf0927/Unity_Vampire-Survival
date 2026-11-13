@@ -1,11 +1,8 @@
 using UnityEngine;
-using Unity.Profiling;
 
-// Collider 전환 이전의 고정 경로 이동과 경로 이탈 제한을 사용한다.
-internal class EnemySwarmMovement
+public class EnemySwarmMovement : EnemyMovement
 {
-    private static readonly ProfilerMarker moveMarker = new("EnemySwarmMovement.Move");
-    private readonly EnemyMovement enemy;
+    [SerializeField, Min(0f)] private float swarmOverlapCorrectionSpeed = 3f;
     private Vector3 swarmStart;
     private Vector3 swarmDirection;
     private bool swarmHasEnteredScreen;
@@ -15,27 +12,45 @@ internal class EnemySwarmMovement
     private float swarmMaxOffset;
     private float swarmRecoverySpeed;
 
-    internal Vector3 Direction => swarmDirection;
-    internal float CorrectionWeight => 1f / swarmPushStrength;
+    internal override bool IsSwarm => true;
+    internal override float MovementRadius => BodyRadius;
+    internal override Vector3 SwarmDirection => swarmDirection;
+    internal override float CorrectionWeight => 1f / swarmPushStrength;
+    internal override float CorrectionSpeed => swarmOverlapCorrectionSpeed * CorrectionWeight;
 
-    internal EnemySwarmMovement(EnemyMovement enemy)
+    protected override void ResetMovement()
     {
-        this.enemy = enemy;
+        swarmProgress = 0f;
+        swarmHasEnteredScreen = false;
+        swarmPushStrength = 1f;
     }
 
-    internal void Reset()
+    protected override void StopMovement()
     {
         swarmProgress = 0f;
         swarmHasEnteredScreen = false;
     }
 
-    internal bool ShouldReturnOffscreen(bool inside)
+    internal override void PrepareSwarmStep(float deltaTime)
+    {
+        base.PrepareSwarmStep(deltaTime);
+        crowdPosition = Move(deltaTime);
+    }
+
+    internal override void ApplyCrowdStep()
+    {
+        crowdPosition = ClampPosition(crowdPosition);
+        if ((crowdPosition - body.position).sqrMagnitude > 0f) body.position = crowdPosition;
+        body.rotation = Quaternion.LookRotation(swarmDirection, Vector3.up);
+    }
+
+    internal override bool CheckScreenExit(bool inside, float now)
     {
         if (inside) swarmHasEnteredScreen = true;
         return swarmHasEnteredScreen && !inside;
     }
 
-    internal void Configure(Vector3 start, Vector3 direction, float speed,
+    public void ConfigureSwarm(Vector3 start, Vector3 direction, float speed,
         float pushStrength, float maxOffset, float recoverySpeed)
     {
         swarmStart = start;
@@ -47,15 +62,15 @@ internal class EnemySwarmMovement
         swarmPushStrength = Mathf.Max(1f, pushStrength);
         swarmMaxOffset = Mathf.Max(0f, maxOffset);
         swarmRecoverySpeed = Mathf.Max(0f, recoverySpeed);
+        body.rotation = Quaternion.LookRotation(swarmDirection, Vector3.up);
     }
 
     internal Vector3 Move(float deltaTime)
     {
-        using var scope = moveMarker.Auto();
-        Vector3 offset = enemy.framePosition - (swarmStart + swarmDirection * swarmProgress);
+        Vector3 offset = framePosition - (swarmStart + swarmDirection * swarmProgress);
         offset.y = 0f;
         offset = Vector3.MoveTowards(offset, Vector3.zero, swarmRecoverySpeed * deltaTime);
-        if (enemy.TryGetKnockbackMovement(deltaTime, out Vector3 knockback)) offset += knockback;
+        if (TryGetKnockbackMovement(deltaTime, out Vector3 knockback)) offset += knockback;
         swarmProgress += swarmSpeed * deltaTime;
         return swarmStart + swarmDirection * swarmProgress + Vector3.ClampMagnitude(offset, swarmMaxOffset);
     }

@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Profiling;
 using System.Collections.Generic;
 
 public partial class EnemyCrowdComparison
@@ -39,7 +38,7 @@ public partial class EnemyCrowdComparison
     private float scenarioTime, nextKnockback, nextClock, nextSwarm, nextScreenCheck;
     private bool effectsStarted, runEffects, runManual;
     private CrowdMode runMode;
-    private static readonly ProfilerMarker effectsMarker = new("EnemyComparison.TestEffects");
+
     public bool IsFrozen => Time.time < frozenUntil;
 
     private void AddPlayerControls(GameObject target)
@@ -106,7 +105,6 @@ public partial class EnemyCrowdComparison
         Keyboard keys = Keyboard.current;
         if (keys != null && keys.tKey.wasPressedThisFrame) Time.timeScale = Time.timeScale > 0f ? 0f : 1f;
         if (Time.deltaTime <= 0f || Time.timeScale <= 0f) return;
-        using var scope = effectsMarker.Auto();
         if (!runManual && movingTarget)
         {
             float x = Mathf.PingPong(runTime * 3f, 16f);

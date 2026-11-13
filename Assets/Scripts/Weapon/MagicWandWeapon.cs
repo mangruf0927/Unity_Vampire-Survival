@@ -1,9 +1,8 @@
 using UnityEngine;
-using Unity.Profiling;
 
 public class MagicWandWeapon : Weapon
 {
-    private static readonly ProfilerMarker nearestEnemyMarker = new("MagicWandWeapon.FindNearestVisibleEnemy");
+
     [SerializeField] private Projectile projectilePrefab;
     private float cooldown;
     private float projectileSpeed;
@@ -81,7 +80,6 @@ public class MagicWandWeapon : Weapon
 
     private EnemyMovement FindNearestVisibleEnemy()
     {
-        using var scope = nearestEnemyMarker.Auto();
         EnemyMovement nearest = null;
         float nearestDistance = float.PositiveInfinity;
         Vector3 origin = AttackOrigin.position;

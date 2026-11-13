@@ -1,10 +1,8 @@
 // 비교 테스트 전용: Collider 전환 이전 격자 이동을 보관한다. 실제 게임에서는 사용하지 않는다.
 using UnityEngine;
-using Unity.Profiling;
 
 internal class LegacyGridEnemyDefaultMovement
 {
-    private static readonly ProfilerMarker moveMarker = new ProfilerMarker("LegacyGridEnemyDefaultMovement.Move");
 
     private readonly LegacyGridEnemyMovement enemy;
     private float offscreenSince = -1f;
@@ -40,7 +38,6 @@ internal class LegacyGridEnemyDefaultMovement
 
     internal void Move(Vector3 direction, float stepDeltaTime)
     {
-        using var scope = moveMarker.Auto();
 
         canAvoidObstacles = false;
         if (enemy.TryGetKnockbackMovement(stepDeltaTime, out Vector3 knockback))
@@ -76,7 +73,6 @@ internal class LegacyGridEnemyDefaultMovement
     // 기존 회피 판단을 재사용하고 몸체 충돌과 미끄러짐은 물리 엔진에 맡긴다.
     internal Vector3 GetPhysicsVelocity(Vector3 direction, Vector3 currentVelocity, float deltaTime, float acceleration)
     {
-        using var scope = moveMarker.Auto();
         float remainingDistance = Mathf.Max(0f, direction.magnitude - enemy.MovementRadius - enemy.PlayerRadius);
         if (remainingDistance <= 0.001f)
         {

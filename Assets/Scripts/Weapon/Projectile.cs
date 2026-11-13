@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Profiling;
 
 public class Projectile : MonoBehaviour
 {
-    private static readonly ProfilerMarker hitMarker = new("Projectile.HandleHits");
+
     [SerializeField, Min(0f)] private float hitRadius = 0.125f;
     private float damage;
     private int hitsRemaining;
@@ -51,7 +50,6 @@ public class Projectile : MonoBehaviour
 
     private bool HandleProjectileHits(Vector3 start, Vector3 end)
     {
-        using var scope = hitMarker.Auto();
         while (true)
         {
             float radius = hitRadius * hitRadiusMultiplier;

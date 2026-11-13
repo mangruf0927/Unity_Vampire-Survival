@@ -1,11 +1,8 @@
 // 비교 테스트 전용: Collider 전환 이전 격자 이동을 보관한다. 실제 게임에서는 사용하지 않는다.
 using UnityEngine;
-using Unity.Profiling;
 
 public class LegacyGridEnemyMovement : MonoBehaviour
 {
-    private static readonly ProfilerMarker physicsMoveMarker = new("LegacyGridEnemyMovement.PhysicsMove");
-    private static readonly ProfilerMarker contactDamageMarker = new ProfilerMarker("LegacyGridEnemyMovement.ApplyContactDamage");
 
     [SerializeField] private Transform target;
     // 비교 씬의 기존 격자 모드는 유지하고 실제 적 프리팹에서만 활성화한다.
@@ -207,7 +204,6 @@ public class LegacyGridEnemyMovement : MonoBehaviour
     private void FixedUpdate()
     {
         if (!UsesPhysics) return;
-        using var scope = physicsMoveMarker.Auto();
         bool frozen = LegacyGridEnemyCrowd.IsFrozen;
         if (physicsFrozen != frozen)
         {
@@ -268,7 +264,6 @@ public class LegacyGridEnemyMovement : MonoBehaviour
 
     private void ApplyContactDamage()
     {
-        using var scope = contactDamageMarker.Auto();
 
         if (LegacyGridEnemyCrowd.IsFrozen || Time.deltaTime <= 0f || target == null) return;
         if (cachedDamageTarget != target)

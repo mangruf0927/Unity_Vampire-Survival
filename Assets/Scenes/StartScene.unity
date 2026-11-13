@@ -1465,7 +1465,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 473098629}
         m_TargetAssemblyTypeName: CharacterSelectionUI, Assembly-CSharp
         m_MethodName: StartGame
         m_Mode: 1
@@ -1814,7 +1814,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 473098629}
         m_TargetAssemblyTypeName: CharacterSelectionUI, Assembly-CSharp
         m_MethodName: SelectCharacter
         m_Mode: 3
@@ -2512,7 +2512,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 473098629}
         m_TargetAssemblyTypeName: CharacterSelectionUI, Assembly-CSharp
         m_MethodName: SelectCharacter
         m_Mode: 3
@@ -3210,7 +3210,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 473098629}
         m_TargetAssemblyTypeName: CharacterSelectionUI, Assembly-CSharp
         m_MethodName: SelectCharacter
         m_Mode: 3

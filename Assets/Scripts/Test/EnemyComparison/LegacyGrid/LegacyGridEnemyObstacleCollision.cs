@@ -1,13 +1,9 @@
 // 비교 테스트 전용: Collider 전환 이전 격자 이동을 보관한다. 실제 게임에서는 사용하지 않는다.
 using UnityEngine;
-using Unity.Profiling;
 
 // 기존 격자 이동의 충돌 처리와 물리 이동의 장애물 감지를 제공한다.
 public static class LegacyGridEnemyObstacleCollision
 {
-    private static readonly ProfilerMarker castMarker = new ProfilerMarker("LegacyGridEnemyObstacleCollision.Cast");
-    private static readonly ProfilerMarker resolveOverlapMarker = new ProfilerMarker("LegacyGridEnemyObstacleCollision.ResolveOverlap");
-    private static readonly ProfilerMarker moveMarker = new ProfilerMarker("LegacyGridEnemyObstacleCollision.Move");
 
     private const int ObstacleMask = 1 << 11;
     private const float Skin = 0.002f;
@@ -18,7 +14,6 @@ public static class LegacyGridEnemyObstacleCollision
     // Rigidbody 적은 실제 SphereCollider와 같은 형태로 감지한다.
     internal static bool CastSphere(Vector3 start, Vector3 displacement, float radius, out RaycastHit hit)
     {
-        using var scope = castMarker.Auto();
         float distance = displacement.magnitude;
         if (distance <= 0.00001f)
         {
@@ -31,7 +26,6 @@ public static class LegacyGridEnemyObstacleCollision
 
     public static bool Cast(Vector3 start, Vector3 displacement, float radius, out RaycastHit hit)
     {
-        using var scope = castMarker.Auto();
 
         float distance = displacement.magnitude;
         if (distance <= 0.00001f)
@@ -46,7 +40,6 @@ public static class LegacyGridEnemyObstacleCollision
 
     public static Vector3 ResolveOverlap(Vector3 position, float radius)
     {
-        using var scope = resolveOverlapMarker.Auto();
 
         for (int pass = 0; pass < MaximumPasses; pass++)
         {
@@ -101,7 +94,6 @@ public static class LegacyGridEnemyObstacleCollision
 
     public static Vector3 Move(Vector3 start, Vector3 displacement, float radius)
     {
-        using var scope = moveMarker.Auto();
 
         displacement.y = 0f;
         Vector3 position = start;

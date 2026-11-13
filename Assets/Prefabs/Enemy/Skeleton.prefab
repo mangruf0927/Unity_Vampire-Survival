@@ -104,14 +104,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1800000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 560198c7df8c427a92ab2aed18113ffb, type: 3}
+  m_Script: {fileID: 11500000, guid: 0806bb393f144fba80d04231ff05ee14, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   target: {fileID: 0}
-  collisionRadius: 0.45
   swarmPushSpeed: 3
   chaseAcceleration: 24
-  maxDepenetrationVelocity: 2
   playerRadius: 0.4
   bodyRadius: 0.4
   obstacleLookAhead: 1.8

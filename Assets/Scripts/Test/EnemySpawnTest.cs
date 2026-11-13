@@ -29,10 +29,10 @@ public class EnemySpawnTest : MonoBehaviour
     private void SpawnEnemies(int count)
     {
         if (!ObjectPool.Instance.TryGetPrefab(enemyType, out GameObject prefab)
-            || !prefab.TryGetComponent(out EnemyMovement prefabMovement)
+            || !prefab.TryGetComponent(out EnemyDefaultMovement prefabMovement)
             || !prefab.TryGetComponent(out EnemyHealth _))
         {
-            Debug.LogWarning("EnemySpawnTest: EnemyMovement와 EnemyHealth가 있는 적 풀을 선택해 주세요.", this);
+            Debug.LogWarning("EnemySpawnTest: EnemyDefaultMovement와 EnemyHealth가 있는 일반 적 풀을 선택해 주세요.", this);
             return;
         }
 

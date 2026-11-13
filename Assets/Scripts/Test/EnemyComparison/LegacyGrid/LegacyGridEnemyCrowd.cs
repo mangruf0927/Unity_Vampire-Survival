@@ -1,20 +1,10 @@
 // 비교 테스트 전용: Collider 전환 이전 격자 이동을 보관한다. 실제 게임에서는 사용하지 않는다.
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Profiling;
 using UnityEngine.SceneManagement;
 
 public static class LegacyGridEnemyCrowd
 {
-    private static readonly ProfilerMarker updateCrowdMarker = new("LegacyGridEnemyCrowd.UpdateCrowd");
-    private static readonly ProfilerMarker simulateCrowdMarker = new("LegacyGridEnemyCrowd.SimulateCrowd");
-    private static readonly ProfilerMarker refreshGridMarker = new("LegacyGridEnemyCrowd.RefreshGrid");
-    private static readonly ProfilerMarker getSeparationMarker = new("LegacyGridEnemyCrowd.GetSeparation");
-    private static readonly ProfilerMarker correctOverlapMarker = new("LegacyGridEnemyCrowd.CorrectOverlap");
-    private static readonly ProfilerMarker tryGetProjectileHitMarker = new("LegacyGridEnemyCrowd.TryGetProjectileHit");
-    private static readonly ProfilerMarker moveEnemiesMarker = new("LegacyGridEnemyCrowd.MoveEnemies");
-    private static readonly ProfilerMarker overlapCorrectionMarker = new("LegacyGridEnemyCrowd.OverlapCorrection");
-    private static readonly ProfilerMarker overlapCorrectionPassMarker = new("LegacyGridEnemyCrowd.OverlapCorrectionPass");
 
     private const float CellSize = 2f;
     private const int CorrectionPasses = 2;
@@ -63,7 +53,6 @@ public static class LegacyGridEnemyCrowd
 
     public static void UpdateCrowd()
     {
-        using var scope = updateCrowdMarker.Auto();
 
         if (Time.deltaTime <= 0f || simulationFrame == Time.frameCount) return;
 
@@ -101,7 +90,6 @@ public static class LegacyGridEnemyCrowd
 
     internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out LegacyGridEnemyMovement hitEnemy, out float firstHitTime, HashSet<LegacyGridEnemyMovement> ignoredEnemies = null)
     {
-        using var scope = tryGetProjectileHitMarker.Auto();
 
         hitEnemy = null;
         firstHitTime = float.PositiveInfinity;
@@ -163,7 +151,6 @@ public static class LegacyGridEnemyCrowd
 
     private static void SimulateCrowd()
     {
-        using var scope = simulateCrowdMarker.Auto();
 
         for (int i = 0; i < activeEnemies.Count; i++)
         {
@@ -176,60 +163,53 @@ public static class LegacyGridEnemyCrowd
 
         RefreshGrid();
 
-        using (moveEnemiesMarker.Auto())
+        for (int i = 0; i < activeEnemies.Count; i++)
+        {
+            LegacyGridEnemyMovement enemy = activeEnemies[i];
+            if (enemy.UsesPhysics) continue;
+
+            if (enemy.Target != null)
+                enemy.Move(enemy.GetTargetDirection(), stepDeltaTime);
+            else
+                enemy.velocity = Vector3.zero;
+
+            if (!enemy.IsSwarm)
+            {
+                Vector3 requested = enemy.nextPosition - enemy.framePosition;
+                enemy.nextPosition = LegacyGridEnemyObstacleCollision.Move(enemy.framePosition, requested, enemy.BodyRadius);
+                if (enemy.Target != null)
+                    enemy.RecordObstacleMovement(requested, enemy.nextPosition - enemy.framePosition, stepDeltaTime);
+            }
+        }
+
+        for (int pass = 0; pass < CorrectionPasses; pass++)
         {
             for (int i = 0; i < activeEnemies.Count; i++)
             {
                 LegacyGridEnemyMovement enemy = activeEnemies[i];
-                if (enemy.UsesPhysics) continue;
-
-                if (enemy.Target != null)
-                    enemy.Move(enemy.GetTargetDirection(), stepDeltaTime);
-                else
-                    enemy.velocity = Vector3.zero;
-
-                if (!enemy.IsSwarm)
-                {
-                    Vector3 requested = enemy.nextPosition - enemy.framePosition;
-                    enemy.nextPosition = LegacyGridEnemyObstacleCollision.Move(enemy.framePosition, requested, enemy.BodyRadius);
-                    if (enemy.Target != null)
-                        enemy.RecordObstacleMovement(requested, enemy.nextPosition - enemy.framePosition, stepDeltaTime);
-                }
+                enemy.correction = Vector3.zero;
+                enemy.contactCount = 0;
             }
-        }
 
-        using (overlapCorrectionMarker.Auto())
-        {
-            for (int pass = 0; pass < CorrectionPasses; pass++)
+            RefreshGrid();
+
+            for (int i = 0; i < activeEnemies.Count; i++)
+                CorrectOverlap(activeEnemies[i]);
+
+            for (int i = 0; i < activeEnemies.Count; i++)
             {
-                using var passScope = overlapCorrectionPassMarker.Auto();
-                for (int i = 0; i < activeEnemies.Count; i++)
+                LegacyGridEnemyMovement enemy = activeEnemies[i];
+                if (enemy.Target == null || enemy.UsesPhysics) continue;
+
+                if (enemy.contactCount > 0)
                 {
-                    LegacyGridEnemyMovement enemy = activeEnemies[i];
-                    enemy.correction = Vector3.zero;
-                    enemy.contactCount = 0;
+                    Vector3 offset = enemy.correction / enemy.contactCount;
+                    Vector3 movement = Vector3.ClampMagnitude(offset, enemy.OverlapCorrectionSpeed * stepDeltaTime);
+                    enemy.nextPosition = enemy.IsSwarm ? enemy.nextPosition + movement
+                        : LegacyGridEnemyObstacleCollision.Move(enemy.nextPosition, movement, enemy.BodyRadius);
                 }
+                if (enemy.IsSwarm) enemy.nextPosition = enemy.ClampSwarmPosition(enemy.nextPosition);
 
-                RefreshGrid();
-
-                for (int i = 0; i < activeEnemies.Count; i++)
-                    CorrectOverlap(activeEnemies[i]);
-
-                for (int i = 0; i < activeEnemies.Count; i++)
-                {
-                    LegacyGridEnemyMovement enemy = activeEnemies[i];
-                    if (enemy.Target == null || enemy.UsesPhysics) continue;
-
-                    if (enemy.contactCount > 0)
-                    {
-                        Vector3 offset = enemy.correction / enemy.contactCount;
-                        Vector3 movement = Vector3.ClampMagnitude(offset, enemy.OverlapCorrectionSpeed * stepDeltaTime);
-                        enemy.nextPosition = enemy.IsSwarm ? enemy.nextPosition + movement
-                            : LegacyGridEnemyObstacleCollision.Move(enemy.nextPosition, movement, enemy.BodyRadius);
-                    }
-                    if (enemy.IsSwarm) enemy.nextPosition = enemy.ClampSwarmPosition(enemy.nextPosition);
-
-                }
             }
         }
 
@@ -254,7 +234,6 @@ public static class LegacyGridEnemyCrowd
 
     private static void RefreshGrid(bool useCurrentPosition = false)
     {
-        using var scope = refreshGridMarker.Auto();
 
         grid.Clear();
         largestRadius = 0f;
@@ -272,7 +251,6 @@ public static class LegacyGridEnemyCrowd
 
     internal static Vector3 GetSeparation(LegacyGridEnemyMovement enemy)
     {
-        using var scope = getSeparationMarker.Auto();
 
         Vector3 separation = Vector3.zero;
         Vector3 forward = enemy.GetTargetDirection().normalized;
@@ -322,7 +300,6 @@ public static class LegacyGridEnemyCrowd
 
     private static void CorrectOverlap(LegacyGridEnemyMovement enemy)
     {
-        using var scope = correctOverlapMarker.Auto();
 
         Vector2Int cell = GetCell(enemy.nextPosition);
         int cells = Mathf.CeilToInt((enemy.BodyRadius + largestRadius) / CellSize);

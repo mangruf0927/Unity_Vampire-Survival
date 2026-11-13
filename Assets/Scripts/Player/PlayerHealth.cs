@@ -3,13 +3,13 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
 {
-    private float maxHealth = 100f;
-    private float damageInterval = 1f;
+    private readonly List<IObserver> observers = new();
 
+    private float maxHealth;
+    private float damageInterval;
     private float currentHealth;
     private float nextDamageTime;
     private bool isDead;
-    private readonly List<IObserver> observers = new();
 
     public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
@@ -20,9 +20,44 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
         PlayerData data = DataManager.Instance.SelectedPlayer;
         maxHealth = data.maxHealth;
         damageInterval = data.damageInterval;
-
         currentHealth = maxHealth;
+    }
+
+    public void TakeDamage(float damage)
+    {
+        if (isDead || damage <= 0f || Time.timeScale <= 0f || Time.time < nextDamageTime) return;
+
+        currentHealth = Mathf.Max(0f, currentHealth - damage);
+        nextDamageTime = Time.time + Mathf.Max(0.01f, damageInterval);
+
+        if (SoundManager.Instance != null) SoundManager.Instance.PlaySFX(SoundManager.PlayerHit);
+
+        if (currentHealth <= 0f) Die();
         NotifyObservers();
+    }
+
+    public void Heal(float amount)
+    {
+        if (isDead || amount <= 0f || Time.timeScale <= 0f) return;
+
+        float healedHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        if (healedHealth == currentHealth) return;
+
+        currentHealth = healedHealth;
+        NotifyObservers();
+    }
+
+    public void IncreaseMaxHealth(float increaseRate)
+    {
+        if (isDead || increaseRate <= 0f) return;
+
+        maxHealth = Mathf.Max(1, Mathf.RoundToInt(maxHealth * (1f + increaseRate)));
+        NotifyObservers();
+    }
+
+    private void Die()
+    {
+        isDead = true;
     }
 
     public void AddObserver(IObserver observer)
@@ -39,38 +74,5 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
     {
         IObserver[] snapshot = observers.ToArray();
         for (int i = 0; i < snapshot.Length; i++) snapshot[i].Notify();
-    }
-
-    public void TakeDamage(float damage)
-    {
-        if (isDead || damage <= 0f || Time.timeScale <= 0f || Time.time < nextDamageTime) return;
-
-        currentHealth = Mathf.Max(0f, currentHealth - damage);
-        SoundManager.Instance?.PlaySFX(SoundManager.PlayerHit);
-        nextDamageTime = Time.time + Mathf.Max(0.01f, damageInterval);
-        if (currentHealth <= 0f) Die();
-        NotifyObservers();
-    }
-
-    public void Heal(float amount)
-    {
-        if (isDead || amount <= 0f || Time.timeScale <= 0f) return;
-        float healedHealth = Mathf.Min(maxHealth, currentHealth + amount);
-        if (healedHealth == currentHealth) return;
-        currentHealth = healedHealth;
-        NotifyObservers();
-    }
-
-    public void IncreaseMaxHealth(float increaseRate)
-    {
-        if (isDead || increaseRate <= 0f) return;
-        maxHealth = Mathf.Max(1, Mathf.RoundToInt(maxHealth * (1f + increaseRate)));
-
-        NotifyObservers();
-    }
-
-    private void Die()
-    {
-        isDead = true;
     }
 }

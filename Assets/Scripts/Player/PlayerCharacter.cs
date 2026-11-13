@@ -2,28 +2,48 @@ using UnityEngine;
 
 public class PlayerCharacter : MonoBehaviour, IObserver
 {
+    [System.Serializable]
+    private class CharacterPrefab
+    {
+        [Min(1)] public int playerId;
+        public GameObject prefab;
+    }
+
     [SerializeField] private PlayerExperience playerExperience;
     [SerializeField] private WeaponManager weaponManager;
-    [SerializeField] private Renderer characterRenderer;
-    [SerializeField] private Color antonioColor = new(0.35f, 0.7f, 0.4f);
-    [SerializeField] private Color imeldaColor = new(0.65f, 0.4f, 0.9f);
-    [SerializeField] private Color gennaroColor = new(0.4f, 0.65f, 0.95f);
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private CharacterPrefab[] characterPrefabs;
 
+    private PlayerData data;
     private int lastLevel = -1;
 
     private void Awake()
     {
         if (playerExperience == null) playerExperience = GetComponent<PlayerExperience>();
         if (weaponManager == null) weaponManager = GetComponent<WeaponManager>();
-        if (characterRenderer == null) return;
+        data = DataManager.Instance.SelectedPlayer;
+        CreateCharacter();
+    }
 
-        int id = DataManager.Instance.SelectedPlayerId;
-        Color color = id == 2 ? imeldaColor : id == 3 ? gennaroColor : antonioColor;
-        MaterialPropertyBlock block = new();
-        characterRenderer.GetPropertyBlock(block);
-        block.SetColor("_BaseColor", color);
-        block.SetColor("_Color", color);
-        characterRenderer.SetPropertyBlock(block);
+    private void CreateCharacter()
+    {
+        if (visualRoot == null || characterPrefabs == null)
+        {
+            Debug.LogError("PlayerCharacter: Visual Root와 캐릭터 외형 목록을 설정해 주세요.", this);
+            return;
+        }
+
+        for (int i = 0; i < characterPrefabs.Length; i++)
+        {
+            CharacterPrefab visual = characterPrefabs[i];
+            if (visual == null || visual.playerId != data.Id) continue;
+            if (visual.prefab == null) break;
+
+            GameObject instance = Instantiate(visual.prefab, visualRoot);
+            instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            return;
+        }
+        Debug.LogError($"PlayerCharacter: 캐릭터 ID {data.Id}의 외형 프리팹을 등록해 주세요.", this);
     }
 
     private void OnEnable()
@@ -42,7 +62,11 @@ public class PlayerCharacter : MonoBehaviour, IObserver
     {
         if (weaponManager == null || playerExperience == null || lastLevel == playerExperience.Level) return;
         lastLevel = playerExperience.Level;
-        PlayerData data = DataManager.Instance.SelectedPlayer;
+        ApplyAbility();
+    }
+
+    private void ApplyAbility()
+    {
         int steps = data.abilityInterval > 0 ? playerExperience.Level / data.abilityInterval : 1;
         float bonus = Mathf.Min(data.maxAbilityBonus, steps * data.abilityBonus);
         float damage = 1f;

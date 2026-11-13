@@ -15,6 +15,6 @@ public class Attractorb : Accessory
     {
         if (playerExperience == null) return;
 
-        playerExperience.SetAttractionRangeMultiplier(AttractionRangeMultiplier);
+        playerExperience.SetRangeMultiplier(AttractionRangeMultiplier);
     }
 }

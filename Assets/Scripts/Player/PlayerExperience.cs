@@ -3,15 +3,17 @@ using UnityEngine;
 
 public class PlayerExperience : MonoBehaviour, ISubject
 {
+    [SerializeField] private SphereCollider attractionCollider;
+
     private int initialExp = 5;
     private int expGrowth = 10;
-    [SerializeField] private SphereCollider attractionCollider;
     private float attractionRange = 1f;
     private float attractionSpeed = 10f;
 
     private int level = 1;
     private int currentExperience;
-    private float attractionRangeMultiplier = 1f;
+    private float rangeMultiplier = 1f;
+
     private readonly List<IObserver> observers = new();
 
     public int Level => level;
@@ -26,32 +28,54 @@ public class PlayerExperience : MonoBehaviour, ISubject
         attractionRange = data.attractionRange;
         attractionSpeed = data.attractionSpeed;
 
-        UpdateAttractionRange();
+        UpdateRange();
     }
 
     private void OnValidate()
     {
-        UpdateAttractionRange();
+        UpdateRange();
     }
 
-    private void UpdateAttractionRange()
+    private void UpdateRange()
     {
-        if (attractionCollider != null)
-            attractionCollider.radius = Mathf.Max(0.01f, attractionRange * attractionRangeMultiplier);
+        if (attractionCollider == null) return;
+        attractionCollider.radius = Mathf.Max(0.01f, attractionRange * rangeMultiplier);
     }
 
-    public void SetAttractionRangeMultiplier(float multiplier)
+    public void SetRangeMultiplier(float multiplier)
     {
-        attractionRangeMultiplier = Mathf.Max(0f, multiplier);
-        UpdateAttractionRange();
+        rangeMultiplier = Mathf.Max(0f, multiplier);
+        UpdateRange();
     }
 
     public void TryAttractGem(Collider sensor, ExperienceGem gem)
     {
-        if (!isActiveAndEnabled || Time.timeScale <= 0f || attractionCollider == null
-            || sensor != attractionCollider || gem == null) return;
+        if (!isActiveAndEnabled || Time.timeScale <= 0f || attractionCollider == null || sensor != attractionCollider || gem == null)
+            return;
 
         gem.AttractTo(this, attractionSpeed);
+    }
+
+    public void AddExperience(int amount)
+    {
+        if (amount <= 0) return;
+
+        while (amount > 0)
+        {
+            int remaining = RequiredExperience - currentExperience;
+
+            if (amount < remaining)
+            {
+                currentExperience += amount;
+                break;
+            }
+
+            amount -= remaining;
+            currentExperience = 0;
+            level++;
+        }
+
+        NotifyObservers();
     }
 
     public void AddObserver(IObserver observer)
@@ -68,24 +92,5 @@ public class PlayerExperience : MonoBehaviour, ISubject
     {
         IObserver[] snapshot = observers.ToArray();
         for (int i = 0; i < snapshot.Length; i++) snapshot[i].Notify();
-    }
-
-    public void AddExperience(int amount)
-    {
-        if (amount <= 0) return;
-
-        while (amount > 0)
-        {
-            int remaining = RequiredExperience - currentExperience;
-            if (amount < remaining)
-            {
-                currentExperience += amount;
-                break;
-            }
-            amount -= remaining;
-            currentExperience = 0;
-            level++;
-        }
-        NotifyObservers();
     }
 }

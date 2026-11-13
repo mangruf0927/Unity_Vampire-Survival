@@ -70,6 +70,9 @@
 - 안토니오는 시금치와 별도 배율로 곱한다. 최종 피해량 = 무기 강화 후 피해량 × 시금치 배율 × 캐릭터 피해 배율.
 - 이멜다의 속도 보너스는 지팡이·단검의 직진 속도와 성경의 공전 속도에 적용한다. 채찍에는 적용하지 않는다.
 - 캐릭터 능력은 PlayerCharacter가 레벨 알림으로 갱신하고 WeaponManager가 기존/신규 무기에 전달한다.
+- 공통 Player 루트의 이동·충돌·체력·입력·무기와 기존 씬 참조를 유지한다. PlayerCharacter는 시작 시 선택 PlayerData를 저장하고, Inspector의 캐릭터 ID → 외형 프리팹 목록에서 하나를 VisualRoot 아래에 생성한다. 재활성화 시 외형을 중복 생성하지 않는다.
+- 외형 프리팹은 Assets/Prefabs/Character의 AntonioVisual·ImeldaVisual·GennaroVisual이다. 현재는 캡슐과 정면 표시 및 개별 머티리얼로 구성한 임시 외형이며, 런타임 색상 변경 코드는 없다. 실제 모델·Animator는 각 프리팹 내부에서 교체한다.
+- VisualRoot는 Player 로컬 Y=-1, 외형 프리팹은 발 위치를 원점·정면을 +Z로 맞춘다. 외형에는 게임플레이 스크립트·추가 Collider/Rigidbody를 넣지 않으며 Animator 사용 시 Apply Root Motion을 끈다. 모델별 크기·회전 보정은 프리팹 내부에서 관리한다.
 
 ## 5. 적과 스폰
 

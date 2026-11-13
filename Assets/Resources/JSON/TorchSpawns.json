@@ -1,0 +1,15 @@
+{
+  "tableName": "TorchSpawns",
+  "records": [
+    {
+      "Id": 1,
+      "spawnInterval": 5,
+      "spawnChance": 0.5,
+      "maximumTorches": 10,
+      "spawnMargin": 2,
+      "minimumSpacing": 2,
+      "placementAttempts": 8,
+      "returnDistance": 70
+    }
+  ]
+}

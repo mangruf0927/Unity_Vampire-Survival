@@ -3136,13 +3136,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 774257183}
   gameCamera: {fileID: 330585545}
-  spawnInterval: 3
-  spawnChance: 1
-  maximumTorches: 12
-  spawnMargin: 2
-  minimumSpacing: 2
-  placementAttempts: 8
-  returnDistance: 70
+  dataId: 1
   groundLayers:
     serializedVersion: 2
     m_Bits: 512

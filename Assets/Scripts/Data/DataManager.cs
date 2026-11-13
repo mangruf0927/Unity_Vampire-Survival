@@ -23,6 +23,7 @@ public class DataManager
     private readonly DataTable<AccessoryData> accessories = new();
     private readonly DataTable<PlayerData> players = new();
     private readonly DataTable<ExperienceGemData> gems = new();
+    private readonly DataTable<TorchSpawnData> torchSpawns = new();
     private readonly Dictionary<string, Action<JToken>> tableLoaderDictionary = new();
 
     public DataTable<EnemyData> Enemies { get { LoadAll(); return enemies; } }
@@ -32,6 +33,8 @@ public class DataManager
     public DataTable<PlayerData> Players { get { LoadAll(); return players; } }
     public DataTable<ExperienceGemData> Gems { get { LoadAll(); return gems; } }
 
+    public DataTable<TorchSpawnData> TorchSpawns { get { LoadAll(); return torchSpawns; } }
+
     private DataManager()
     {
         tableLoaderDictionary.Add("Enemies", enemies.LoadFromToken);
@@ -40,6 +43,7 @@ public class DataManager
         tableLoaderDictionary.Add("Accessories", accessories.LoadFromToken);
         tableLoaderDictionary.Add("Players", players.LoadFromToken);
         tableLoaderDictionary.Add("ExperienceGems", gems.LoadFromToken);
+        tableLoaderDictionary.Add("TorchSpawns", torchSpawns.LoadFromToken);
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -103,5 +107,6 @@ public class DataManager
         accessories.Clear();
         players.Clear();
         gems.Clear();
+        torchSpawns.Clear();
     }
 }

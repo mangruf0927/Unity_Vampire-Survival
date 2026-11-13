@@ -5,13 +5,7 @@ public class TorchSpawner : MonoBehaviour
 {
     [SerializeField] private Transform player;
     [SerializeField] private Camera gameCamera;
-    [SerializeField, Min(0.1f)] private float spawnInterval = 3f;
-    [SerializeField, Range(0f, 1f)] private float spawnChance = 0.5f;
-    [SerializeField, Min(0)] private int maximumTorches = 12;
-    [SerializeField, Min(0f)] private float spawnMargin = 2f;
-    [SerializeField, Min(0f)] private float minimumSpacing = 2f;
-    [SerializeField, Min(1)] private int placementAttempts = 8;
-    [SerializeField, Min(1f)] private float returnDistance = 70f;
+    [SerializeField, Min(1)] private int dataId = 1;
     [SerializeField] private LayerMask groundLayers = 1 << 9;
     [SerializeField] private LayerMask obstacleLayers = 1 << 11;
 
@@ -19,8 +13,7 @@ public class TorchSpawner : MonoBehaviour
 
     private readonly Vector3[] corners = new Vector3[4];
     private CameraView cameraView;
-    private Plane[] cameraPlanes;
-
+    private TorchSpawnData data;
     private float timer;
     private float torchRadius;
 
@@ -38,6 +31,7 @@ public class TorchSpawner : MonoBehaviour
             return;
         }
 
+        data = DataManager.Instance.TorchSpawns.Get(dataId);
         torchRadius = torch.HitRadius;
     }
 
@@ -47,32 +41,31 @@ public class TorchSpawner : MonoBehaviour
 
         timer -= Time.deltaTime;
         if (timer > 0f) return;
-        timer = spawnInterval;
+        timer = data.spawnInterval;
 
-        cameraPlanes = cameraView.FrustumPlanes;
-        ReturnDistantTorches();
+        Plane[] planes = cameraView.FrustumPlanes;
+        ReturnDistantTorches(planes);
 
-        if (CanSpawn()) SpawnTorch();
+        if (CanSpawn()) SpawnTorch(planes);
     }
 
     private bool CanSpawn()
     {
-        return Torch.ActiveCount < maximumTorches && Random.value < spawnChance;
+        return Torch.ActiveCount < data.maximumTorches && Random.value < data.spawnChance;
     }
 
-    private void SpawnTorch()
+    private void SpawnTorch(Plane[] planes)
     {
         if (!ReadCameraCorners()) return;
 
-        for (int i = 0; i < placementAttempts; i++)
+        for (int i = 0; i < data.placementAttempts; i++)
         {
             if (!TryGetPosition(out Vector3 position)) continue;
 
             GameObject obj = ObjectPool.Instance.GetFromPool(PoolTypeEnums.Torch, position, Quaternion.identity);
             if (obj == null) return;
 
-            // 불꽃을 포함해 횃불이 화면 밖에 있으면 생성 유지
-            if (!obj.GetComponent<Torch>().IsVisible(cameraPlanes)) return;
+            if (!obj.GetComponent<Torch>().IsVisible(planes)) return;
 
             ObjectPool.Instance.TryReturnToPool(obj);
         }
@@ -94,22 +87,22 @@ public class TorchSpawner : MonoBehaviour
         Vector3 outward = new Vector3(-(to - from).z, 0f, (to - from).x).normalized;
         if (Vector3.Dot(outward, point - center) < 0f) outward = -outward;
 
-        position = point + outward * (spawnMargin + torchRadius);
+        position = point + outward * (data.spawnMargin + torchRadius);
 
-        if (!Physics.Raycast(position + Vector3.up * 5f, Vector3.down, out RaycastHit hit,
-            10f, groundLayers, QueryTriggerInteraction.Ignore)) return false;
+        if (!Physics.Raycast(position + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f, groundLayers, QueryTriggerInteraction.Ignore))
+            return false;
 
         position.y = hit.point.y + CenterHeight;
 
-        if (Physics.CheckCapsule(position + Vector3.down * 0.5f, position + Vector3.up * 0.5f,
-            torchRadius, obstacleLayers, QueryTriggerInteraction.Ignore)) return false;
+        if (Physics.CheckCapsule(position + Vector3.down * 0.5f, position + Vector3.up * 0.5f, torchRadius, obstacleLayers, QueryTriggerInteraction.Ignore))
+            return false;
 
-        return Torch.IsSpaceAvailable(position, torchRadius, minimumSpacing);
+        return Torch.IsSpaceAvailable(position, torchRadius, data.minimumSpacing);
     }
 
-    private void ReturnDistantTorches()
+    private void ReturnDistantTorches(Plane[] planes)
     {
-        float distanceSquared = returnDistance * returnDistance;
+        float distanceSquared = data.returnDistance * data.returnDistance;
 
         for (int i = Torch.ActiveCount - 1; i >= 0; i--)
         {
@@ -117,7 +110,7 @@ public class TorchSpawner : MonoBehaviour
             Vector3 offset = torch.transform.position - player.position;
             offset.y = 0f;
 
-            if (offset.sqrMagnitude > distanceSquared && !torch.IsVisible(cameraPlanes))
+            if (offset.sqrMagnitude > distanceSquared && !torch.IsVisible(planes))
                 ObjectPool.Instance.TryReturnToPool(torch.gameObject);
         }
     }

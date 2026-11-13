@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PickupItem : MonoBehaviour
+public class MapItem : MonoBehaviour
 {
     private enum ItemType { Chicken, Vacuum, Clock }
 
@@ -16,23 +16,16 @@ public class PickupItem : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (collected || !isActiveAndEnabled || Time.timeScale <= 0f) return;
-        // 보석 흡인용 자식 센서는 제외하고 플레이어 몸체 접촉만 처리한다.
+
         if (!other.TryGetComponent(out PlayerExperience player) || !player.isActiveAndEnabled
             || !other.TryGetComponent(out PlayerHealth health) || health.IsDead) return;
 
         collected = true;
-        switch (itemType)
-        {
-            case ItemType.Chicken:
-                health.Heal(healAmount);
-                break;
-            case ItemType.Vacuum:
-                ExperienceGem.AttractAllTo(player, attractionSpeed);
-                break;
-            case ItemType.Clock:
-                EnemyCrowd.FreezeFor(freezeDuration);
-                break;
-        }
+
+        if (itemType == ItemType.Chicken) health.Heal(healAmount);
+        else if (itemType == ItemType.Vacuum) ExperienceGem.AttractAllTo(player, attractionSpeed);
+        else if (itemType == ItemType.Clock) EnemyCrowd.FreezeFor(freezeDuration);
+
         ObjectPool.Instance.TryReturnToPool(gameObject);
     }
 }

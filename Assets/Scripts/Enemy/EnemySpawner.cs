@@ -37,7 +37,8 @@ public class EnemySpawner : MonoBehaviour
 
     private readonly List<Vector3> formationOffsets = new();
     private readonly List<Renderer> enemyRenderers = new();
-    private readonly Plane[] cameraPlanes = new Plane[6];
+    private CameraView cameraView;
+    private Plane[] cameraPlanes;
 
     private float spawnTimer;
     private int currentStage = -1;
@@ -54,6 +55,13 @@ public class EnemySpawner : MonoBehaviour
             stages == null || stages.Length != 10)
         {
             Debug.LogError("EnemySpawner: Player, Camera, Time System과 10개 구간을 설정해 주세요.", this);
+            enabled = false;
+            return;
+        }
+
+        if (!spawnCamera.TryGetComponent(out cameraView))
+        {
+            Debug.LogError("EnemySpawner: Camera에 CameraView를 추가해 주세요.", this);
             enabled = false;
             return;
         }
@@ -120,7 +128,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (Time.time >= nextOffscreenCheckTime)
         {
-            GeometryUtility.CalculateFrustumPlanes(spawnCamera, cameraPlanes);
+            cameraPlanes = cameraView.FrustumPlanes;
             ReturnOffscreenEnemies();
             nextOffscreenCheckTime = Time.time + Mathf.Max(0.01f, offscreenCheckInterval);
         }
@@ -301,18 +309,7 @@ public class EnemySpawner : MonoBehaviour
 
     private bool TryGetCameraCorners(out Vector3 center)
     {
-        center = Vector3.zero;
-        Plane spawnPlane = new(Vector3.up, new Vector3(0f, spawnHeight, 0f));
-        for (int i = 0; i < 4; i++)
-        {
-            float x = i == 1 || i == 2 ? 1f : 0f;
-            float y = i >= 2 ? 1f : 0f;
-            Ray ray = spawnCamera.ViewportPointToRay(new Vector3(x, y, 0f));
-            if (!spawnPlane.Raycast(ray, out float distance)) return false;
-            corners[i] = ray.GetPoint(distance);
-            center += corners[i] * 0.25f;
-        }
-        return true;
+        return cameraView.TryGetCorners(spawnHeight, corners, out center);
     }
 
     private bool TryGetSpawnPosition(float radius, out Vector3 position, Vector3 entryDirection = default)

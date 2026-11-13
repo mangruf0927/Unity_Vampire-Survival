@@ -11,6 +11,7 @@ public class MapGenerator : MonoBehaviour
 
     private readonly Dictionary<Vector2Int, GameObject> activeChunks = new();
     private readonly List<Vector2Int> returnCoordinates = new();
+    private CameraView cameraView;
     private Vector3 origin;
     private Vector2Int previousCenter;
     private int previousRadius = -1;
@@ -18,10 +19,11 @@ public class MapGenerator : MonoBehaviour
     private void Start()
     {
         if (gameCamera == null) gameCamera = Camera.main;
-        if (player == null || gameCamera == null || chunkSize.x <= 0f || chunkSize.y <= 0f
+        if (player == null || gameCamera == null || !gameCamera.TryGetComponent(out cameraView)
+            || chunkSize.x <= 0f || chunkSize.y <= 0f
             || !ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.ForestChunk, out _))
         {
-            Debug.LogError("MapGenerator: Player, Camera, Chunk Size와 ForestChunk 풀을 확인해 주세요.", this);
+            Debug.LogError("MapGenerator: Player, Camera의 CameraView, Chunk Size와 ForestChunk 풀을 확인해 주세요.", this);
             enabled = false;
             return;
         }
@@ -78,7 +80,7 @@ public class MapGenerator : MonoBehaviour
         Plane ground = new(Vector3.up, origin);
         for (int i = 0; i < 4; i++)
         {
-            Ray ray = gameCamera.ViewportPointToRay(new Vector3(i % 2, i / 2, 0f));
+            Ray ray = cameraView.GetCornerRay(i);
             if (!ground.Raycast(ray, out float distance)) continue;
             Vector3 point = ray.GetPoint(distance);
             // 플레이어가 청크 가장자리에 있어도 화면을 덮도록 여유 반경을 계산한다.

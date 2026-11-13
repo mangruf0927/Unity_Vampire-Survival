@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// 화면 영역을 사용하는 Spawner와 MapGenerator보다 먼저 카메라를 이동한다.
+[DefaultExecutionOrder(-100)]
 public class CameraFollow : MonoBehaviour
 {
     [SerializeField] private Transform target;

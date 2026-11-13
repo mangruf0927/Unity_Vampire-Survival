@@ -13,6 +13,9 @@ GameObject:
   m_Layer: 0
   m_Name: WhipWeapon
   m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &400000
 Transform:
@@ -39,9 +42,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9d42dd8385c47469d51ac8974097750, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  icon: {fileID: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  icon: {fileID: 21300000, guid: 4a1ed1760417b4350809447be6885443, type: 3}
+  dataId: 4
   level: 1
   slashPrefab: {fileID: 11400000, guid: a6dcd456941240bea9bd4df992f09beb, type: 3}
-  dataId: 4

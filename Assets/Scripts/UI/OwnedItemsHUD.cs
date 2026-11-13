@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,9 +10,6 @@ public class OwnedItemsHUD : MonoBehaviour
     [SerializeField] private Image[] weaponIcons;
     [SerializeField] private Image[] accessoryIcons;
     [SerializeField] private Sprite placeholderIcon;
-
-    [SerializeField] private Color weaponPlaceholderColor = new(0.35f, 0.75f, 1f);
-    [SerializeField] private Color accessoryPlaceholderColor = new(1f, 0.75f, 0.35f);
 
     private void OnEnable()
     {
@@ -47,7 +45,7 @@ public class OwnedItemsHUD : MonoBehaviour
         {
             Weapon weapon = weaponManager != null && i < weaponManager.OwnedWeapons.Count ? weaponManager.OwnedWeapons[i] : null;
 
-            SetIcon(weaponIcons[i], weapon, weaponPlaceholderColor);
+            SetIcon(weaponIcons[i], weapon);
         }
     }
 
@@ -65,7 +63,7 @@ public class OwnedItemsHUD : MonoBehaviour
             if (icon == null) continue;
 
             icon.transform.parent.gameObject.SetActive(i < baseSlots || accessory != null);
-            SetIcon(icon, accessory, accessoryPlaceholderColor);
+            SetIcon(icon, accessory);
         }
     }
 
@@ -101,15 +99,13 @@ public class OwnedItemsHUD : MonoBehaviour
         }
     }
 
-    private void SetIcon(Image image, ILevelUpOption item, Color placeholderColor)
+    private void SetIcon(Image image, ILevelUpOption item)
     {
         if (image == null) return;
 
-        bool hasIcon = item != null && item.Icon != null;
-        Sprite sprite = hasIcon ? item.Icon : placeholderIcon;
+        image.sprite = item != null && item.Icon != null ? item.Icon : placeholderIcon;
 
-        image.sprite = sprite;
-        image.enabled = item != null && sprite != null;
-        image.color = hasIcon ? Color.white : placeholderColor;
+        image.enabled = image.sprite != null;
+        image.color = Color.white;
     }
 }

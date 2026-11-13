@@ -21,6 +21,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable, ISubject
         maxHealth = data.maxHealth;
         damageInterval = data.damageInterval;
         currentHealth = maxHealth;
+        NotifyObservers();
     }
 
     public void TakeDamage(float damage)

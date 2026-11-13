@@ -2,34 +2,57 @@ using UnityEngine;
 
 public abstract class Weapon : MonoBehaviour, ILevelUpOption
 {
-    private bool isOwned;
     [SerializeField] private Sprite icon;
     [SerializeField, Min(1)] private int dataId = 1;
-    public int DataId => dataId;
-    protected WeaponData Data => DataManager.Instance.Weapons.Get(dataId);
     [SerializeField, Range(1, 8)] private int level = 1;
+
+    private bool isOwned;
+    private bool upgradesInitialized;
+
     protected float damage;
     protected int projectileCount;
     protected float knockback;
+    protected float cooldownRemaining;
 
-    private bool upgradesInitialized;
     private float damageMultiplier = 1f;
     private float cooldownMultiplier = 1f;
     private float characterDamageMultiplier = 1f;
     private int characterProjectileBonus;
-    protected float CharacterProjectileSpeedMultiplier { get; private set; } = 1f;
-
-    public void SetCharacterBonuses(float damageBonus, float speedBonus, int projectileBonus)
-    {
-        characterDamageMultiplier = damageBonus;
-        CharacterProjectileSpeedMultiplier = speedBonus;
-        characterProjectileBonus = projectileBonus;
-    }
-    protected float cooldownRemaining;
 
     protected Transform AttackOrigin { get; private set; }
     protected Camera TargetCamera { get; private set; }
     protected Vector3 AttackDirection { get; private set; } = Vector3.forward;
+    protected float CharacterProjectileSpeedMultiplier { get; private set; } = 1f;
+
+    protected WeaponData Data => DataManager.Instance.Weapons.Get(dataId);
+    protected abstract float BaseCooldown { get; }
+
+    public int DataId => dataId;
+    public bool IsOwned => isOwned;
+    public Sprite Icon => icon;
+    public int Level => isOwned ? Mathf.Clamp(level, 1, 8) : 0;
+    public bool CanUpgrade => !isOwned || Level < 8;
+    public string DisplayName => Data.displayName;
+
+    public virtual float Damage => damage * damageMultiplier * characterDamageMultiplier;
+    public virtual int ProjectileCount => projectileCount + characterProjectileBonus;
+    public float Knockback => knockback;
+    public float Cooldown => Mathf.Max(0.01f, BaseCooldown * cooldownMultiplier);
+
+    protected virtual void OnEnable()
+    {
+        InitializeUpgrades();
+    }
+
+    protected virtual void OnDisable() { }
+
+    protected virtual void LateUpdate()
+    {
+        if (!isOwned || AttackOrigin == null || Time.deltaTime <= 0f) return;
+
+        cooldownRemaining = Mathf.Max(0f, cooldownRemaining - Time.deltaTime);
+        UpdateAttack(Time.deltaTime);
+    }
 
     public void Initialize(Transform attackOrigin, Camera targetCamera, Vector3 attackDirection)
     {
@@ -41,29 +64,16 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public void SetAttackDirection(Vector3 direction)
     {
         direction.y = 0f;
-        if (direction.sqrMagnitude > 0.000001f) AttackDirection = direction.normalized;
+
+        if (direction.sqrMagnitude > 0.000001f)
+            AttackDirection = direction.normalized;
     }
 
-    public bool IsOwned => isOwned;
-    public Sprite Icon => icon;
-    public int Level => isOwned ? Mathf.Clamp(level, 1, 8) : 0;
-    public bool CanUpgrade => !isOwned || Level < 8;
-    public string DisplayName => Data.displayName;
-    public string GetChoiceDescription()
+    public void SetCharacterBonuses(float damageBonus, float speedBonus, int projectileBonus)
     {
-        if (!IsOwned) return Data.acquisitionDescription;
-        WeaponUpgradeData upgrade = Data.GetUpgrade(Level + 1);
-        return upgrade != null ? upgrade.GetDescription() : "최대 레벨";
-    }
-    public virtual float Damage => damage * damageMultiplier * characterDamageMultiplier;
-    public virtual int ProjectileCount => projectileCount + characterProjectileBonus;
-    public float Knockback => knockback;
-    public float Cooldown => Mathf.Max(0.01f, BaseCooldown * cooldownMultiplier);
-    protected abstract float BaseCooldown { get; }
-
-    public void SetCooldownMultiplier(float multiplier)
-    {
-        cooldownMultiplier = Mathf.Max(0f, multiplier);
+        characterDamageMultiplier = damageBonus;
+        CharacterProjectileSpeedMultiplier = speedBonus;
+        characterProjectileBonus = projectileBonus;
     }
 
     public void SetDamageMultiplier(float multiplier)
@@ -71,21 +81,31 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
         damageMultiplier = Mathf.Max(0f, multiplier);
     }
 
-    protected virtual void OnEnable()
+    public void SetCooldownMultiplier(float multiplier)
     {
-        InitializeUpgrades();
+        cooldownMultiplier = Mathf.Max(0f, multiplier);
     }
 
-    protected virtual void OnDisable() { }
+    public string GetChoiceDescription()
+    {
+        if (!isOwned) return Data.acquisitionDescription;
+
+        WeaponUpgradeData upgrade = Data.GetUpgrade(Level + 1);
+        return upgrade != null ? upgrade.GetDescription() : "최대 레벨";
+    }
 
     public void Acquire()
     {
         if (isOwned) return;
+
         WeaponData data = Data;
+
         damage = data.damage;
         projectileCount = data.projectileCount;
         knockback = data.knockback;
+
         ApplyWeaponData(data);
+
         isOwned = true;
         level = 1;
         InitializeUpgrades();
@@ -95,33 +115,28 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public void LevelUp()
     {
         if (!Application.isPlaying || !isOwned || Level >= 8) return;
+
         InitializeUpgrades();
-        level = Level + 1;
+        level++;
         UpgradeWeapon(level);
     }
 
     private void InitializeUpgrades()
     {
         if (!isOwned || upgradesInitialized) return;
-        upgradesInitialized = true;
-        // Inspector에서 지정한 시작 레벨의 강화도 순서대로 한 번만 적용한다.
-        for (int i = 2; i <= Level; i++) UpgradeWeapon(i);
-    }
 
-    protected abstract void ApplyWeaponData(WeaponData data);
+        upgradesInitialized = true;
+
+        for (int i = 2; i <= Level; i++)
+            UpgradeWeapon(i);
+    }
 
     protected virtual void UpgradeWeapon(int level)
     {
         WeaponUpgradeData upgrade = Data.GetUpgrade(level);
+
         damage += upgrade.damage;
         projectileCount += upgrade.projectileCount;
-    }
-
-    protected virtual void LateUpdate()
-    {
-        if (!isOwned || AttackOrigin == null || Time.deltaTime <= 0f) return;
-        cooldownRemaining = Mathf.Max(0f, cooldownRemaining - Time.deltaTime);
-        UpdateAttack(Time.deltaTime);
     }
 
     protected void StartCooldown()
@@ -129,5 +144,6 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
         cooldownRemaining = Cooldown;
     }
 
+    protected abstract void ApplyWeaponData(WeaponData data);
     protected abstract void UpdateAttack(float deltaTime);
 }

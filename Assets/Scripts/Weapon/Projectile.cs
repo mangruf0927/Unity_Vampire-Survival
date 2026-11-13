@@ -3,12 +3,12 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-
     [SerializeField, Min(0f)] private float hitRadius = 0.125f;
+
     private float damage;
     private int hitsRemaining;
     private float knockback;
-    private readonly HashSet<EnemyMovement> hitEnemies = new();
+    private readonly Dictionary<EnemyMovement, int> hitEnemies = new();
     private readonly Dictionary<Torch, int> hitTorches = new();
 
     private Vector3 direction;
@@ -54,12 +54,12 @@ public class Projectile : MonoBehaviour
         {
             float radius = hitRadius * hitRadiusMultiplier;
             bool hasEnemy = EnemyCrowd.TryGetProjectileHit(start, end, radius,
-                out EnemyMovement enemy, out float enemyTime, hitEnemies);
+                out EnemyMovement enemy, out float enemyTime, ignoredEnemyVersions: hitEnemies);
             bool hasTorch = Torch.TryGetHit(start, end, radius, out Torch torch, out float torchTime, hitTorches);
             if (!hasEnemy && !hasTorch) break;
             if (hasEnemy && (!hasTorch || enemyTime <= torchTime))
             {
-                hitEnemies.Add(enemy);
+                hitEnemies[enemy] = enemy.ActivationVersion;
                 enemy.ApplyKnockback(direction, knockback);
                 if (enemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(damage);
             }

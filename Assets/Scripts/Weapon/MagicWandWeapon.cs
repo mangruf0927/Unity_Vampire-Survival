@@ -2,15 +2,17 @@ using UnityEngine;
 
 public class MagicWandWeapon : Weapon
 {
-
     [SerializeField] private Projectile projectilePrefab;
+
     private float cooldown;
     private float projectileSpeed;
-
     private float burstInterval;
     private int penetrationCount;
     private float speedMultiplier;
     private float areaMultiplier;
+
+    private float burstRemaining;
+    private int shotsRemaining;
 
     protected override float BaseCooldown => cooldown;
     public int PenetrationCount => penetrationCount;
@@ -35,9 +37,6 @@ public class MagicWandWeapon : Weapon
         speedMultiplier += upgrade.speedMultiplier;
         areaMultiplier += upgrade.areaMultiplier;
     }
-
-    private float burstRemaining;
-    private int shotsRemaining;
 
     private void Awake()
     {
@@ -75,7 +74,7 @@ public class MagicWandWeapon : Weapon
         projectile.transform.localScale *= areaMultiplier;
         projectile.Initialize(direction.normalized, projectileSpeed * speedMultiplier * CharacterProjectileSpeedMultiplier,
             TargetCamera, Damage, PenetrationCount, Knockback, areaMultiplier);
-        SoundManager.Instance?.PlaySFX(SoundManager.MagicWandAttack);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlaySFX(SoundManager.MagicWandAttack);
     }
 
     private EnemyMovement FindNearestVisibleEnemy()

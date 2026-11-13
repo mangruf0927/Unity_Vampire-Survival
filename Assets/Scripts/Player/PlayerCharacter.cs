@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerCharacter : MonoBehaviour, IObserver
 {
@@ -12,6 +13,7 @@ public class PlayerCharacter : MonoBehaviour, IObserver
     [SerializeField] private PlayerExperience playerExperience;
     [SerializeField] private WeaponManager weaponManager;
     [SerializeField] private Transform visualRoot;
+    [FormerlySerializedAs("characterVisuals")]
     [SerializeField] private CharacterPrefab[] characterPrefabs;
 
     private PlayerData data;

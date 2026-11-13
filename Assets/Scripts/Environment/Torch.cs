@@ -15,6 +15,7 @@ public class Torch : MonoBehaviour, IDamageable
 
     private static readonly List<Torch> activeTorches = new();
 
+    private readonly List<MeshFilter> dropMeshes = new();
     private Renderer[] renderers;
     private float groundHeight;
     private bool broken;
@@ -116,17 +117,40 @@ public class Torch : MonoBehaviour, IDamageable
 
     private void SpawnDrop(PoolTypeEnums type)
     {
-        if (!ObjectPool.Instance.TryGetPrefab(type, out GameObject prefab) || !prefab.TryGetComponent(out MeshFilter meshFilter) || meshFilter.sharedMesh == null) return;
-
         Vector3 position = transform.position;
         float height = groundHeight;
 
         if (Physics.Raycast(position + Vector3.up, Vector3.down, out RaycastHit hit,
             Mathf.Infinity, groundLayers, QueryTriggerInteraction.Ignore)) height = hit.point.y;
 
-        float halfHeight = meshFilter.sharedMesh.bounds.extents.y * Mathf.Abs(prefab.transform.localScale.y);
-        position.y = height + halfHeight;
-        ObjectPool.Instance.GetFromPool(type, position, Quaternion.identity);
+        position.y = height;
+        GameObject item = ObjectPool.Instance.GetFromPool(type, position, Quaternion.identity);
+        if (item != null) PlaceDropOnGround(item, height);
+    }
+
+    private void PlaceDropOnGround(GameObject item, float groundY)
+    {
+        dropMeshes.Clear();
+        item.GetComponentsInChildren<MeshFilter>(true, dropMeshes);
+        float lowest = float.PositiveInfinity;
+
+        for (int i = 0; i < dropMeshes.Count; i++)
+        {
+            MeshFilter mesh = dropMeshes[i];
+            if (mesh.sharedMesh == null) continue;
+            Bounds bounds = mesh.sharedMesh.bounds;
+
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Vector3 point = new((corner & 1) == 0 ? bounds.min.x : bounds.max.x,
+                                    (corner & 2) == 0 ? bounds.min.y : bounds.max.y,
+                                    (corner & 4) == 0 ? bounds.min.z : bounds.max.z);
+                lowest = Mathf.Min(lowest, mesh.transform.TransformPoint(point).y);
+            }
+        }
+        if (lowest < float.PositiveInfinity)
+            item.transform.position += Vector3.up * (groundY - lowest);
+        dropMeshes.Clear();
     }
 
     internal bool IsVisible(Plane[] planes)

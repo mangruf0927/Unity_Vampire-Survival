@@ -2925,7 +2925,7 @@ MonoBehaviour:
   playerExperience: {fileID: 2130000000}
   weaponManager: {fileID: 2240000200}
   visualRoot: {fileID: 2260000101}
-  characterVisuals:
+  characterPrefabs:
   - playerId: 1
     prefab: {fileID: 100000, guid: daa535348e6940dfad6644fa280d96d6, type: 3}
   - playerId: 2

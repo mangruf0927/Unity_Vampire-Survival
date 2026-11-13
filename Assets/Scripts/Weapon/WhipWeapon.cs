@@ -66,9 +66,8 @@ public class WhipWeapon : Weapon
         {
             Vector3 direction = burstRight * nextSide;
             WhipSlash slash = Instantiate(slashPrefab, transform);
-            slash.Initialize(AttackOrigin, direction, Damage, Knockback,
-                slashLength * areaMultiplier, slashWidth * areaMultiplier, slashDuration);
-            SoundManager.Instance?.PlaySFX(SoundManager.WhipAttack);
+            slash.Initialize(AttackOrigin, direction, Damage, Knockback, slashLength * areaMultiplier, slashWidth * areaMultiplier, slashDuration);
+            if (SoundManager.Instance != null) SoundManager.Instance.PlaySFX(SoundManager.WhipAttack);
             nextSide = -nextSide;
             shotsRemaining--;
             burstRemaining += Mathf.Max(0.01f, burstInterval);

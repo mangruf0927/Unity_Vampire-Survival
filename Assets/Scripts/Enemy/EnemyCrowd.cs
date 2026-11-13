@@ -167,12 +167,12 @@ public static class EnemyCrowd
         for (int i = 0; i < activeEnemies.Count; i++) activeEnemies[i].ClearFrozenMotion();
     }
 
-    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, HashSet<EnemyMovement> ignoredEnemies = null)
+    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, HashSet<EnemyMovement> ignoredEnemies = null, Dictionary<EnemyMovement, int> ignoredEnemyVersions = null)
     {
-        return TryGetProjectileHit(start, end, hitRadius, out hitEnemy, out _, ignoredEnemies);
+        return TryGetProjectileHit(start, end, hitRadius, out hitEnemy, out _, ignoredEnemies, ignoredEnemyVersions);
     }
 
-    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, out float firstHitTime, HashSet<EnemyMovement> ignoredEnemies = null)
+    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, out float firstHitTime, HashSet<EnemyMovement> ignoredEnemies = null, Dictionary<EnemyMovement, int> ignoredEnemyVersions = null)
     {
         hitEnemy = null;
         firstHitTime = float.PositiveInfinity;
@@ -198,7 +198,7 @@ public static class EnemyCrowd
 
                 while (enemy != null)
                 {
-                    if (IsValidHitTarget(enemy, ignoredEnemies) && IsProjectileHit(enemy, start, segment, lengthSquared, hitRadius))
+                    if (IsValidHitTarget(enemy, ignoredEnemies, ignoredEnemyVersions) && IsProjectileHit(enemy, start, segment, lengthSquared, hitRadius))
                     {
                         float hitTime = CalculateHitTime(enemy, start, segment, lengthSquared, hitRadius);
 
@@ -216,9 +216,11 @@ public static class EnemyCrowd
         return hitEnemy != null;
     }
 
-    private static bool IsValidHitTarget(EnemyMovement enemy, HashSet<EnemyMovement> ignoredEnemies)
+    private static bool IsValidHitTarget(EnemyMovement enemy, HashSet<EnemyMovement> ignoredEnemies, Dictionary<EnemyMovement, int> ignoredEnemyVersions)
     {
-        return enemy.isActiveAndEnabled && (ignoredEnemies == null || !ignoredEnemies.Contains(enemy));
+        if (!enemy.isActiveAndEnabled || (ignoredEnemies != null && ignoredEnemies.Contains(enemy))) return false;
+        return ignoredEnemyVersions == null || !ignoredEnemyVersions.TryGetValue(enemy, out int version)
+            || version != enemy.ActivationVersion;
     }
 
     private static bool IsProjectileHit(EnemyMovement enemy, Vector3 start, Vector3 segment, float lengthSquared, float hitRadius)

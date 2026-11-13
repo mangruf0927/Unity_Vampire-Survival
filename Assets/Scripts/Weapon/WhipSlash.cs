@@ -3,8 +3,7 @@ using UnityEngine;
 
 public class WhipSlash : MonoBehaviour
 {
-
-    private readonly HashSet<EnemyMovement> hitEnemies = new();
+    private readonly Dictionary<EnemyMovement, int> hitEnemies = new();
     private readonly Dictionary<Torch, int> hitTorches = new();
     private Transform origin;
     private Vector3 direction;
@@ -14,8 +13,7 @@ public class WhipSlash : MonoBehaviour
     private float width;
     private float remainingDuration;
 
-    public void Initialize(Transform origin, Vector3 direction, float damage, float knockback,
-        float length, float width, float duration)
+    public void Initialize(Transform origin, Vector3 direction, float damage, float knockback, float length, float width, float duration)
     {
         this.origin = origin;
         this.direction = direction;
@@ -54,9 +52,9 @@ public class WhipSlash : MonoBehaviour
         float radius = width * 0.5f;
         Vector3 start = origin.position + direction * radius;
         Vector3 end = origin.position + direction * (length - radius);
-        while (EnemyCrowd.TryGetProjectileHit(start, end, radius, out EnemyMovement enemy, hitEnemies))
+        while (EnemyCrowd.TryGetProjectileHit(start, end, radius, out EnemyMovement enemy, ignoredEnemyVersions: hitEnemies))
         {
-            hitEnemies.Add(enemy);
+            hitEnemies[enemy] = enemy.ActivationVersion;
             enemy.ApplyKnockback(direction, knockback);
             if (enemy.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(damage);
         }

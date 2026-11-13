@@ -37,8 +37,8 @@ public class PlayerHPBar : MonoBehaviour, IObserver
 
     private void LateUpdate()
     {
-        if (playerHealth == null || gameCamera == null || parentRect == null
-            || !isVisible) return;
+        if (playerHealth == null || gameCamera == null || parentRect == null || !isVisible)
+            return;
 
         UpdateBarPosition();
     }

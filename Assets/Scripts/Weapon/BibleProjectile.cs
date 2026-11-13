@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class BibleProjectile : MonoBehaviour
 {
-
     [SerializeField, Min(0.01f)] private float hitRadius = 0.3f;
     private readonly HashSet<EnemyMovement> checkedEnemies = new();
     private readonly Dictionary<Torch, int> checkedTorches = new();

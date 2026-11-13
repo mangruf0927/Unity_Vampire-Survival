@@ -44,15 +44,12 @@ public class EnemyHealth : MonoBehaviour, IDamageable
     private void DropExperienceGem()
     {
         if (gemDropChance <= 0f || (gemDropChance < 1f && Random.value >= gemDropChance)) return;
-        if (!ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.ExperienceGem, out GameObject prefab)) return;
-        if (!prefab.TryGetComponent(out MeshFilter meshFilter) || meshFilter.sharedMesh == null) return;
-
         Vector3 origin = transform.position + Vector3.up;
         if (!Physics.Raycast(origin, Vector3.down, out RaycastHit hit, Mathf.Infinity, groundLayers, QueryTriggerInteraction.Ignore)) return;
 
-        float halfHeight = meshFilter.sharedMesh.bounds.extents.y * Mathf.Abs(prefab.transform.localScale.y);
-        Vector3 position = hit.point + Vector3.up * halfHeight;
-        ObjectPool.Instance.GetFromPool(PoolTypeEnums.ExperienceGem, position, Quaternion.identity);
+        GameObject gem = ObjectPool.Instance.GetFromPool(PoolTypeEnums.ExperienceGem, hit.point, Quaternion.identity);
+        if (gem != null && gem.TryGetComponent(out ExperienceGem experienceGem))
+            gem.transform.position = hit.point + Vector3.up * experienceGem.GroundOffset;
     }
 
 }

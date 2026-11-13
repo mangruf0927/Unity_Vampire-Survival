@@ -52,6 +52,37 @@ public class EnemyMovement : MonoBehaviour
     // 투사체 검색 격자와 이동 판단에 필요한 실행 상태
     internal EnemyMovement nextInCell;
     internal Vector3 framePosition;
+    internal Vector3 crowdPosition;
+    internal Vector3 crowdCorrection;
+    internal int crowdContacts;
+    [SerializeField, Min(0f)] private float swarmOverlapCorrectionSpeed = 3f;
+    // 일반 적이 이벤트 박쥐에게 밀리는 보정 속도. 박쥐의 경로 보정과 분리한다.
+    [SerializeField, Min(0f)] private float swarmPushSpeed = 3f;
+    internal Vector3 PhysicsPosition => body.position;
+    internal float CrowdRadius => isSwarm ? bodyRadius : collisionRadius;
+    internal float CorrectionWeight => isSwarm ? swarmMovement.CorrectionWeight : 1f;
+    internal Vector3 SwarmDirection => swarmMovement.Direction;
+    internal float CorrectionSpeed => isSwarm
+        ? swarmOverlapCorrectionSpeed * CorrectionWeight : swarmPushSpeed;
+
+    internal void PrepareSwarmStep(float deltaTime)
+    {
+        framePosition = body.position;
+        crowdPosition = isSwarm ? swarmMovement.Move(deltaTime) : framePosition;
+    }
+
+    internal void ApplyCrowdStep()
+    {
+        Vector3 position = isSwarm ? swarmMovement.ClampPosition(crowdPosition) : crowdPosition;
+        crowdPosition = position;
+        if ((position - body.position).sqrMagnitude > 0f)
+        {
+            body.position = position;
+            recordPhysicsMovement = false;
+        }
+        if (isSwarm) body.rotation = Quaternion.LookRotation(swarmMovement.Direction, Vector3.up);
+    }
+
     internal Vector3 targetPosition;
 
     internal int enemyId;
@@ -61,7 +92,7 @@ public class EnemyMovement : MonoBehaviour
     internal int ActivationVersion { get; private set; }
     internal float BodyRadius => bodyRadius;
     // 무기 명중 반경은 기존 값을 유지하고 물리 이동의 접촉 거리는 Collider와 맞춘다.
-    internal float MovementRadius => collisionRadius;
+    internal float MovementRadius => isSwarm ? bodyRadius : collisionRadius;
     internal float PlayerRadius => playerRadius;
 
     internal float MoveSpeed => moveSpeed;
@@ -76,18 +107,19 @@ public class EnemyMovement : MonoBehaviour
     }
 
     public void ConfigureSwarm(Vector3 start, Vector3 direction, float speed,
-        float pushStrength, float maxOffset, float recoverySpeed, float acceleration = 6f)
+        float pushStrength, float maxOffset, float recoverySpeed)
     {
         if (!isSwarm)
         {
             isSwarm = true;
             EnemyCrowd.RegisterSwarm();
         }
-        swarmMovement.Configure(start, direction, speed, maxOffset, recoverySpeed, acceleration);
+        swarmMovement.Configure(start, direction, speed, pushStrength, maxOffset, recoverySpeed);
         body.linearVelocity = Vector3.zero;
         body.angularVelocity = Vector3.zero;
-        body.mass = Mathf.Max(1f, pushStrength);
-        body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+        body.isKinematic = true;
+        bodyCollider.enabled = false;
         body.rotation = Quaternion.LookRotation(swarmMovement.Direction, Vector3.up);
         gameObject.layer = SwarmLayer;
         recordPhysicsMovement = false;
@@ -162,6 +194,7 @@ public class EnemyMovement : MonoBehaviour
         knockbackVelocity = Vector3.zero;
         EnemyCrowd.Unregister(this);
         isSwarm = false;
+        swarmMovement.Reset();
     }
 
     internal bool ShouldReturnOffscreen(bool inside, float now)
@@ -173,15 +206,16 @@ public class EnemyMovement : MonoBehaviour
     private void FixedUpdate()
     {
         using var scope = physicsMoveMarker.Auto();
+        EnemyCrowd.UpdateSwarms();
         bool frozen = EnemyCrowd.IsFrozen;
         if (physicsFrozen != frozen)
         {
             physicsFrozen = frozen;
             body.constraints = frozen ? RigidbodyConstraints.FreezeAll : MovementConstraints;
-            body.linearVelocity = body.angularVelocity = Vector3.zero;
+            if (!body.isKinematic) body.linearVelocity = body.angularVelocity = Vector3.zero;
             recordPhysicsMovement = false;
         }
-        if (frozen) return;
+        if (frozen || isSwarm) return;
         if (target == null && !isSwarm)
         {
             body.linearVelocity = Vector3.zero;
@@ -195,12 +229,7 @@ public class EnemyMovement : MonoBehaviour
         if (recordPhysicsMovement)
             defaultMovement.RecordObstacleMovement(requestedPhysicsMovement, body.position - previousPhysicsPosition, dt);
         Vector3 direction = GetTargetDirection();
-        if (isSwarm)
-        {
-            body.linearVelocity = swarmMovement.GetVelocity(body.linearVelocity, dt);
-            recordPhysicsMovement = false;
-        }
-        else if (TryGetKnockbackMovement(dt, out Vector3 knockback))
+        if (TryGetKnockbackMovement(dt, out Vector3 knockback))
         {
             // 한 스텝의 이동 구간을 검사하여 빠른 넉백의 장애물 관통을 방지한다.
             if (EnemyObstacleCollision.CastSphere(body.position, knockback, collisionRadius, out RaycastHit hit))
@@ -265,7 +294,7 @@ public class EnemyMovement : MonoBehaviour
 
     internal void ClearFrozenMotion()
     {
-        body.linearVelocity = body.angularVelocity = Vector3.zero;
+        if (!body.isKinematic) body.linearVelocity = body.angularVelocity = Vector3.zero;
         body.constraints = RigidbodyConstraints.FreezeAll;
         physicsFrozen = true;
         recordPhysicsMovement = false;

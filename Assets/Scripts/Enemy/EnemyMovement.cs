@@ -1,71 +1,74 @@
 using UnityEngine;
+using Unity.Profiling;
 
+[RequireComponent(typeof(Rigidbody), typeof(SphereCollider))]
 public class EnemyMovement : MonoBehaviour
 {
+    private static readonly ProfilerMarker physicsMoveMarker = new("EnemyMovement.PhysicsMove");
+    private static readonly ProfilerMarker contactDamageMarker = new ProfilerMarker("EnemyMovement.ApplyContactDamage");
+
     [SerializeField] private Transform target;
+    [SerializeField, Min(0.01f)] private float collisionRadius = 0.45f;
+    [SerializeField, Min(0.01f)] private float chaseAcceleration = 24f;
+    [SerializeField, Min(0.01f)] private float maxDepenetrationVelocity = 2f;
+    private Rigidbody body;
+    private SphereCollider bodyCollider;
+    private bool physicsFrozen;
+    private bool recordPhysicsMovement;
+    private Vector3 previousPhysicsPosition;
+    private Vector3 requestedPhysicsMovement;
+    private bool wasPhysicsKnockback;
+    private int regularLayer;
+    private float regularMass;
+    private CollisionDetectionMode regularCollisionMode;
+    private const int SwarmLayer = 13;
+    private const RigidbodyConstraints MovementConstraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
+
     [SerializeField, Min(1)] private int dataId = 1;
-    public int DataId => dataId;
-    private float moveSpeed = 3f;
-    private float rotationSpeed = 360f;
     [SerializeField, Min(0.01f)] private float bodyRadius = 0.5f;
     [SerializeField, Min(0f)] private float playerRadius = 0.5f;
-    [SerializeField, Min(0f)] private float separationRange = 1.5f;
-    [SerializeField, Min(0f)] private float separationStrength = 2f;
-    [SerializeField, Min(0f)] private float overlapCorrectionSpeed = 3f;
-    private float damage = 10f;
-    private float offscreenReturnDelay = 5f;
 
     [SerializeField, Min(0.1f)] private float obstacleLookAhead = 1.8f;
     [SerializeField, Min(0.01f)] private float avoidanceCheckInterval = 0.15f;
     [SerializeField, Min(0.01f)] private float obstacleClearance = 0.15f;
 
-    private bool avoidingObstacle;
-    private Vector3 avoidanceDirection;
-    private bool canAvoidObstacles;
-    private float avoidanceSide;
-    private float avoidanceCheckRemaining;
-    private float obstacleBlockedTime;
+    public int DataId => dataId;
+    private float moveSpeed = 3f;
+    private float rotationSpeed = 360f;
+    private float damage = 10f;
+    private float offscreenReturnDelay = 5f;
 
     private float knockbackDistance = 1f;
     private float knockbackDuration = 0.15f;
 
     private Vector3 knockbackVelocity;
     private float knockbackRemaining;
-    private float offscreenSince = -1f;
     private bool isSwarm;
-    private Vector3 swarmStart;
-    private Vector3 swarmDirection;
-    private bool swarmHasEnteredScreen;
-    private float swarmProgress;
-    private float swarmSpeed;
-    private float swarmPushStrength;
-    private float swarmMaxOffset;
-    private float swarmRecoverySpeed;
-
+    private EnemyDefaultMovement defaultMovement;
+    private EnemySwarmMovement swarmMovement;
     private Transform cachedDamageTarget;
     private IDamageable damageTarget;
 
-    // EnemyCrowd와 공유하는 실행 중 상태
+    // 투사체 검색 격자와 이동 판단에 필요한 실행 상태
     internal EnemyMovement nextInCell;
     internal Vector3 framePosition;
-    internal Vector3 nextPosition;
     internal Vector3 targetPosition;
-    internal Vector3 velocity;
-    internal Vector3 correction;
 
-    internal int contactCount;
     internal int enemyId;
     internal float sidePreference;
 
     internal bool IsSwarm => isSwarm;
-    internal Vector3 SwarmDirection => swarmDirection;
-    internal float CorrectionWeight => isSwarm ? 1f / swarmPushStrength : 1f;
     internal int ActivationVersion { get; private set; }
-    internal Transform Target => target;
     internal float BodyRadius => bodyRadius;
+    // 무기 명중 반경은 기존 값을 유지하고 물리 이동의 접촉 거리는 Collider와 맞춘다.
+    internal float MovementRadius => collisionRadius;
     internal float PlayerRadius => playerRadius;
-    internal float SeparationRange => separationRange;
-    internal float OverlapCorrectionSpeed => overlapCorrectionSpeed * CorrectionWeight;
+
+    internal float MoveSpeed => moveSpeed;
+    internal float ObstacleLookAhead => obstacleLookAhead;
+    internal float AvoidanceCheckInterval => avoidanceCheckInterval;
+    internal float ObstacleClearance => obstacleClearance;
+    internal float OffscreenReturnDelay => offscreenReturnDelay;
 
     public void SetTarget(Transform target)
     {
@@ -73,51 +76,45 @@ public class EnemyMovement : MonoBehaviour
     }
 
     public void ConfigureSwarm(Vector3 start, Vector3 direction, float speed,
-        float pushStrength, float maxOffset, float recoverySpeed)
+        float pushStrength, float maxOffset, float recoverySpeed, float acceleration = 6f)
     {
         if (!isSwarm)
         {
             isSwarm = true;
             EnemyCrowd.RegisterSwarm();
         }
-        swarmStart = start;
-        direction.y = 0f;
-        swarmDirection = direction.normalized;
-        swarmHasEnteredScreen = false;
-        swarmProgress = 0f;
-        swarmSpeed = Mathf.Max(0.01f, speed);
-        swarmPushStrength = Mathf.Max(1f, pushStrength);
-        swarmMaxOffset = Mathf.Max(0f, maxOffset);
-        swarmRecoverySpeed = Mathf.Max(0f, recoverySpeed);
-        transform.rotation = Quaternion.LookRotation(swarmDirection, Vector3.up);
-    }
-
-    private void MoveSwarm(float stepDeltaTime)
-    {
-        Vector3 offset = framePosition - (swarmStart + swarmDirection * swarmProgress);
-        offset.y = 0f;
-        offset = Vector3.MoveTowards(offset, Vector3.zero, swarmRecoverySpeed * stepDeltaTime);
-        if (knockbackRemaining > 0f)
-        {
-            float duration = Mathf.Min(stepDeltaTime, knockbackRemaining);
-            offset += knockbackVelocity * duration;
-            knockbackRemaining = Mathf.Max(0f, knockbackRemaining - duration);
-        }
-        swarmProgress += swarmSpeed * stepDeltaTime;
-        nextPosition = swarmStart + swarmDirection * swarmProgress + Vector3.ClampMagnitude(offset, swarmMaxOffset);
-        velocity = swarmDirection * swarmSpeed;
-    }
-
-    internal Vector3 ClampSwarmPosition(Vector3 position)
-    {
-        Vector3 ideal = swarmStart + swarmDirection * swarmProgress;
-        Vector3 offset = position - ideal;
-        offset.y = 0f;
-        return ideal + Vector3.ClampMagnitude(offset, swarmMaxOffset);
+        swarmMovement.Configure(start, direction, speed, maxOffset, recoverySpeed, acceleration);
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+        body.mass = Mathf.Max(1f, pushStrength);
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        body.rotation = Quaternion.LookRotation(swarmMovement.Direction, Vector3.up);
+        gameObject.layer = SwarmLayer;
+        recordPhysicsMovement = false;
     }
 
     private void Awake()
     {
+        body = GetComponent<Rigidbody>();
+        bodyCollider = GetComponent<SphereCollider>();
+        if (body == null || bodyCollider == null)
+        {
+            Debug.LogError("EnemyMovement requires Rigidbody and SphereCollider.", this);
+            enabled = false;
+            return;
+        }
+        regularLayer = gameObject.layer;
+        regularMass = body.mass;
+        regularCollisionMode = body.collisionDetectionMode;
+        // SphereCollider는 가장 큰 축의 스케일로 확대되므로 월드 반경을 보정한다.
+        Vector3 scale = transform.lossyScale;
+        float largestScale = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+        bodyCollider.radius = collisionRadius / Mathf.Max(0.0001f, largestScale);
+        body.useGravity = false;
+        body.constraints = MovementConstraints;
+        body.maxDepenetrationVelocity = maxDepenetrationVelocity;
+        defaultMovement = new EnemyDefaultMovement(this);
+        swarmMovement = new EnemySwarmMovement(this);
         EnemyData data = DataManager.Instance.Enemies.Get(dataId);
         moveSpeed = data.moveSpeed;
         rotationSpeed = data.rotationSpeed;
@@ -130,57 +127,113 @@ public class EnemyMovement : MonoBehaviour
     private void OnEnable()
     {
         isSwarm = false;
-        swarmHasEnteredScreen = false;
-        swarmProgress = 0f;
+        body.isKinematic = false;
+        body.position = transform.position;
+        body.rotation = transform.rotation;
+        bodyCollider.enabled = true;
+        body.mass = regularMass;
+        body.collisionDetectionMode = regularCollisionMode;
+        gameObject.layer = regularLayer;
+        physicsFrozen = false;
+        body.constraints = MovementConstraints;
+        body.linearVelocity = body.angularVelocity = Vector3.zero;
+        recordPhysicsMovement = false;
+        wasPhysicsKnockback = false;
+        swarmMovement.Reset();
         ActivationVersion++;
-        offscreenSince = -1f;
         cachedDamageTarget = null;
         damageTarget = null;
         enemyId = GetInstanceID();
         sidePreference = ((enemyId >> 2) & 1) == 0 ? 1f : -1f;
-        velocity = Vector3.zero;
         knockbackRemaining = 0f;
         knockbackVelocity = Vector3.zero;
-        ResetObstacleAvoidance();
-        avoidanceCheckRemaining = Mathf.Max(0.01f, avoidanceCheckInterval) * ((enemyId & 7) / 8f);
+        defaultMovement.Reset();
         EnemyCrowd.Register(this);
+        if (EnemyCrowd.IsFrozen) ClearFrozenMotion();
     }
 
     private void OnDisable()
     {
+        if (body != null && !body.isKinematic)
+            body.linearVelocity = body.angularVelocity = Vector3.zero;
+        recordPhysicsMovement = false;
+        wasPhysicsKnockback = false;
         knockbackRemaining = 0f;
         knockbackVelocity = Vector3.zero;
         EnemyCrowd.Unregister(this);
         isSwarm = false;
-        velocity = Vector3.zero;
     }
 
     internal bool ShouldReturnOffscreen(bool inside, float now)
     {
+        return isSwarm ? swarmMovement.ShouldReturnOffscreen(inside)
+            : defaultMovement.ShouldReturnOffscreen(inside, now);
+    }
+
+    private void FixedUpdate()
+    {
+        using var scope = physicsMoveMarker.Auto();
+        bool frozen = EnemyCrowd.IsFrozen;
+        if (physicsFrozen != frozen)
+        {
+            physicsFrozen = frozen;
+            body.constraints = frozen ? RigidbodyConstraints.FreezeAll : MovementConstraints;
+            body.linearVelocity = body.angularVelocity = Vector3.zero;
+            recordPhysicsMovement = false;
+        }
+        if (frozen) return;
+        if (target == null && !isSwarm)
+        {
+            body.linearVelocity = Vector3.zero;
+            recordPhysicsMovement = false;
+            return;
+        }
+
+        float dt = Time.fixedDeltaTime;
+        framePosition = body.position;
+        if (target != null) targetPosition = target.position;
+        if (recordPhysicsMovement)
+            defaultMovement.RecordObstacleMovement(requestedPhysicsMovement, body.position - previousPhysicsPosition, dt);
+        Vector3 direction = GetTargetDirection();
         if (isSwarm)
         {
-            if (inside) swarmHasEnteredScreen = true;
-            return swarmHasEnteredScreen && !inside;
+            body.linearVelocity = swarmMovement.GetVelocity(body.linearVelocity, dt);
+            recordPhysicsMovement = false;
         }
-
-        if (inside)
+        else if (TryGetKnockbackMovement(dt, out Vector3 knockback))
         {
-            offscreenSince = -1f;
-            return false;
+            // 한 스텝의 이동 구간을 검사하여 빠른 넉백의 장애물 관통을 방지한다.
+            if (EnemyObstacleCollision.CastSphere(body.position, knockback, collisionRadius, out RaycastHit hit))
+                knockback = Vector3.ClampMagnitude(knockback, Mathf.Max(0f, hit.distance - 0.002f));
+            body.linearVelocity = knockback / dt;
+            recordPhysicsMovement = false;
+            wasPhysicsKnockback = true;
         }
-
-        if (offscreenSince < 0f) offscreenSince = now;
-        return now - offscreenSince >= offscreenReturnDelay;
+        else
+        {
+            // 넉백 속도를 추적 가속도에 넘기면 종료 후에도 추가로 밀려난다.
+            if (wasPhysicsKnockback) body.linearVelocity = Vector3.zero;
+            wasPhysicsKnockback = false;
+            body.linearVelocity = defaultMovement.GetVelocity(direction, body.linearVelocity, dt, chaseAcceleration);
+            previousPhysicsPosition = body.position;
+            requestedPhysicsMovement = body.linearVelocity * dt;
+            recordPhysicsMovement = true;
+        }
+        Vector3 facing = isSwarm ? swarmMovement.Direction : direction;
+        if (facing.sqrMagnitude > 0.000001f)
+            body.MoveRotation(Quaternion.RotateTowards(body.rotation,
+                Quaternion.LookRotation(facing, Vector3.up), rotationSpeed * dt));
     }
 
     private void LateUpdate()
     {
-        EnemyCrowd.UpdateCrowd();
         ApplyContactDamage();
     }
 
     private void ApplyContactDamage()
     {
+        using var scope = contactDamageMarker.Auto();
+
         if (EnemyCrowd.IsFrozen || Time.deltaTime <= 0f || target == null) return;
         if (cachedDamageTarget != target)
         {
@@ -191,7 +244,7 @@ public class EnemyMovement : MonoBehaviour
 
         Vector3 offset = target.position - transform.position;
         offset.y = 0f;
-        float contactDistance = bodyRadius + playerRadius + 0.002f;
+        float contactDistance = MovementRadius + playerRadius + 0.002f;
         if (offset.sqrMagnitude <= contactDistance * contactDistance)
         {
             damageTarget.TakeDamage(damage);
@@ -204,18 +257,32 @@ public class EnemyMovement : MonoBehaviour
         direction.y = 0f;
         if (strength <= 0f || knockbackDistance <= 0f || direction.sqrMagnitude <= 0.000001f) return;
         // 새 명중은 밀림을 무한히 누적하지 않고 방향과 지속 시간을 갱신한다.
-        ResetObstacleAvoidance();
+        defaultMovement.ResetObstacleAvoidance();
+        recordPhysicsMovement = false;
         knockbackRemaining = Mathf.Max(0.01f, knockbackDuration);
         knockbackVelocity = direction.normalized * (knockbackDistance * strength / knockbackRemaining);
-        velocity = Vector3.zero;
     }
 
     internal void ClearFrozenMotion()
     {
-        velocity = Vector3.zero;
+        body.linearVelocity = body.angularVelocity = Vector3.zero;
+        body.constraints = RigidbodyConstraints.FreezeAll;
+        physicsFrozen = true;
+        recordPhysicsMovement = false;
+        wasPhysicsKnockback = false;
         knockbackRemaining = 0f;
         knockbackVelocity = Vector3.zero;
-        ResetObstacleAvoidance();
+        defaultMovement.ResetObstacleAvoidance();
+    }
+
+    internal bool TryGetKnockbackMovement(float deltaTime, out Vector3 movement)
+    {
+        movement = Vector3.zero;
+        if (knockbackRemaining <= 0f) return false;
+        float duration = Mathf.Min(deltaTime, knockbackRemaining);
+        movement = knockbackVelocity * duration;
+        knockbackRemaining = Mathf.Max(0f, knockbackRemaining - duration);
+        return true;
     }
 
     internal Vector3 GetTargetDirection()
@@ -225,122 +292,12 @@ public class EnemyMovement : MonoBehaviour
         return direction;
     }
 
-    internal void Move(Vector3 direction, Vector3 separation, float stepDeltaTime)
+    internal bool CastObstacle(Vector3 direction, out RaycastHit hit)
     {
-        canAvoidObstacles = false;
-        if (isSwarm)
-        {
-            MoveSwarm(stepDeltaTime);
-            return;
-        }
-        if (knockbackRemaining > 0f)
-        {
-            float duration = Mathf.Min(stepDeltaTime, knockbackRemaining);
-            nextPosition = framePosition + knockbackVelocity * duration;
-            knockbackRemaining = Mathf.Max(0f, knockbackRemaining - duration);
-            velocity = Vector3.zero;
-            return;
-        }
-
-        float remainingDistance = Mathf.Max(0f, direction.magnitude - bodyRadius - playerRadius);
-        if (remainingDistance <= 0.001f)
-        {
-            ResetObstacleAvoidance();
-            velocity = Vector3.zero;
-            nextPosition = framePosition;
-            return;
-        }
-
-        canAvoidObstacles = true;
-        UpdateObstacleAvoidance(direction, stepDeltaTime);
-        float chaseSpeed = Mathf.Min(moveSpeed, remainingDistance / stepDeltaTime);
-        Vector3 desiredVelocity = direction.normalized * chaseSpeed + separation * (separationStrength * moveSpeed);
-        if (avoidingObstacle) desiredVelocity += avoidanceDirection * (moveSpeed * 1.5f);
-        desiredVelocity = Vector3.ClampMagnitude(desiredVelocity, moveSpeed);
-        velocity = Vector3.MoveTowards(velocity, desiredVelocity, moveSpeed * 8f * stepDeltaTime);
-
-        Vector3 movement = Vector3.ClampMagnitude(velocity * stepDeltaTime, remainingDistance);
-        nextPosition = framePosition + movement;
+        // 접촉 중인 Collider와 같은 크기로 탐색하면 시작점이 접촉 영역에 걸려
+        // 좌우 탐색도 거리 0으로 판정될 수 있다. 감지용 구체에만 작은 여유를 준다.
+        float probeRadius = Mathf.Max(0.01f, collisionRadius - 0.02f);
+        return EnemyObstacleCollision.CastSphere(framePosition, direction, probeRadius, out hit);
     }
 
-    internal void RecordObstacleMovement(Vector3 requested, Vector3 actual, float deltaTime)
-    {
-        if (!canAvoidObstacles || isSwarm) return;
-        // 군중 때문에 느려진 것이 아니라, 장애물 충돌로 실제 이동이 크게 줄었는지 확인한다.
-        bool blocked = requested.sqrMagnitude > 0.00000001f
-            && actual.sqrMagnitude < requested.sqrMagnitude * 0.25f;
-        obstacleBlockedTime = blocked ? obstacleBlockedTime + deltaTime : 0f;
-    }
-
-    private void UpdateObstacleAvoidance(Vector3 targetDirection, float deltaTime)
-    {
-        avoidanceCheckRemaining -= deltaTime;
-        if (!avoidingObstacle && obstacleBlockedTime < 0.15f) return;
-        if (avoidanceCheckRemaining > 0f) return;
-        avoidanceCheckRemaining = Mathf.Max(0.01f, avoidanceCheckInterval);
-
-        float distance = Mathf.Max(0.1f, obstacleLookAhead);
-        Vector3 probe = Vector3.ClampMagnitude(targetDirection, distance);
-        if (!EnemyObstacleCollision.Cast(framePosition, probe, bodyRadius, out RaycastHit hit))
-        {
-            ResetObstacleAvoidance();
-            return;
-        }
-
-        Vector3 normal = hit.normal;
-        normal.y = 0f;
-        if (normal.sqrMagnitude <= 0.00001f) return;
-        normal.Normalize();
-        Vector3 tangent = Vector3.Cross(Vector3.up, normal);
-        float side = avoidingObstacle ? avoidanceSide : sidePreference;
-        Vector3 first = (tangent * (side * distance) + normal * obstacleClearance).normalized;
-        Vector3 second = (tangent * (-side * distance) + normal * obstacleClearance).normalized;
-        float firstSpace = GetFreeDistance(first, distance);
-        float secondSpace = GetFreeDistance(second, distance);
-
-        // 이동 중에는 방향을 유지하고, 선택한 쪽도 막혔을 때만 반대편을 시도한다.
-        bool changeSide = !avoidingObstacle
-            ? secondSpace > firstSpace + 0.05f
-            : obstacleBlockedTime >= 0.5f && firstSpace < 0.05f && secondSpace > 0.1f;
-        if (changeSide)
-        {
-            side = -side;
-            first = second;
-            firstSpace = secondSpace;
-            obstacleBlockedTime = 0f;
-        }
-        avoidanceSide = side;
-        avoidingObstacle = true;
-        // 양쪽 모두 막혔다면 회피를 강제하지 않고 기존 추적과 분리에 맡긴다.
-        avoidanceDirection = firstSpace > 0.02f ? first : Vector3.zero;
-    }
-
-    private float GetFreeDistance(Vector3 direction, float distance)
-    {
-        return EnemyObstacleCollision.Cast(framePosition, direction * distance, bodyRadius, out RaycastHit hit)
-            ? hit.distance : distance;
-    }
-
-    private void ResetObstacleAvoidance()
-    {
-        avoidingObstacle = false;
-        avoidanceDirection = Vector3.zero;
-        obstacleBlockedTime = 0f;
-        avoidanceCheckRemaining = 0f;
-        canAvoidObstacles = false;
-    }
-
-    internal Vector3 GetOverlapDirection(EnemyMovement other)
-    {
-        int pair = enemyId ^ other.enemyId;
-        float angle = (pair & 1023) * (Mathf.PI * 2f / 1024f);
-        Vector3 direction = new(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-        return enemyId < other.enemyId ? direction : -direction;
-    }
-
-    internal void Rotate(Vector3 direction, float stepDeltaTime)
-    {
-        Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * stepDeltaTime);
-    }
 }

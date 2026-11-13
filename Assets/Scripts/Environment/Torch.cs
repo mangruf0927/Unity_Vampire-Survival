@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Profiling;
 
 public class Torch : MonoBehaviour, IDamageable
 {
+    private static readonly ProfilerMarker hitSearchMarker = new("Torch.TryGetHit");
     [SerializeField, Min(0.01f)] private float maxHealth = 1f;
     [SerializeField, Min(0.01f)] private float hitRadius = 0.4f;
     [Header("Drop probabilities (%) - automatically normalized to 100")]
@@ -134,6 +136,7 @@ public class Torch : MonoBehaviour, IDamageable
     internal static bool TryGetHit(Vector3 start, Vector3 end, float attackRadius,
         out Torch hitTorch, out float hitTime, Dictionary<Torch, int> ignored)
     {
+        using var scope = hitSearchMarker.Auto();
         hitTorch = null;
         hitTime = float.PositiveInfinity;
         Vector3 segment = end - start;

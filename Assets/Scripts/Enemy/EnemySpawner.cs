@@ -35,7 +35,10 @@ public class EnemySpawner : MonoBehaviour
 
     [SerializeField, Min(1)] private int swarmCount = 20;
     [SerializeField, Min(0.1f)] private float swarmSpeed = 16f;
-    [SerializeField, Min(1f)] private float swarmPushStrength = 5f;
+    // 물리 이벤트 박쥐의 질량. 일반 적(질량 1)보다 조금 무겁게 설정한다.
+    [SerializeField, Min(1f)] private float swarmPushStrength = 1.5f;
+    // 충돌 후 속도를 회복하는 가속도. 질량과 함께 지속적인 밀어내기를 결정한다.
+    [SerializeField, Min(0.1f)] private float swarmAcceleration = 6f;
     [SerializeField, Min(1.1f)] private float swarmSpacing = 1.3f;
     [SerializeField, Min(0f)] private float swarmMaxOffset = 0.25f;
     [SerializeField, Min(0f)] private float swarmRecoverySpeed = 4f;
@@ -245,7 +248,7 @@ public class EnemySpawner : MonoBehaviour
             GameObject bat = Spawn(position, PoolTypeEnums.Bat);
             if (bat == null) continue;
             bat.GetComponent<EnemyMovement>().ConfigureSwarm(position, direction, swarmSpeed,
-                swarmPushStrength, swarmMaxOffset, swarmRecoverySpeed);
+                swarmPushStrength, swarmMaxOffset, swarmRecoverySpeed, swarmAcceleration);
         }
     }
 

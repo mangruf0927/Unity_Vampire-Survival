@@ -1060,3 +1060,94 @@
 - 숫자는 기존과 같이 소수 둘째 자리까지 표시한다. 예: cooldown=-0.2, description="쿨타임이 {cooldown}초 감소합니다." → "쿨타임이 0.2초 감소합니다." 증감 방향을 바꾸면 JSON 문구도 함께 수정한다. 표시자 철자는 위 표대로 작성한다. 별도 템플릿 엔진·로컬라이제이션 시스템은 추가하지 않는다.
 - WeaponData와 Weapons.json의 speedLabel 및 관련 검증을 제거했다. Weapon.GetChoiceDescription은 기존 UI 흐름을 유지하며 upgrade.GetDescription()을 호출한다. 선택 UI는 수정하지 않는다.
 - 검증: 전체 Unity 참조 컴파일, 실제 JSON/무기 검사 510개와 기존 캐릭터/강화 회귀 검사 170개를 통과했다. 28개 단계 설명·표시자 치환·음수 감소량·백분율·수치 수정 반영·표시자 없는 문구·필수 설명 누락/null/공백 및 기존 1~8레벨 강화 수치를 확인했다. 실제 Unity에서는 각 무기의 다음 레벨 카드 문구와 수치를 확인한다.
+
+### 일반 적·이벤트 박쥐 이동 분리 — 리팩토링
+
+- `EnemyMovement`는 기존 MonoBehaviour와 외부 API를 유지한다. 데이터 로딩, Inspector 설정, 타깃, 활성화 버전, 군중 등록/해제, 접촉 피해, 넉백 상태/변위 계산, 회전 및 두 이동 방식으로의 호출 전달을 담당한다.
+- 새 일반 C# 클래스 `EnemyDefaultMovement`는 일반 추적·플레이어 접촉 시 정지·군중 분리 벡터 반영·장애물 회피와 전용 상태, 일반 적 화면 밖 반환 대기 타이머를 담당한다. 이름은 사용자가 지정한 EnemyDefaultMovement를 사용한다.
+- 새 일반 C# 클래스 `EnemySwarmMovement`는 고정 경로·방향·진행 거리, 경로 복귀·이탈 제한, 밀림 보정 비율, 화면 진입 기록과 진입 후 이탈 반환 판정을 담당한다. 이벤트 박쥐는 기존처럼 장애물을 통과한다.
+- 두 객체는 EnemyMovement.Awake에서 한 번 생성해 재사용한다. 별도 MonoBehaviour/Update/LateUpdate, 이동 인터페이스, 추가 매니저나 풀·프리팹을 만들지 않는다. 활성화 시 두 방식의 실행 상태를 초기화하므로 같은 박쥐 풀의 일반/이벤트 재사용을 유지한다. 군중 등록과 이벤트 적 수 증감은 기존 EnemyMovement 창구에서만 처리한다.
+- 공통 TryGetKnockbackMovement가 기존과 동일한 지속 시간·변위 계산을 제공한다. 일반 이동은 해당 프레임의 추적 대신 넉백 변위를 적용하고, 이벤트 이동은 기존 경로 오프셋에 더한다. 공식을 새로 통일하거나 계산 순서를 바꾸지 않는다.
+- EnemyCrowd/EnemySpawner/EnemyHealth/무기 연결은 유지한다. 기존 군중 격자·충돌·겹침 보정 순서와 이벤트 일정·대형·화면 기준 반환·시계 정지 및 접촉 피해 차단은 변경하지 않는다. 기존 EnemyHealth의 사용자 변경도 유지했다.
+- 모든 SerializeField의 이름·형식·Inspector 기본값과 EnemyMovement 스크립트 GUID를 유지한다. 씬/프리팹 변경이나 새 컴포넌트 연결은 필요 없다. 이동 클래스가 설정을 읽는 internal 속성과 상태 초기화 호출만 추가했다.
+- 검증: 전체 Unity 참조 컴파일과 실제 EnemyMovement/두 이동 클래스/EnemyCrowd/EnemyObstacleCollision을 사용한 모의 검사 66개를 통과했다. 일반 추적·장애물 회피/미끄러짐·군중 보정·강한 넉백·Y 유지·이벤트 장애물 통과·시계/일시 정지·접촉 피해·반환 조건·일반↔이벤트 풀 재사용 및 활성 개수 초기화를 확인했다. 일반 적 2개와 이벤트 박쥐에 장애물/넉백/시계를 적용한 500프레임의 전체 위치 기록도 분리 전후 완전히 일치했다. 실제 Unity Physics 플레이는 별도 확인한다.
+- Unity 테스트: 일반 적의 추적·접촉 정지와 나무/돌 주변 이동, 무기 명중·넉백·처치, 이벤트 박쥐의 고정 방향·대형·일반 적 밀어내기·장애물 통과·화면 이탈 반환을 확인한다. 시계 획득/해제 및 일시 정지 재개, 풀 재사용 후 일반 적이 이벤트 경로로 움직이거나 이벤트 수가 누적되지 않는지도 확인한다.
+
+### Enemy 군중 계산 1순위 최적화 — 적용
+
+- 이번에는 두 항목만 변경했다. CorrectionPasses=2, 서브스텝 수, 셀 검색 범위·격자 갱신 순서·군중 힘 공식·장애물 처리·이벤트 이동은 유지한다.
+- GetSeparation은 후보의 제곱거리와 검색 반경의 제곱을 먼저 비교하고 범위 밖이면 다음 후보로 넘어간다. 범위 안에서는 기존 magnitude·엄격한 거리 비교·방향·가중치·좌우 회피 계산을 유지한다.
+- CorrectOverlap도 몸체 반경 합의 제곱으로 범위 밖 후보를 먼저 제외한다. 실제 후보에는 기존 `반경 합 - 거리 - ContactTolerance`와 overlap > 0 조건을 그대로 적용하여 접촉 허용 오차와 힘 분배를 유지한다. 두 검색 모두 제외한 후보에서는 제곱근을 계산하지 않는다.
+- EnemyCrowd가 이동 인자를 만들 때 무조건 GetSeparation을 호출하던 코드를 제거했다. EnemyDefaultMovement.Move의 기존 넉백/접촉 정지 분기 이후에만 호출하므로, 사용하지 않을 분리 벡터를 계산하지 않는다. 필요 여부 판단을 중복 구현하거나 콜백/델리게이트를 추가하지 않았다. 이벤트 박쥐에는 기존처럼 분리 계산을 하지 않는다.
+- EnemyMovement/EnemyDefaultMovement.Move의 내부 인자에서 미리 계산된 separation을 제거하고 GetSeparation을 내부 호출 가능하게 했다. 새 클래스·필드·캐시·할당은 추가하지 않았다. 기존 ProfilerMarker는 유지한다. GetSeparation은 이제 EnemyDefaultMovement.Move의 하위 샘플로 표시되므로 일반 이동의 Total 시간에는 분리 계산이 포함된다. 이전 측정과는 동일한 GetSeparation 마커 및 Self 시간을 구분해 비교한다.
+- 검증: 전체 Unity 참조 컴파일과 실제 군중/이동/장애물 코드를 사용하는 모의 검사 74개를 통과했다. 정지/넉백/이벤트에서 분리 호출이 생략되고 추적 재개 시 다시 호출되는지 확인했다. 기존 500프레임 위치 기록도 변경 전과 완전히 일치했다. 실제 CPU 개선량은 동일한 적 수·밀도·서브스텝 조건으로 Unity Profiler에서 재측정한다.
+
+
+### Collider 전환 1단계 — 일반 적 이동
+
+- 기존 EnemyMovement / EnemyDefaultMovement / EnemySwarmMovement 구성을 유지한다. 실제 일반 적 5종 프리팹은 Use Physics Movement를 켜고 FixedUpdate에서 Rigidbody 속도로 이동한다. 기존 비교 테스트의 격자 적은 이 설정을 켜지 않아 기존 경로를 유지한다.
+- 일반 적의 월드 충돌 반경은 Collision Radius=0.45, Chase Acceleration=24, Max Depenetration Velocity=2이다. 비균일 프리팹 스케일을 보정한다. 무기 명중용 Body Radius는 기존 값을 유지하며 일반 적의 이동 정지·접촉 피해 거리는 Collision Radius를 사용한다.
+- Enemy 레이어(12)는 Enemy / Obstacle(11)에만 물리 충돌한다. Player(8)와는 충돌하지 않아 플레이어가 자유롭게 통과한다. 중력 비활성, Y 위치 및 물리 회전 고정, 마찰·반발 0의 EnemyBody 재질을 사용한다. 적은 플레이어 방향으로 부드럽게 회전한다.
+- 물리 일반 적에는 기존 군중 분리·Transform 이동·겹침 보정 결과를 적용하지 않는다. EnemyCrowd의 활성 목록, 스폰 수, 투사체 구간 검색 격자와 FreezeFor API는 유지한다.
+- 기존 넉백은 물리 속도에 연결한다. 시계는 속도 초기화와 FreezeAll로 위치·접촉 피해를 정지시키며, 정지 중 생성된 적과 풀 재사용 상태도 초기화한다. 장애물 회피는 기존 판단만 재사용하며 이번 단계에서 추가 조정하지 않는다.
+- 이벤트 박쥐는 ConfigureSwarm 시 Collider 비활성 / kinematic으로 전환하여 기존 이동 경로를 유지한다. 일반 적과 이벤트 적 사이의 밀어내기는 아직 최종 상태가 아니며 이벤트 물리 전환 단계에서 다룬다. 일반 적으로 풀 재사용되면 동적 Rigidbody와 Collider를 복원한다.
+- 확인: 전체 게임 스크립트 Unity 참조 컴파일, 실제 EnemyDefaultMovement의 물리 이동 분기 모의 검사 10개(가속·속도 제한·접촉 정지·대각선 방향·Y 속도 제거·화면 밖 타이머), 5종 프리팹 참조 / 월드 반경 / 충돌 매트릭스 검사를 통과했다. 실제 PhysX 군중, 넉백, 회피, 시계, 풀 재사용과 성능은 Unity 플레이 테스트가 필요하다. 2단계 조정은 미진행이다.
+
+### Collider 전환 2단계 — 장애물·넉백·시계 연결 점검
+
+- 일반 적의 회피 감지는 명중용 Body Radius / 기존 캡슐 대신 실제 이동 충돌 반경(Collision Radius)의 SphereCast를 사용한다. 기존 격자 적의 CapsuleCast는 유지한다. 실제로 막힌 뒤에만 기존 좌우 회피 판단을 실행하며 새 경로 탐색이나 군중 보정은 추가하지 않는다.
+- 일반 적의 넉백은 각 물리 스텝의 구간을 Obstacle 레이어에 SphereCast하여 빠른 넉백의 장애물 관통을 제한한다. 위치를 직접 보정하지 않고 그 스텝의 Rigidbody 속도를 제한한다. 넉백 종료 후 잔여 속도를 제거하고 추적 가속을 다시 시작하여 추가 밀림을 방지한다. 새 넉백이 들어오면 이전 추적 이동 기록을 폐기하여 회피 판단에 섞이지 않게 한다.
+- 시계의 기존 FreezeFor / FreezeAll / 접촉 피해 차단 연결을 유지한다. 재획득은 현재 게임 시간부터 지속 시간을 갱신한다. 정지 중 일반 적 생성, 풀 재사용, 정지 해제 후 추적 재개를 점검했다. 정지 중 무기 명중·피해·사망 처리는 기존 EnemyHealth 경로를 유지한다.
+- 이벤트 박쥐의 이동 방식과 비교 테스트 코드, 씬·프리팹·JSON은 이번 단계에서 변경하지 않았다. 이벤트 물리 전환은 3단계에 진행한다.
+- 검증: 전체 Unity 참조 C# 컴파일 및 실제 EnemyMovement / EnemyDefaultMovement / EnemyCrowd / EnemySwarmMovement를 실행하는 모의 물리 검사 19개를 통과했다. 추적, 넉백 거리와 종료 후 속도, 빠른 넉백의 벽 제한, 시계 중 이동·접촉 피해·추가 넉백 차단, 정지 중 생성, 지속 시간 갱신·해제, 풀 상태 초기화, 일반↔이벤트 재사용, 단일 장애물 우회를 확인했다. 모의 검사는 실제 PhysX 접촉 해결·다수 적 밀집을 검증하지 않으므로 Unity 플레이 확인이 필요하다.
+
+### 물리 적의 장애물 접촉 회피 보완
+
+- EnemyMovement.CastObstacle의 회피 감지 구체만 실제 충돌 반경보다 0.02 작게 한다(기본 0.43). 접촉 영역에서 좌우 탐색까지 거리 0으로 막히는 상황을 줄인다. 실제 SphereCollider 반경 0.45, 무기 명중 반경과 넉백 구간 검사는 변경하지 않는다.
+- EnemyDefaultMovement.RecordObstacleMovement는 실제 이동 거리의 크기 대신 요청 방향으로 전진한 양(Dot)을 비교한다. 군중에게 옆으로 밀린 상황을 정상 전진으로 판단하여 막힘 타이머가 초기화되는 문제를 수정한다. 정상적으로 요청 방향으로 절반 이상 이동하면 기존처럼 타이머를 초기화한다.
+- 전체 C# 컴파일과 실제 이동 코드를 사용한 모의 검사 22개를 통과했다. 접촉 시 같은 반경의 탐색이 거리 0을 반환하는 회귀 상황은 기존 탐색에서 실패하고 수정 후 통과했다. 횡방향 밀림의 막힘 판정, 접촉 상태에서 시작한 우회와 기존 넉백·시계·풀 재사용 검사를 포함한다. 이 검사는 접촉 상황을 모사하며 실제 PhysX와 사진의 돌 배치에서의 재현·해결 여부는 Unity 플레이 확인이 필요하다.
+
+### Collider 전환 3단계 — 이벤트 박쥐
+
+- 물리 이동을 켠 EnemyMovement는 일반 / 이벤트 모두 FixedUpdate에서 Rigidbody 속도로 이동한다. ConfigureSwarm은 Collider를 비활성화하거나 kinematic으로 바꾸지 않는다. 기존 EnemyCrowd는 UsesPhysics 적의 이동·겹침 보정을 건너뛰므로 이벤트에도 이중 보정이 적용되지 않는다. 기존 격자 비교 경로와 사용하지 않는 군중 로직은 4단계 전까지 유지한다.
+- EnemySwarmMovement.GetPhysicsVelocity는 기존 고정 방향·진행 거리·넉백·최대 오프셋·복귀 목표 계산을 재사용한다. 목표점까지 순간이동하지 않고 속도(기존 이동 속도 + 복귀 속도 상한)로 복귀한다. 플레이어 위치가 바뀌어도 최초 방향을 유지하고, 바라보는 방향도 고정한다. 실제 물리 접촉 중에는 목표 오프셋을 벗어날 수 있으며 해소 후 복귀한다.
+- EnemySwarm 레이어(13)는 일반 Enemy(12)와만 물리 충돌한다. 장애물·플레이어·이벤트 박쥐끼리는 충돌하지 않아 장애물 통과와 대형을 유지한다. 플레이어 피해와 무기 명중은 기존 거리 / 구간 판정을 계속 사용한다.
+- 기존 Spawner의 Swarm Push Strength를 이벤트 Rigidbody 질량에 연결한다. 빠른 박쥐의 충돌 누락을 줄이기 위해 이벤트에 Continuous Speculative를 사용한다. 일반 박쥐로 풀 재사용되면 원래 질량·레이어·충돌 검출 모드를 복원한다. 새 클래스·이벤트 풀·추가 스폰 일정은 만들지 않는다.
+- 시계 정지 중 기존 / 신규 이벤트도 FreezeAll 상태를 유지하고 경로 진행 시간을 누적하지 않는다. 해제 후 멈췄던 위치와 기존 방향에서 재개한다. 기존 이벤트 시간·마리 수 상한·화면 진입 후 완전 이탈 반환은 변경하지 않는다.
+- 검증: 전체 Unity 참조 컴파일, 실제 EnemyMovement / EnemySwarmMovement / EnemyCrowd와 모의 물리를 사용하는 검사 35개, 이벤트 레이어 충돌 매트릭스 검사를 통과했다. 고정 방향·진행 거리·측면 밀림 복귀·정지/재개·정지 중 생성·풀 설정 복원·화면 진입/이탈과 이전 일반 적 회피·넉백 회귀 검사를 포함한다. 실제 PhysX의 밀어내기 강도·고속 충돌·대량 적 성능은 Unity에서 확인해야 한다. 4단계 코드는 아직 정리하지 않았다.
+
+
+### 이벤트 박쥐 밀어내기 강도 조정
+
+- EnemySpawner의 Swarm Push Strength 기본값과 GameScene 저장값을 5에서 1.5로 낮췄다. 이 값은 물리 이벤트 박쥐의 Rigidbody 질량으로 적용된다. 일반 적의 질량은 1이다.
+- 질량뿐 아니라 이동 속도와 경로를 유지하려는 속도 갱신도 실제 밀어내기에 영향을 준다. 이번에는 질량만 낮추고 Swarm Speed=16, Recovery Speed=4, Max Offset=0.25와 기존 경로 복귀 계산은 유지한다. 질량 감소 비율이 실제 밀려나는 거리의 감소 비율을 의미하지는 않는다.
+- 실제 게임의 EnemySpawner Inspector에서 Swarm Push Strength를 조절한다. 변경값은 이후 생성되는 이벤트 박쥐에 적용된다. 동일한 군중 밀도에서 밀려나는 거리와 경로 복귀를 플레이 테스트로 확인한다.
+
+### 이벤트 박쥐 구동 가속도 제한
+
+- EnemySpawner에 Swarm Acceleration(기본 / GameScene 값 6)을 추가한다. Swarm Push Strength=1.5는 질량으로 유지한다. 가속도는 물리 스텝당 속도 변화량을 제한하며 충돌 후 최고 속도를 즉시 복원하지 않는다. Fixed Timestep=0.02 기준 한 스텝의 구동 속도 변화 상한은 0.12이다. 실제 접촉 충격의 상한을 의미하지는 않는다.
+- 물리 이벤트의 전진 경로 기준은 실제 위치를 최초 고정 방향에 투영하여 계산한다. 충돌 중 가상의 목표점이 계속 달아나지 않으므로 앞뒤 지연을 따라잡기 위한 추가 가속이 발생하지 않는다. 최초 방향과 기준 직선은 유지한다.
+- 측면 경로 오차에는 기존 Max Offset / Recovery Speed를 활용한 제한된 복귀 목표 속도를 사용한다. 경로에 가까울수록 복귀 속도를 줄이며 전진과 복귀를 합친 속도 변화에도 같은 가속도 제한을 적용한다. 무기 넉백은 별도로 기존 지속 시간에 맞춰 적용하고 종료 후 제한된 가속으로 이동을 재개한다.
+- 초기 생성과 시계 해제 후에도 점진적으로 가속한다. 기존 일정·물리 레이어·정지·풀·화면 이탈 반환·격자 비교 경로는 유지하며 4단계 정리는 진행하지 않는다.
+- 전체 C# 컴파일과 실제 이동 코드를 사용하는 모의 검사 39개를 통과했다. 가속 상한, 최고 속도 도달, 충돌로 속도가 0이 된 후 재가속, 전진 지연에 대한 과속 방지, 측면 복귀, 넉백, 시계·신규 생성·풀 상태 및 기존 장애물 회피 검사를 포함한다. 실제 밀집 군중의 밀림과 접촉 시 감속 정도는 Unity PhysX 플레이 테스트가 필요하다.
+
+### Collider 전환 4단계 — 실제 게임의 격자 이동 코드 제거 (최신 기준)
+
+- 실제 EnemyMovement는 Rigidbody / SphereCollider를 필수 컴포넌트로 사용한다. 전환용 Use Physics Movement 설정과 격자 이동 폴백을 제거했다. 일반 / 이벤트 이동과 넉백·시계·풀 초기화는 직전 물리 구현을 유지한다. EnemyDefaultMovement와 EnemySwarmMovement의 물리 속도 메서드 이름을 GetVelocity로 통일했다.
+- EnemyCrowd에서 UpdateCrowd / SimulateCrowd / GetSeparation / CorrectOverlap, 서브스텝·반복 겹침 보정과 전용 ProfilerMarker를 제거했다. EnemyMovement의 기존 군중용 nextPosition / velocity / correction / contactCount, 분리·겹침 보정 Inspector 설정 및 호출 전달 메서드를 제거했다. 5종 적 프리팹의 사용하지 않는 직렬화 항목도 정리했다.
+- EnemyCrowd는 활성 적 목록·일반/이벤트 수·투사체 검색 격자·시계 API를 유지한다. 검색 격자는 필요할 때 프레임당 한 번 갱신하고 등록·반환 시 무효화한다. MagicWand의 대상 탐색과 기존 구간 명중·관통 순서·성경 재피격·채찍 명중 방식은 변경하지 않았다.
+- EnemyObstacleCollision은 실제 게임에서 사용하는 SphereCast만 남겼다. 직접 위치 이동 / 캡슐 미끄러짐 / 겹침 해소는 물리 엔진이 담당한다.
+- 기존 EnemyCrowdComparison 테스트를 보존하기 위해 기존 격자 구현 5개를 Test/EnemyComparison/LegacyGrid 아래 LegacyGrid 접두사로 격리했다. 테스트 Grid 모드와 비교 Collider의 기존 장애물 감지는 보관본에 연결한다. EnemySpawnTest의 생성 위치 보정도 테스트 전용 보관본을 사용한다. 실제 게임의 활성 목록·시계·이동 코드와 보관본은 서로 독립적이며 게임용 매니저·이동 클래스를 추가하지 않았다. Grid 비교는 보관된 알고리즘이고 현재 실제 게임 구현은 아니다.
+- 검증: 전체 게임·비교 테스트 C# Unity 참조 컴파일, 실제 코드를 사용하는 모의 검사 49개를 통과했다. 기존 일반/이벤트 이동·가속·회피·넉백·시계·풀 복원 39개, 빠른 구간 명중·첫 명중/관통 제외 목록·같은 프레임 반환 후 검색·일반/이벤트 수 관리, 보관된 Grid 이동과 활성 목록 독립성을 확인했다. 실제 Unity PhysX 성능 및 500/1000/1500마리 프레임 시간은 별도로 측정해야 하며 이번 작업에서 새 실측 결과를 생성하지 않았다.
+- Unity 최종 확인: 4종 무기의 명중·관통·피해·사망·경험치 드롭, 일반 적 추적·플레이어 통과·장애물 회피·넉백, 이벤트의 제한된 구동과 경로 복귀·화면 반환, 시계/레벨업/일시 정지 및 풀 재사용을 확인한다. Profiler에서 EnemyMovement.PhysicsMove / EnemyDefaultMovement.Move / EnemyCrowd.RefreshGrid / EnemyCrowd.TryGetProjectileHit와 Physics 비용을 함께 확인한다. 제거한 군중 보정 마커는 실제 게임에 나타나지 않아야 한다. 비교 씬의 Grid 마커는 LegacyGridEnemyCrowd.* 이름으로 표시된다.
+
+### 실제 게임 CPU 측정 마커
+
+- 측정 구간만 추가했다. 이동·공격·피해·사망·생성·풀·씬 설정은 변경하지 않았다. 모든 마커는 static readonly 고정 이름과 Auto 스코프를 사용하며 측정을 위한 프레임별 로그 / 배열 / 문자열 할당을 추가하지 않는다. 기존 게임 처리에서 발생하는 GC까지 0으로 만드는 변경은 아니다.
+- 적 이동 전체 스크립트: EnemyMovement.PhysicsMove. 내부 일반 / 이벤트 속도 계산: EnemyDefaultMovement.Move / EnemySwarmMovement.Move. 실제 회피 탐색: EnemyDefaultMovement.ObstacleAvoidance, 구체 검사: EnemyObstacleCollision.Cast. 접촉 피해는 별도 EnemyMovement.ApplyContactDamage로 유지한다.
+- 가장 가까운 화면 내 적 탐색: MagicWandWeapon.FindNearestVisibleEnemy. 투사체 생성 비용은 이 범위 밖이다. 마법 지팡이가 실제 발사 대상을 찾는 프레임에 표시된다.
+- 명중 처리 전체(검색 및 명중 후 피해·넉백·사망·드롭 등 동기 호출 포함): Projectile.HandleHits(마법 지팡이 / 단검 공용), BibleProjectile.HandleHits, WhipSlash.HandleHits. 하위 검색만: EnemyCrowd.TryGetProjectileHit(적), EnemyCrowd.RefreshGrid(격자 갱신), Torch.TryGetHit(횃불). 성경 마커에는 적별 재피격 제한 확인도 포함한다.
+- Physics는 Unity 기본 FixedUpdate.PhysicsFixedUpdate / Physics.Simulate 등 실제 실행 중 표시되는 물리 구간을 CPU Usage Timeline에서 확인한다. 워커 스레드 작업도 펼쳐 본다. CPU 물리 상위 구간에 하위 Simulate 시간을 다시 더하지 않는다. 마커명을 Enemy / Weapon으로 필터링한 화면만으로 Physics가 제외되지 않게 검색을 해제하여 확인한다.
+- 측정 방법: GameScene 실제 플레이 또는 Development Build + Autoconnect Profiler를 사용한다. Deep Profile과 Allocation Call Stacks는 기본 비교 측정에서 끈다. 초기 생성 직후를 피하고 동일한 적 수·밀도·무기 종류와 레벨·플레이어 이동·장애물 조건으로 15~30초씩 기록한다. 정지/레벨업 선택과 실제 전투 구간은 분리한다. Hierarchy의 Time ms / Self ms / Calls / GC Alloc 및 Timeline을 확인하며 하위 마커가 포함된 상위 시간과 자식 시간을 중복 합산하지 않는다. 여러 물리 스텝이 실행된 프레임은 이동 / Physics 호출 수도 함께 기록한다.
+- 기존 EnemySpawnTest가 연결돼 있다면 1/2/3은 적 100/300/500마리를 각각 '추가'한다. 정확한 활성 적 수는 처치·일반 스폰·화면 반환·이벤트에 따라 변하므로 생성 로그와 당시 활성 수를 함께 확인한다. 최종 성능 비교는 같은 실행 환경에서 500/1000/1500마리를 각각 재측정한다. 이번 작업은 측정 준비이며 실제 CPU 실측 결과는 아직 없다.
+- 검증: 전체 스크립트 Unity 참조 컴파일과 기존 실제 Enemy 코드를 사용하는 모의 검사 49개를 통과했다. 무기 / 횃불 변경은 마커 필드 및 스코프만 추가했고 연산과 호출 순서를 유지했음을 확인했다.

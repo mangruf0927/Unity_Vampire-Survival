@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour, IDamageable
 {
-    private float maxHealth = 5f;
-    private float gemDropChance = 0.6f;
     [SerializeField] private LayerMask groundLayers = 1 << 9;
 
+    private float maxHealth;
+    private float gemDropChance;
     private float currentHealth;
     private bool isDead;
 
@@ -29,7 +29,10 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         if (isDead || damage <= 0f) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - damage);
-        SoundManager.Instance?.PlaySFX(currentHealth > 0f ? SoundManager.EnemyHit : SoundManager.EnemyDeath);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(currentHealth > 0f ? SoundManager.EnemyHit : SoundManager.EnemyDeath);
+        }
         if (currentHealth > 0f) return;
 
         isDead = true;

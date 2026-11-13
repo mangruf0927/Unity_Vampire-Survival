@@ -1,37 +1,29 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Profiling;
 using UnityEngine.SceneManagement;
 
 public static class EnemyCrowd
 {
+    private static readonly ProfilerMarker refreshGridMarker = new("EnemyCrowd.RefreshGrid");
+    private static readonly ProfilerMarker tryGetProjectileHitMarker = new("EnemyCrowd.TryGetProjectileHit");
+
     private const float CellSize = 2f;
-    private const int CorrectionPasses = 4;
-    private const float ContactTolerance = 0.001f;
 
     private static readonly List<EnemyMovement> activeEnemies = new();
+    private static readonly Dictionary<Vector2Int, EnemyMovement> grid = new();
+
     internal static int ActiveCount => activeEnemies.Count;
     internal static int ActiveSwarmCount { get; private set; }
     internal static int RegularCount => ActiveCount - ActiveSwarmCount;
     internal static void RegisterSwarm() => ActiveSwarmCount++;
     internal static EnemyMovement GetActiveEnemy(int index) => activeEnemies[index];
-    private static readonly Dictionary<Vector2Int, EnemyMovement> grid = new();
 
-    private static int simulationFrame = -1;
     private static int hitGridFrame = -1;
     private static float largestRadius;
-    private static float stepDeltaTime;
     private static float frozenUntil;
     private static int frozenSceneHandle;
-    internal static bool IsFrozen => Time.time < frozenUntil
-        && SceneManager.GetActiveScene().handle == frozenSceneHandle;
-
-    public static void FreezeFor(float duration)
-    {
-        if (duration <= 0f) return;
-        frozenSceneHandle = SceneManager.GetActiveScene().handle;
-        frozenUntil = Time.time + duration;
-        for (int i = 0; i < activeEnemies.Count; i++) activeEnemies[i].ClearFrozenMotion();
-    }
+    internal static bool IsFrozen => Time.time < frozenUntil && SceneManager.GetActiveScene().handle == frozenSceneHandle;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetCrowd()
@@ -39,7 +31,6 @@ public static class EnemyCrowd
         activeEnemies.Clear();
         ActiveSwarmCount = 0;
         grid.Clear();
-        simulationFrame = -1;
         hitGridFrame = -1;
         frozenUntil = 0f;
         frozenSceneHandle = 0;
@@ -57,20 +48,12 @@ public static class EnemyCrowd
         hitGridFrame = -1;
     }
 
-    public static void UpdateCrowd()
+    public static void FreezeFor(float duration)
     {
-        if (Time.deltaTime <= 0f || simulationFrame == Time.frameCount) return;
-
-        simulationFrame = Time.frameCount;
-        if (IsFrozen) return;
-
-        int steps = Mathf.Clamp(Mathf.CeilToInt(Time.deltaTime / (1f / 60f)), 1, 4);
-        stepDeltaTime = Time.deltaTime / steps;
-
-        for (int i = 0; i < steps; i++) SimulateCrowd();
-
-        RefreshGrid(true);
-        hitGridFrame = Time.frameCount;
+        if (duration <= 0f) return;
+        frozenSceneHandle = SceneManager.GetActiveScene().handle;
+        frozenUntil = Time.time + duration;
+        for (int i = 0; i < activeEnemies.Count; i++) activeEnemies[i].ClearFrozenMotion();
     }
 
     internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, HashSet<EnemyMovement> ignoredEnemies = null)
@@ -78,14 +61,15 @@ public static class EnemyCrowd
         return TryGetProjectileHit(start, end, hitRadius, out hitEnemy, out _, ignoredEnemies);
     }
 
-    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius,
-        out EnemyMovement hitEnemy, out float firstHitTime, HashSet<EnemyMovement> ignoredEnemies = null)
+    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, out float firstHitTime, HashSet<EnemyMovement> ignoredEnemies = null)
     {
+        using var scope = tryGetProjectileHitMarker.Auto();
+
         hitEnemy = null;
         firstHitTime = float.PositiveInfinity;
         if (hitGridFrame != Time.frameCount)
         {
-            RefreshGrid(true);
+            RefreshGrid();
             hitGridFrame = Time.frameCount;
         }
 
@@ -139,97 +123,22 @@ public static class EnemyCrowd
         return hitEnemy != null;
     }
 
-    private static void SimulateCrowd()
-    {
-        for (int i = 0; i < activeEnemies.Count; i++)
-        {
-            EnemyMovement enemy = activeEnemies[i];
-            enemy.framePosition = enemy.IsSwarm ? enemy.transform.position
-                : EnemyObstacleCollision.ResolveOverlap(enemy.transform.position, enemy.BodyRadius);
-            enemy.nextPosition = enemy.framePosition;
-
-            if (enemy.Target != null) enemy.targetPosition = enemy.Target.position;
-        }
-
-        RefreshGrid();
-
-        for (int i = 0; i < activeEnemies.Count; i++)
-        {
-            EnemyMovement enemy = activeEnemies[i];
-
-            if (enemy.Target != null)
-                enemy.Move(enemy.GetTargetDirection(), enemy.IsSwarm ? Vector3.zero : GetSeparation(enemy), stepDeltaTime);
-            else
-                enemy.velocity = Vector3.zero;
-
-            if (!enemy.IsSwarm)
-            {
-                Vector3 requested = enemy.nextPosition - enemy.framePosition;
-                enemy.nextPosition = EnemyObstacleCollision.Move(enemy.framePosition, requested, enemy.BodyRadius);
-                if (enemy.Target != null)
-                    enemy.RecordObstacleMovement(requested, enemy.nextPosition - enemy.framePosition, stepDeltaTime);
-            }
-        }
-
-        for (int pass = 0; pass < CorrectionPasses; pass++)
-        {
-            for (int i = 0; i < activeEnemies.Count; i++)
-            {
-                EnemyMovement enemy = activeEnemies[i];
-                enemy.correction = Vector3.zero;
-                enemy.contactCount = 0;
-            }
-
-            RefreshGrid();
-
-            for (int i = 0; i < activeEnemies.Count; i++)
-                CorrectOverlap(activeEnemies[i]);
-
-            for (int i = 0; i < activeEnemies.Count; i++)
-            {
-                EnemyMovement enemy = activeEnemies[i];
-                if (enemy.Target == null) continue;
-
-                if (enemy.contactCount > 0)
-                {
-                    Vector3 offset = enemy.correction / enemy.contactCount;
-                    Vector3 movement = Vector3.ClampMagnitude(offset, enemy.OverlapCorrectionSpeed * stepDeltaTime);
-                    enemy.nextPosition = enemy.IsSwarm ? enemy.nextPosition + movement
-                        : EnemyObstacleCollision.Move(enemy.nextPosition, movement, enemy.BodyRadius);
-                }
-                if (enemy.IsSwarm) enemy.nextPosition = enemy.ClampSwarmPosition(enemy.nextPosition);
-
-            }
-        }
-
-        for (int i = 0; i < activeEnemies.Count; i++)
-        {
-            EnemyMovement enemy = activeEnemies[i];
-            if (enemy.Target == null) continue;
-
-            enemy.transform.position = enemy.nextPosition;
-
-            Vector3 facingDirection = enemy.IsSwarm ? enemy.SwarmDirection : enemy.targetPosition - enemy.nextPosition;
-            facingDirection.y = 0f;
-
-            if (facingDirection.sqrMagnitude > 0.000001f) enemy.Rotate(facingDirection, stepDeltaTime);
-        }
-    }
-
     private static Vector2Int GetCell(Vector3 position)
     {
         return new Vector2Int(Mathf.FloorToInt(position.x / CellSize), Mathf.FloorToInt(position.z / CellSize));
     }
 
-    private static void RefreshGrid(bool useCurrentPosition = false)
+    private static void RefreshGrid()
     {
+        using var scope = refreshGridMarker.Auto();
+
         grid.Clear();
         largestRadius = 0f;
 
         for (int i = 0; i < activeEnemies.Count; i++)
         {
             EnemyMovement enemy = activeEnemies[i];
-            Vector2Int cell = GetCell(useCurrentPosition ? enemy.transform.position : enemy.nextPosition);
+            Vector2Int cell = GetCell(enemy.transform.position);
 
             grid.TryGetValue(cell, out enemy.nextInCell);
             grid[cell] = enemy;
@@ -237,96 +146,4 @@ public static class EnemyCrowd
         }
     }
 
-    private static Vector3 GetSeparation(EnemyMovement enemy)
-    {
-        Vector3 separation = Vector3.zero;
-        Vector3 forward = enemy.GetTargetDirection().normalized;
-        Vector2Int cell = GetCell(enemy.framePosition);
-        int cells = Mathf.CeilToInt(Mathf.Max(enemy.SeparationRange, enemy.BodyRadius + largestRadius) / CellSize);
-
-        for (int x = -cells; x <= cells; x++)
-        {
-            for (int z = -cells; z <= cells; z++)
-            {
-                grid.TryGetValue(cell + new Vector2Int(x, z), out EnemyMovement other);
-
-                while (other != null)
-                {
-                    if (other != enemy)
-                    {
-                        Vector3 away = enemy.framePosition - other.framePosition;
-                        away.y = 0f;
-
-                        float distance = away.magnitude;
-                        float range = Mathf.Max(enemy.SeparationRange, enemy.BodyRadius + other.BodyRadius);
-
-                        if (distance < range)
-                        {
-                            Vector3 normal = distance > 0.0001f ? away / distance : enemy.GetOverlapDirection(other);
-                            float weight = 1f - distance / range;
-
-                            separation += normal * weight * weight;
-
-                            float blocking = Mathf.Max(0f, Vector3.Dot(-normal, forward));
-                            separation += 0.5f * blocking * enemy.sidePreference * weight * weight * Vector3.Cross(Vector3.up, forward);
-                        }
-                    }
-
-                    other = other.nextInCell;
-                }
-            }
-        }
-
-        return Vector3.ClampMagnitude(separation, 1f);
-    }
-
-    private static void CorrectOverlap(EnemyMovement enemy)
-    {
-        Vector2Int cell = GetCell(enemy.nextPosition);
-        int cells = Mathf.CeilToInt((enemy.BodyRadius + largestRadius) / CellSize);
-
-        for (int x = -cells; x <= cells; x++)
-        {
-            for (int z = -cells; z <= cells; z++)
-            {
-                grid.TryGetValue(cell + new Vector2Int(x, z), out EnemyMovement other);
-
-                while (other != null)
-                {
-                    if (enemy.enemyId < other.enemyId && (enemy.Target != null || other.Target != null))
-                    {
-                        Vector3 away = enemy.nextPosition - other.nextPosition;
-                        away.y = 0f;
-
-                        float distance = away.magnitude;
-                        float overlap = enemy.BodyRadius + other.BodyRadius - distance - ContactTolerance;
-
-                        if (overlap > 0f)
-                        {
-                            Vector3 normal = distance > 0.0001f ? away / distance : enemy.GetOverlapDirection(other);
-                            bool bothMoving = enemy.Target != null && other.Target != null;
-                            float totalWeight = enemy.CorrectionWeight + other.CorrectionWeight;
-                            float enemyShare = bothMoving ? enemy.CorrectionWeight / totalWeight : 1f;
-                            float otherShare = bothMoving ? other.CorrectionWeight / totalWeight : 1f;
-                            Vector3 offset = normal * overlap;
-
-                            if (enemy.Target != null)
-                            {
-                                enemy.correction += offset * enemyShare;
-                                enemy.contactCount++;
-                            }
-
-                            if (other.Target != null)
-                            {
-                                other.correction -= offset * otherShare;
-                                other.contactCount++;
-                            }
-                        }
-                    }
-
-                    other = other.nextInCell;
-                }
-            }
-        }
-    }
 }

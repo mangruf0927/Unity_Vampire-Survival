@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Profiling;
 
 public class WhipSlash : MonoBehaviour
 {
+    private static readonly ProfilerMarker hitMarker = new("WhipSlash.HandleHits");
     private readonly HashSet<EnemyMovement> hitEnemies = new();
     private readonly Dictionary<Torch, int> hitTorches = new();
     private Transform origin;
@@ -49,6 +51,7 @@ public class WhipSlash : MonoBehaviour
     {
         transform.SetPositionAndRotation(origin.position + direction * (length * 0.5f), Quaternion.LookRotation(direction, Vector3.up));
         transform.localScale = new Vector3(width, 0.12f, length);
+        using var scope = hitMarker.Auto();
 
         float radius = width * 0.5f;
         Vector3 start = origin.position + direction * radius;

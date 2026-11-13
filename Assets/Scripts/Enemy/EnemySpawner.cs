@@ -31,17 +31,9 @@ public class EnemySpawner : MonoBehaviour
 
     [SerializeField, Min(0.1f)] private float spawnMargin = 2f;
 
-    [SerializeField, Min(0)] private int maximumSwarmEnemies = 120;
-
-    [SerializeField, Min(1)] private int swarmCount = 20;
-    [SerializeField, Min(0.1f)] private float swarmSpeed = 16f;
-    // 기존 겹침 보정 분배 가중치. Rigidbody 질량과 무관하다.
-    [SerializeField, Min(1f)] private float swarmPushStrength = 5f;
-    [SerializeField, Min(1.1f)] private float swarmSpacing = 1.3f;
-    [SerializeField, Min(0f)] private float swarmMaxOffset = 0.25f;
-    [SerializeField, Min(0f)] private float swarmRecoverySpeed = 4f;
-    private readonly int[] swarmTimes = { 125, 130, 135, 425, 430, 435 };
-    private int nextSwarmEvent;
+    private readonly List<EventEnemyData> eventEnemies = new();
+    private int[] nextEventIndices;
+    private float[] eventBoundsRadii;
 
     private readonly List<Vector3> formationOffsets = new();
     private readonly List<Renderer> enemyRenderers = new();
@@ -55,7 +47,6 @@ public class EnemySpawner : MonoBehaviour
     private bool cameraCornersReady;
     private Vector3 screenCenter;
     private Vector3 spawnEdgeNormal;
-    private float swarmBoundsRadius;
 
     private void Start()
     {
@@ -84,28 +75,35 @@ public class EnemySpawner : MonoBehaviour
                 if (!ValidatePool(entry.poolType)) return;
             }
         }
-        if (!ValidatePool(PoolTypeEnums.SwarmBat)) return;
-        ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.SwarmBat, out GameObject swarmPrefab);
-        swarmBoundsRadius = swarmPrefab.GetComponent<EnemyMovement>().BodyRadius;
-
-        swarmPrefab.GetComponentsInChildren<Renderer>(enemyRenderers);
-        for (int i = 0; i < enemyRenderers.Count; i++)
-        {
-            Bounds bounds = enemyRenderers[i].bounds;
-            float radius = (bounds.center - swarmPrefab.transform.position).magnitude + bounds.extents.magnitude;
-            swarmBoundsRadius = Mathf.Max(swarmBoundsRadius, radius);
-        }
-        enemyRenderers.Clear();
-
         float elapsed = timeSystem.ElapsedSeconds;
-        while (nextSwarmEvent < swarmTimes.Length && swarmTimes[nextSwarmEvent] < elapsed) nextSwarmEvent++;
+        foreach (EventEnemyData data in DataManager.Instance.EventEnemies.All.Values) eventEnemies.Add(data);
+        nextEventIndices = new int[eventEnemies.Count];
+        eventBoundsRadii = new float[eventEnemies.Count];
+        for (int i = 0; i < eventEnemies.Count; i++)
+        {
+            EventEnemyData data = eventEnemies[i];
+            if (!ValidatePool(data.poolType, true)) return;
+            ObjectPool.Instance.TryGetPrefab(data.poolType, out GameObject prefab);
+            float radius = prefab.GetComponent<EnemyMovement>().BodyRadius;
+            prefab.GetComponentsInChildren<Renderer>(enemyRenderers);
+            for (int j = 0; j < enemyRenderers.Count; j++)
+            {
+                Bounds bounds = enemyRenderers[j].bounds;
+                float rendererRadius = (bounds.center - prefab.transform.position).magnitude + bounds.extents.magnitude;
+                radius = Mathf.Max(radius, rendererRadius);
+            }
+            eventBoundsRadii[i] = radius;
+            enemyRenderers.Clear();
+            while (nextEventIndices[i] < data.spawnTimes.Length && data.spawnTimes[nextEventIndices[i]] < elapsed)
+                nextEventIndices[i]++;
+        }
     }
 
-    private bool ValidatePool(PoolTypeEnums type)
+    private bool ValidatePool(PoolTypeEnums type, bool swarm = false)
     {
         if (ObjectPool.Instance.TryGetPrefab(type, out GameObject prefab) && prefab.GetComponent<EnemyHealth>() != null)
         {
-            bool validMovement = type == PoolTypeEnums.SwarmBat
+            bool validMovement = swarm
                 ? prefab.GetComponent<EnemySwarmMovement>() != null
                 : prefab.GetComponent<EnemyDefaultMovement>() != null;
             if (validMovement) return true;
@@ -221,43 +219,52 @@ public class EnemySpawner : MonoBehaviour
     private void UpdateSwarmEvents()
     {
         float elapsed = timeSystem.ElapsedSeconds;
-        while (nextSwarmEvent < swarmTimes.Length && elapsed >= swarmTimes[nextSwarmEvent])
+        for (int i = 0; i < eventEnemies.Count; i++)
         {
-            nextSwarmEvent++;
-            SpawnSwarm();
+            EventEnemyData data = eventEnemies[i];
+            while (nextEventIndices[i] < data.spawnTimes.Length && elapsed >= data.spawnTimes[nextEventIndices[i]])
+            {
+                nextEventIndices[i]++;
+                SpawnSwarm(data, eventBoundsRadii[i]);
+            }
         }
     }
 
-    private void SpawnSwarm()
+    private void SpawnSwarm(EventEnemyData data, float boundsRadius)
     {
-        int count = Mathf.Min(swarmCount, Mathf.Max(0, maximumSwarmEnemies - EnemyCrowd.ActiveSwarmCount));
-        if (count <= 0 || !TryGetSpawnPosition(swarmBoundsRadius, out Vector3 center)) return;
-        Vector3 direction = player.position - center;
-        direction.y = 0f;
-        direction.Normalize();
+        int activeCount = 0;
+        for (int i = 0; i < EnemyCrowd.ActiveCount; i++)
+        {
+            if (EnemyCrowd.GetActiveEnemy(i) is EnemySwarmMovement swarm && swarm.EventDataId == data.Id)
+                activeCount++;
+        }
+        int count = Mathf.Min(data.count, Mathf.Max(0, data.maxActive - activeCount));
+        Vector3 entryDirection = data.directionMode == EventEnemyDirection.Fixed
+            ? data.GetDirection(Vector3.zero, Vector3.zero) : Vector3.zero;
+        if (count <= 0 || !TryGetSpawnPosition(boundsRadius, out Vector3 center, entryDirection)) return;
+        Vector3 direction = data.GetDirection(center, player.position);
+        if (direction.sqrMagnitude <= 0.000001f) return;
         Vector3 side = Vector3.Cross(Vector3.up, direction);
-        BuildDiamondOffsets(direction, side, count);
+        BuildDiamondOffsets(direction, side, count, data.spacing);
 
         float nearest = float.PositiveInfinity;
         for (int i = 0; i < formationOffsets.Count; i++)
             nearest = Mathf.Min(nearest, Vector3.Dot(formationOffsets[i], spawnEdgeNormal));
         float projection = Vector3.Dot(-direction, spawnEdgeNormal);
         if (projection <= 0.0001f) return;
-        float extraDistance = (swarmBoundsRadius + swarmMaxOffset + spawnMargin - nearest) / projection;
+        float extraDistance = (boundsRadius + data.maxOffset + spawnMargin - nearest) / projection;
         center -= direction * Mathf.Max(0f, extraDistance);
 
         for (int i = 0; i < formationOffsets.Count; i++)
         {
             Vector3 position = center + formationOffsets[i];
-            GameObject bat = Spawn(position, PoolTypeEnums.SwarmBat);
-            if (bat == null) continue;
-            EnemySwarmMovement movement = bat.GetComponent<EnemySwarmMovement>();
-            movement.ConfigureSwarm(position, direction, swarmSpeed,
-                swarmPushStrength, swarmMaxOffset, swarmRecoverySpeed);
+            GameObject enemy = Spawn(position, data.poolType);
+            if (enemy == null) continue;
+            enemy.GetComponent<EnemySwarmMovement>().ConfigureSwarm(position, direction, data);
         }
     }
 
-    private void BuildDiamondOffsets(Vector3 direction, Vector3 side, int count)
+    private void BuildDiamondOffsets(Vector3 direction, Vector3 side, int count, float spacing)
     {
         formationOffsets.Clear();
         int rows = 2 * Mathf.CeilToInt(Mathf.Sqrt(count * 0.5f)) - 1;
@@ -285,8 +292,8 @@ public class EnemySpawner : MonoBehaviour
         {
             for (int column = 0; column < rowCounts[row]; column++)
             {
-                float lateral = (column - (rowCounts[row] - 1) * 0.5f) * swarmSpacing;
-                float forward = (middle - row) * swarmSpacing;
+                float lateral = (column - (rowCounts[row] - 1) * 0.5f) * spacing;
+                float forward = (middle - row) * spacing;
                 formationOffsets.Add(side * lateral + direction * forward);
             }
         }
@@ -308,22 +315,32 @@ public class EnemySpawner : MonoBehaviour
         return true;
     }
 
-    private bool TryGetSpawnPosition(float radius, out Vector3 position)
+    private bool TryGetSpawnPosition(float radius, out Vector3 position, Vector3 entryDirection = default)
     {
         position = Vector3.zero;
         if (!cameraCornersReady) return false;
         int edge = Random.Range(0, 4);
-        Vector3 start = corners[edge];
-        Vector3 end = corners[(edge + 1) % 4];
-        Vector3 point = Vector3.Lerp(start, end, Random.value);
-        Vector3 edgeDirection = end - start;
-        Vector3 outward = new Vector3(-edgeDirection.z, 0f, edgeDirection.x).normalized;
-        if (Vector3.Dot(outward, point - screenCenter) < 0f) outward = -outward;
-        Vector3 depthDirection = spawnCamera.orthographic ? spawnCamera.transform.forward : point - spawnCamera.transform.position;
-        spawnEdgeNormal = Vector3.Cross(edgeDirection, depthDirection).normalized;
-        if (Vector3.Dot(spawnEdgeNormal, outward) < 0f) spawnEdgeNormal = -spawnEdgeNormal;
-        position = point + outward * (spawnMargin + radius);
-        position.y = spawnHeight;
-        return true;
+        // 고정 방향은 화면 안으로 진입할 수 있는 쪽의 변에서 생성한다.
+        for (int attempt = 0; attempt < 4; attempt++)
+        {
+            Vector3 start = corners[edge];
+            Vector3 end = corners[(edge + 1) % 4];
+            Vector3 point = Vector3.Lerp(start, end, Random.value);
+            Vector3 edgeDirection = end - start;
+            Vector3 outward = new Vector3(-edgeDirection.z, 0f, edgeDirection.x).normalized;
+            if (Vector3.Dot(outward, point - screenCenter) < 0f) outward = -outward;
+            if (entryDirection.sqrMagnitude > 0f && Vector3.Dot(entryDirection, outward) >= -0.0001f)
+            {
+                edge = (edge + 1) % 4;
+                continue;
+            }
+            Vector3 depthDirection = spawnCamera.orthographic ? spawnCamera.transform.forward : point - spawnCamera.transform.position;
+            spawnEdgeNormal = Vector3.Cross(edgeDirection, depthDirection).normalized;
+            if (Vector3.Dot(spawnEdgeNormal, outward) < 0f) spawnEdgeNormal = -spawnEdgeNormal;
+            position = point + outward * (spawnMargin + radius);
+            position.y = spawnHeight;
+            return true;
+        }
+        return false;
     }
 }

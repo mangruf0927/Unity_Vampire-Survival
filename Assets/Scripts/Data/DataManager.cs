@@ -18,6 +18,7 @@ public class DataManager
     }
 
     private readonly DataTable<EnemyData> enemies = new();
+    private readonly DataTable<EventEnemyData> eventEnemies = new();
     private readonly DataTable<WeaponData> weapons = new();
     private readonly DataTable<AccessoryData> accessories = new();
     private readonly DataTable<PlayerData> players = new();
@@ -25,6 +26,7 @@ public class DataManager
     private readonly Dictionary<string, Action<JToken>> tableLoaderDictionary = new();
 
     public DataTable<EnemyData> Enemies { get { LoadAll(); return enemies; } }
+    public DataTable<EventEnemyData> EventEnemies { get { LoadAll(); return eventEnemies; } }
     public DataTable<WeaponData> Weapons { get { LoadAll(); return weapons; } }
     public DataTable<AccessoryData> Accessories { get { LoadAll(); return accessories; } }
     public DataTable<PlayerData> Players { get { LoadAll(); return players; } }
@@ -33,6 +35,7 @@ public class DataManager
     private DataManager()
     {
         tableLoaderDictionary.Add("Enemies", enemies.LoadFromToken);
+        tableLoaderDictionary.Add("EventEnemies", eventEnemies.LoadFromToken);
         tableLoaderDictionary.Add("Weapons", weapons.LoadFromToken);
         tableLoaderDictionary.Add("Accessories", accessories.LoadFromToken);
         tableLoaderDictionary.Add("Players", players.LoadFromToken);
@@ -95,6 +98,7 @@ public class DataManager
     private void ClearTables()
     {
         enemies.Clear();
+        eventEnemies.Clear();
         weapons.Clear();
         accessories.Clear();
         players.Clear();

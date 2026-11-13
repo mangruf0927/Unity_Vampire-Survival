@@ -12,6 +12,8 @@ public class EnemySwarmMovement : EnemyMovement
     private float swarmMaxOffset;
     private float swarmRecoverySpeed;
 
+    public int EventDataId { get; private set; }
+
     internal override bool IsSwarm => true;
     internal override float MovementRadius => BodyRadius;
     internal override Vector3 SwarmDirection => swarmDirection;
@@ -20,6 +22,7 @@ public class EnemySwarmMovement : EnemyMovement
 
     protected override void ResetMovement()
     {
+        EventDataId = 0;
         swarmProgress = 0f;
         swarmHasEnteredScreen = false;
         swarmPushStrength = 1f;
@@ -48,6 +51,12 @@ public class EnemySwarmMovement : EnemyMovement
     {
         if (inside) swarmHasEnteredScreen = true;
         return swarmHasEnteredScreen && !inside;
+    }
+
+    public void ConfigureSwarm(Vector3 start, Vector3 direction, EventEnemyData data)
+    {
+        EventDataId = data.Id;
+        ConfigureSwarm(start, direction, data.moveSpeed, data.pushStrength, data.maxOffset, data.recoverySpeed);
     }
 
     public void ConfigureSwarm(Vector3 start, Vector3 direction, float speed,

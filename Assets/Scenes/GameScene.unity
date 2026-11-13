@@ -2006,13 +2006,6 @@ MonoBehaviour:
     maximumEnemies: 320
   offscreenCheckInterval: 0.2
   spawnMargin: 2
-  maximumSwarmEnemies: 120
-  swarmCount: 50
-  swarmSpeed: 16
-  swarmPushStrength: 5
-  swarmSpacing: 1.3
-  swarmMaxOffset: 0.25
-  swarmRecoverySpeed: 4
   spawnHeight: 1
 --- !u!114 &2110000103
 MonoBehaviour:

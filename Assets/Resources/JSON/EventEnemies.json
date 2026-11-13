@@ -1,0 +1,25 @@
+{
+  "tableName": "EventEnemies",
+  "records": [
+    {
+      "Id": 1,
+      "poolType": "SwarmBat",
+      "spawnTimes": [
+        125,
+        130,
+        135,
+        425,
+        430,
+        435
+      ],
+      "count": 50,
+      "maxActive": 120,
+      "moveSpeed": 16.0,
+      "spacing": 1.3,
+      "pushStrength": 5.0,
+      "maxOffset": 0.25,
+      "recoverySpeed": 4.0,
+      "directionMode": "ToPlayer"
+    }
+  ]
+}

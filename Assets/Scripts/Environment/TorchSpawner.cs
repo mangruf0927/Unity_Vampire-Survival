@@ -65,7 +65,9 @@ public class TorchSpawner : MonoBehaviour
             GameObject obj = ObjectPool.Instance.GetFromPool(PoolTypeEnums.Torch, position, Quaternion.identity);
             if (obj == null) return;
 
-            if (!obj.GetComponent<Torch>().IsVisible(planes)) return;
+            Torch torch = obj.GetComponent<Torch>();
+            torch.PlaceOnGround(position.y - CenterHeight);
+            if (!torch.IsVisible(planes)) return;
 
             ObjectPool.Instance.TryReturnToPool(obj);
         }

@@ -17,6 +17,7 @@ public class Torch : MonoBehaviour, IDamageable
 
     private readonly List<MeshFilter> dropMeshes = new();
     private Renderer[] renderers;
+    private MeshRenderer[] bodyRenderers;
     private float groundHeight;
     private bool broken;
 
@@ -35,6 +36,7 @@ public class Torch : MonoBehaviour, IDamageable
     {
         NormalizeDropRates();
         renderers = GetComponentsInChildren<Renderer>();
+        bodyRenderers = GetComponentsInChildren<MeshRenderer>();
     }
 
     private void OnEnable()
@@ -50,6 +52,24 @@ public class Torch : MonoBehaviour, IDamageable
     private void OnDisable()
     {
         activeTorches.Remove(this);
+    }
+
+    internal void PlaceOnGround(float groundY)
+    {
+        float lowest = float.PositiveInfinity;
+        for (int i = 0; i < bodyRenderers.Length; i++)
+        {
+            MeshRenderer renderer = bodyRenderers[i];
+            if (renderer.enabled && renderer.gameObject.activeInHierarchy)
+                lowest = Mathf.Min(lowest, renderer.bounds.min.y);
+        }
+        if (lowest == float.PositiveInfinity) return;
+
+        // 명중 판정에 사용하는 루트는 유지하고, 모델과 불꽃만 함께 지면에 맞춘다.
+        Vector3 offset = Vector3.up * (groundY - lowest);
+        for (int i = 0; i < transform.childCount; i++)
+            transform.GetChild(i).position += offset;
+        groundHeight = groundY;
     }
 
     public void TakeDamage(float damage)

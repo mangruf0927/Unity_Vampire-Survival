@@ -5,7 +5,7 @@ public class MapGenerator : MonoBehaviour
 {
     [SerializeField] private Transform player;
     [SerializeField] private Camera gameCamera;
-    [SerializeField] private Vector2 chunkSize = new(32f, 32f);
+    [SerializeField] private Vector2 chunkSize = new(64f, 64f);
     [SerializeField, Min(1)] private int keepRadius = 1;
     [SerializeField, Min(0f)] private float viewPadding = 8f;
 

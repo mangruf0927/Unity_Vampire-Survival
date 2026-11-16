@@ -2731,14 +2731,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerHealth: {fileID: 2110000103}
+  playerExperience: {fileID: 2130000000}
+  weaponManager: {fileID: 2240000200}
+  accessoryManager: {fileID: 2240000300}
   timeSystem: {fileID: 2150000002}
   gameOverUI: {fileID: 1020395981}
   gameClearUI: {fileID: 5020395981}
   playerHPBar: {fileID: 2140000015}
   pauseUI: {fileID: 8020395981}
-  playerExperience: {fileID: 2130000000}
-  weaponManager: {fileID: 2240000200}
-  accessoryManager: {fileID: 2240000300}
   levelUpUI: {fileID: 12000000005}
 --- !u!114 &2240000200
 MonoBehaviour:
@@ -2757,6 +2757,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c923cae2fe954704b25e04eec7981964, type: 3}
   - {fileID: 11400000, guid: b8f179914839495eae5f666128afb0b6, type: 3}
   - {fileID: 11400000, guid: 59f802462d6744d580888ddd6e2958b6, type: 3}
+  testStartingWeapon: {fileID: 11400000, guid: c923cae2fe954704b25e04eec7981964, type: 3}
   playerMovement: {fileID: 774257184}
   attackOrigin: {fileID: 774257183}
   gameCamera: {fileID: 330585545}
@@ -2932,6 +2933,37 @@ MonoBehaviour:
     prefab: {fileID: 100000, guid: 9a0ddb68918743ddb05a5513e03bfc8a, type: 3}
   - playerId: 3
     prefab: {fileID: 100000, guid: 1431f473ea8741b3b6be1d92e41a9e3f, type: 3}
+--- !u!1 &2260000100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2260000101}
+  m_Layer: 0
+  m_Name: VisualRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2260000101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2260000100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 774257183}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2270000000
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6672,8 +6704,6 @@ MonoBehaviour:
   - {fileID: 14000000233}
   - {fileID: 14000000253}
   placeholderIcon: {fileID: 21300000, guid: 4df512a73b324894868958fb250ab335, type: 3}
-  weaponPlaceholderColor: {r: 0.35, g: 0.75, b: 1, a: 1}
-  accessoryPlaceholderColor: {r: 1, g: 0.75, b: 0.35, a: 1}
 --- !u!1 &14000000100
 GameObject:
   m_ObjectHideFlags: 0
@@ -8077,35 +8107,3 @@ SceneRoots:
   - {fileID: 7176783300870188090}
   - {fileID: 2213133187464011160}
   - {fileID: 4280675967882815567}
-
---- !u!1 &2260000100
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2260000101}
-  m_Layer: 0
-  m_Name: VisualRoot
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2260000101
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2260000100}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 774257183}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

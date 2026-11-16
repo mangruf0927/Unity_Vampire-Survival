@@ -180,7 +180,7 @@
       "areaMultiplier": 1.0,
       "slashLength": 3.0,
       "slashWidth": 0.7,
-      "slashDuration": 0.15,
+      "slashDuration": 0.5,
       "upgrades": [
         {
           "level": 2,

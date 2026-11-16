@@ -5,6 +5,11 @@ public class WeaponManager : MonoBehaviour
 {
     [SerializeField] private Weapon[] weaponPrefabs;
 
+#if UNITY_EDITOR
+    [Tooltip("Editor 테스트용 시작 무기입니다. Weapon Prefabs에 등록된 프리팹을 연결하세요. None이면 캐릭터의 시작 무기를 사용합니다.")]
+    [SerializeField] private Weapon testStartingWeapon;
+#endif
+
     [SerializeField] private PlayerMovement playerMovement;
     [SerializeField] private Transform attackOrigin;
     [SerializeField] private Camera gameCamera;
@@ -51,6 +56,13 @@ public class WeaponManager : MonoBehaviour
         if (playerMovement == null) playerMovement = GetComponent<PlayerMovement>();
         if (attackOrigin == null) attackOrigin = transform;
         if (gameCamera == null) gameCamera = Camera.main;
+#if UNITY_EDITOR
+        if (testStartingWeapon != null)
+        {
+            if (AcquireOrUpgrade(testStartingWeapon)) return;
+            Debug.LogWarning("테스트 시작 무기를 획득하지 못했습니다. Weapon Prefabs 등록과 최대 보유 개수를 확인해 주세요. 캐릭터의 시작 무기를 사용합니다.", this);
+        }
+#endif
         int startingId = DataManager.Instance.SelectedPlayer.weaponId;
         if (weaponPrefabs != null)
         {

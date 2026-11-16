@@ -103,7 +103,14 @@ public class OwnedItemsHUD : MonoBehaviour
     {
         if (image == null) return;
 
-        image.sprite = item != null && item.Icon != null ? item.Icon : placeholderIcon;
+        if (item == null)
+        {
+            image.sprite = null;
+            image.enabled = false;
+            return;
+        }
+
+        image.sprite = item.Icon != null ? item.Icon : placeholderIcon;
 
         image.enabled = image.sprite != null;
         image.color = Color.white;

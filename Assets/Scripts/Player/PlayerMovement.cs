@@ -11,6 +11,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 moveDirection;
 
     public float MoveSpeed => moveSpeed * moveSpeedMultiplier;
+    public bool IsMoving { get; private set; }
     public Vector3 LastMoveDirection { get; private set; } = Vector3.forward;
 
     private void Awake()
@@ -37,6 +38,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnDisable()
     {
         moveDirection = Vector3.zero;
+        IsMoving = false;
     }
 
     public void OnMove(InputValue value)
@@ -55,7 +57,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void Move()
     {
+        Vector3 previousPosition = transform.position;
         characterController.Move(moveDirection * MoveSpeed * Time.deltaTime);
+        Vector3 distance = transform.position - previousPosition;
+        distance.y = 0f;
+        IsMoving = distance.sqrMagnitude > 0.00000001f;
     }
 
     private void Rotate()

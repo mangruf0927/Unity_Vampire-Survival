@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -225,9 +226,24 @@ public class GameManager : MonoBehaviour, IObserver
 
         if (result == GameState.GameOver && playerHealth != null)
         {
-            playerHealth.gameObject.SetActive(false);
-            Destroy(playerHealth.gameObject);
+            if (playerHealth.TryGetComponent(out PlayerCharacter character) && character.TryPlayDeathAnimation())
+                StartCoroutine(RemovePlayerAfterDeath(character));
+            else
+            {
+                playerHealth.gameObject.SetActive(false);
+                Destroy(playerHealth.gameObject);
+            }
         }
+    }
+
+    private IEnumerator RemovePlayerAfterDeath(PlayerCharacter character)
+    {
+        while (character != null && !character.IsDeathAnimationComplete)
+            yield return null;
+
+        if (playerHealth == null) yield break;
+        playerHealth.gameObject.SetActive(false);
+        Destroy(playerHealth.gameObject);
     }
 
     private void ShowResultUI(GameState result)

@@ -37,7 +37,7 @@
 - 오른쪽 중간의 일시 정지 버튼 또는 ESC로 정지한다. 팝업의 왼쪽은 종료하기, 오른쪽은 계속하기다. ESC로도 재개한다.
 - 레벨업 선택 중에는 일시 정지 토글을 무시한다. 게임 오버·클리어에서는 정지·재개를 허용하지 않는다.
 - GameManager가 LateUpdate에서 600초 도달을 먼저 검사하고, 다음으로 사망 요청을 처리한다. 결과는 한 번만 확정한다.
-- 게임 오버는 플레이어를 비활성화·제거하고 GAME OVER 패널을 표시한다. 클리어는 플레이어를 유지하고 GAME COMPLETED 패널을 표시한다.
+- 게임 오버는 즉시 게임을 정지하고 GAME OVER 패널을 표시한다. 플레이어 외형의 Die만 UnscaledTime으로 끝까지 재생한 뒤 플레이어를 비활성화·제거한다. Animator가 없으면 기존처럼 즉시 제거한다. 클리어는 플레이어를 유지하고 GAME COMPLETED 패널을 표시한다.
 - GameOverUI와 GameClearUI는 분리되어 있으며 결과 시 HP 바와 일시 정지 버튼을 숨긴다.
 - 나가기/종료하기 버튼은 Inspector에서 `GameManager.ReturnToStartScene()`을 호출한다. timeScale을 1로 복구한 뒤 StartScene으로 이동한다. 즉시 재시작 전용 버튼은 없다.
 
@@ -71,6 +71,7 @@
 - 이멜다의 속도 보너스는 지팡이·단검의 직진 속도와 성경의 공전 속도에 적용한다. 채찍에는 적용하지 않는다.
 - 캐릭터 능력은 PlayerCharacter가 레벨 알림으로 갱신하고 WeaponManager가 기존/신규 무기에 전달한다.
 - 공통 Player 루트의 이동·충돌·체력·입력·무기와 기존 씬 참조를 유지한다. PlayerCharacter는 시작 시 선택 PlayerData를 저장하고, Inspector의 캐릭터 ID → 외형 프리팹 목록에서 하나를 VisualRoot 아래에 생성한다. 재활성화 시 외형을 중복 생성하지 않는다.
+- PlayerMovement는 CharacterController의 실제 XZ 이동량으로 IsMoving을 계산하고 PlayerCharacter가 선택된 외형 Animator에 전달한다. 장애물에 완전히 막히면 Idle로 전환한다. Die Trigger는 게임 오버 확정 시에만 실행하여 같은 프레임의 클리어 우선 규칙을 유지한다. Root Motion은 사용하지 않는다.
 - 외형 프리팹은 Assets/Prefabs/Character의 AntonioVisual·ImeldaVisual·GennaroVisual이다. 현재는 캡슐과 정면 표시 및 개별 머티리얼로 구성한 임시 외형이며, 런타임 색상 변경 코드는 없다. 실제 모델·Animator는 각 프리팹 내부에서 교체한다.
 - VisualRoot는 Player 로컬 Y=-1, 외형 프리팹은 발 위치를 원점·정면을 +Z로 맞춘다. 외형에는 게임플레이 스크립트·추가 Collider/Rigidbody를 넣지 않으며 Animator 사용 시 Apply Root Motion을 끈다. 모델별 크기·회전 보정은 프리팹 내부에서 관리한다.
 

@@ -11,7 +11,7 @@ public static class EnemyCrowd
     internal static int RegularCount => ActiveCount - ActiveSwarmCount;
     internal static EnemyMovement GetActiveEnemy(int index) => activeEnemies[index];
 
-    // 이벤트 박쥐
+    // 이벤트 슬라임
     private static float swarmStepTime;
     private const int SwarmCorrectionPasses = 2;
 

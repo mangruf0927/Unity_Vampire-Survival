@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class EnemySpawnTest : MonoBehaviour
 {
     [SerializeField] private Transform player;
-    [SerializeField] private PoolTypeEnums enemyType = PoolTypeEnums.Bat;
+    [SerializeField] private PoolTypeEnums enemyType = PoolTypeEnums.Slime;
     [SerializeField, Min(0f)] private float minimumRadius = 5f;
     [SerializeField, Min(0.1f)] private float maximumRadius = 18f;
     [SerializeField] private float spawnHeight = 1f;

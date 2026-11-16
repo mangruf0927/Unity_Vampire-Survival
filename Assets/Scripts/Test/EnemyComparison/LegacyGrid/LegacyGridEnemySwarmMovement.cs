@@ -1,7 +1,7 @@
 // 비교 테스트 전용: Collider 전환 이전 격자 이동을 보관한다. 실제 게임에서는 사용하지 않는다.
 using UnityEngine;
 
-// 이벤트 박쥐의 고정 경로, 경로 복귀와 화면 진입 여부를 담당한다.
+// 이벤트 슬라임의 고정 경로, 경로 복귀와 화면 진입 여부를 담당한다.
 internal class LegacyGridEnemySwarmMovement
 {
     private readonly LegacyGridEnemyMovement enemy;

@@ -85,8 +85,8 @@ public partial class EnemyCrowdComparison : MonoBehaviour
 
     private IEnumerator Start()
     {
-        if (ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.Bat, out _)
-            || ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.Zombie, out _))
+        if (ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.Slime, out _)
+            || ObjectPool.Instance.TryGetPrefab(PoolTypeEnums.TurtleMonster, out _))
         {
             Debug.LogError("EnemyCrowdComparison은 기존 게임 씬과 함께 열지 말고 단독 실행해 주세요.", this);
             enabled = false;
@@ -202,7 +202,7 @@ public partial class EnemyCrowdComparison : MonoBehaviour
         templates = new GameObject("Inactive comparison templates");
         templates.SetActive(false);
         gridTemplate = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        gridTemplate.name = "Grid template - archived grid movement, JSON Bat ID 1";
+        gridTemplate.name = "Grid template - archived grid movement, JSON Slime ID 1";
         gridTemplate.transform.SetParent(templates.transform);
         gridTemplate.SetActive(false);
         gridTemplate.layer = EnemyLayer;
@@ -240,8 +240,8 @@ public partial class EnemyCrowdComparison : MonoBehaviour
 
     private void PreparePools()
     {
-        ObjectPool.Instance.Register(new PoolData { poolType = PoolTypeEnums.Bat, prefab = gridTemplate, size = Capacity + ExtraCapacity }, transform);
-        ObjectPool.Instance.Register(new PoolData { poolType = PoolTypeEnums.Zombie, prefab = colliderTemplate, size = Capacity + ExtraCapacity }, transform);
+        ObjectPool.Instance.Register(new PoolData { poolType = PoolTypeEnums.Slime, prefab = gridTemplate, size = Capacity + ExtraCapacity }, transform);
+        ObjectPool.Instance.Register(new PoolData { poolType = PoolTypeEnums.TurtleMonster, prefab = colliderTemplate, size = Capacity + ExtraCapacity }, transform);
         ownsPools = true;
     }
 
@@ -435,7 +435,7 @@ public partial class EnemyCrowdComparison : MonoBehaviour
     private void Spawn(int count, CrowdMode selectedMode)
     {
         EnemyData data = DataManager.Instance.Enemies.Get(1);
-        PoolTypeEnums type = selectedMode == CrowdMode.Grid ? PoolTypeEnums.Bat : PoolTypeEnums.Zombie;
+        PoolTypeEnums type = selectedMode == CrowdMode.Grid ? PoolTypeEnums.Slime : PoolTypeEnums.TurtleMonster;
         for (int i = 0; i < count; i++)
         {
             Vector3 direction = player.position - positions[i];
@@ -539,8 +539,8 @@ public partial class EnemyCrowdComparison : MonoBehaviour
         ClearEnemies();
         if (ownsPools)
         {
-            ObjectPool.Instance.Unregister(PoolTypeEnums.Bat);
-            ObjectPool.Instance.Unregister(PoolTypeEnums.Zombie);
+            ObjectPool.Instance.Unregister(PoolTypeEnums.Slime);
+            ObjectPool.Instance.Unregister(PoolTypeEnums.TurtleMonster);
         }
         mainThreadRecorder.Dispose();
         gcRecorder.Dispose();

@@ -237,7 +237,7 @@ public partial class EnemyCrowdComparison
         for (int i = 0; i < formationOffsets.Count; i++) front = Mathf.Max(front, Vector3.Dot(formationOffsets[i], direction));
         center -= direction * (front + 4f);
         EnemyData data = DataManager.Instance.Enemies.Get(1);
-        PoolTypeEnums type = runMode == CrowdMode.Grid ? PoolTypeEnums.Bat : PoolTypeEnums.Zombie;
+        PoolTypeEnums type = runMode == CrowdMode.Grid ? PoolTypeEnums.Slime : PoolTypeEnums.TurtleMonster;
         for (int i = 0; i < count; i++)
         {
             Vector3 position = center + formationOffsets[i];

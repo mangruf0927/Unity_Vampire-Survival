@@ -174,7 +174,7 @@ public class EnemySpawner : MonoBehaviour
 
     private bool TryChooseEnemy(SpawnStage stage, out PoolTypeEnums type)
     {
-        type = PoolTypeEnums.Bat;
+        type = PoolTypeEnums.Slime;
         float total = 0f;
         for (int i = 0; i < stage.enemies.Length; i++)
             if (stage.enemies[i] != null) total += Mathf.Max(0f, stage.enemies[i].weight);

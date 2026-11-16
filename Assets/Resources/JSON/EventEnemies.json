@@ -3,7 +3,7 @@
   "records": [
     {
       "Id": 1,
-      "poolType": "SwarmBat",
+      "poolType": "SwarmSlime",
       "spawnTimes": [
         125,
         130,

@@ -9,11 +9,26 @@ public class EnemyHealth : MonoBehaviour, IDamageable
     private float currentHealth;
     private bool isDead;
 
+    private static readonly int IsMovingParameter = Animator.StringToHash("IsMoving");
+    private static readonly int HitParameter = Animator.StringToHash("Hit");
+    private static readonly int DieParameter = Animator.StringToHash("Die");
+    private static readonly int IdleState = Animator.StringToHash("Base Layer.Idle");
+    private static readonly int DieState = Animator.StringToHash("Base Layer.Die");
+    private static readonly int DieStateName = Animator.StringToHash("Die");
+
+    private EnemyMovement movement;
+    private Animator animator;
+    private AnimatorCullingMode animatorCullingMode;
+
     public float CurrentHealth => currentHealth;
 
     private void Awake()
     {
-        EnemyData data = DataManager.Instance.Enemies.Get(GetComponent<EnemyMovement>().DataId);
+        movement = GetComponent<EnemyMovement>();
+        animator = GetComponentInChildren<Animator>(true);
+        if (animator != null) animatorCullingMode = animator.cullingMode;
+
+        EnemyData data = DataManager.Instance.Enemies.Get(movement.DataId);
         maxHealth = data.maxHealth;
         gemDropChance = data.gemDropChance;
     }
@@ -22,6 +37,29 @@ public class EnemyHealth : MonoBehaviour, IDamageable
     {
         currentHealth = maxHealth;
         isDead = false;
+        ResetAnimation();
+    }
+
+    private void ResetAnimation()
+    {
+        if (animator == null || !animator.isActiveAndEnabled || animator.runtimeAnimatorController == null) return;
+
+        animator.cullingMode = animatorCullingMode;
+        animator.Rebind();
+        animator.ResetTrigger(HitParameter);
+        animator.ResetTrigger(DieParameter);
+        animator.SetBool(IsMovingParameter, false);
+        animator.Play(IdleState, 0, 0f);
+        animator.Update(0f);
+    }
+
+    private void Update()
+    {
+        if (!isDead || Time.deltaTime <= 0f) return;
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        if (state.shortNameHash == DieStateName && state.normalizedTime >= 1f && !animator.IsInTransition(0))
+            ObjectPool.Instance.TryReturnToPool(gameObject);
     }
 
     public void TakeDamage(float damage)
@@ -33,12 +71,32 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         {
             SoundManager.Instance.PlaySFX(currentHealth > 0f ? SoundManager.EnemyHit : SoundManager.EnemyDeath);
         }
-        if (currentHealth > 0f) return;
+        if (currentHealth > 0f)
+        {
+            if (animator != null && animator.isActiveAndEnabled && animator.runtimeAnimatorController != null)
+            {
+                animator.ResetTrigger(HitParameter);
+                animator.SetTrigger(HitParameter);
+            }
+            return;
+        }
 
         isDead = true;
+        movement.StopForDeath();
         DropExperienceGem();
 
-        ObjectPool.Instance.TryReturnToPool(gameObject);
+        if (animator == null || !animator.isActiveAndEnabled || animator.runtimeAnimatorController == null
+            || !animator.HasState(0, DieState))
+        {
+            ObjectPool.Instance.TryReturnToPool(gameObject);
+            return;
+        }
+
+        animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        animator.SetBool(IsMovingParameter, false);
+        animator.ResetTrigger(HitParameter);
+        animator.ResetTrigger(DieParameter);
+        animator.SetTrigger(DieParameter);
     }
 
     private void DropExperienceGem()

@@ -85,7 +85,7 @@ public static class EnemyCrowd
                 float correctionTime = enemy.IsSwarm ? deltaTime : deltaTime / SwarmCorrectionPasses;
                 Vector3 movement = Vector3.ClampMagnitude(enemy.crowdCorrection / enemy.crowdContacts, enemy.CorrectionSpeed * correctionTime);
 
-                if (!enemy.IsSwarm && EnemyObstacleCollision.CastSphere(enemy.crowdPosition, movement, enemy.CrowdRadius, out RaycastHit hit))
+                if (!enemy.IsSwarm && EnemyObstacleCollision.CastSphere(enemy.crowdPosition + enemy.ColliderCenterOffset, movement, enemy.CrowdRadius, out RaycastHit hit))
                     movement = Vector3.ClampMagnitude(movement, Mathf.Max(0f, hit.distance - 0.002f));
 
                 enemy.crowdPosition += movement;
@@ -218,7 +218,7 @@ public static class EnemyCrowd
 
     private static bool IsValidHitTarget(EnemyMovement enemy, HashSet<EnemyMovement> ignoredEnemies, Dictionary<EnemyMovement, int> ignoredEnemyVersions)
     {
-        if (!enemy.isActiveAndEnabled || (ignoredEnemies != null && ignoredEnemies.Contains(enemy))) return false;
+        if (enemy.IsDead || !enemy.isActiveAndEnabled || (ignoredEnemies != null && ignoredEnemies.Contains(enemy))) return false;
         return ignoredEnemyVersions == null || !ignoredEnemyVersions.TryGetValue(enemy, out int version)
             || version != enemy.ActivationVersion;
     }

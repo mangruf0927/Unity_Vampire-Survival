@@ -16,6 +16,7 @@ public class EnemyDefaultMovement : EnemyMovement
     private Vector3 previousPhysicsPosition;
     private Vector3 requestedPhysicsMovement;
     private bool wasPhysicsKnockback;
+    private Vector3 previousContactPosition;
 
     private float offScreenTime = -1f;
     private bool isAvoiding;
@@ -55,6 +56,7 @@ public class EnemyDefaultMovement : EnemyMovement
         body.linearVelocity = body.angularVelocity = Vector3.zero;
         recordPhysicsMovement = false;
         wasPhysicsKnockback = false;
+        previousContactPosition = body.position;
         offScreenTime = -1f;
         ResetObstacleAvoidance();
         avoidCheckTimer = Mathf.Max(0.01f, AvoidanceCheckInterval) * ((enemyId & 7) / 8f);
@@ -86,6 +88,7 @@ public class EnemyDefaultMovement : EnemyMovement
     protected override void FixedUpdate()
     {
         base.FixedUpdate();
+        if (IsDead) return;
         if (UpdateFrozenState()) return;
         MoveRegularEnemy();
     }
@@ -118,9 +121,12 @@ public class EnemyDefaultMovement : EnemyMovement
         {
             body.linearVelocity = Vector3.zero;
             recordPhysicsMovement = false;
+            previousContactPosition = body.position;
             return;
         }
 
+        LimitPlayerApproach();
+        previousContactPosition = body.position;
         float dt = Time.fixedDeltaTime;
         framePosition = body.position;
         if (target != null) targetPosition = target.position;
@@ -132,6 +138,35 @@ public class EnemyDefaultMovement : EnemyMovement
         else
             MoveTowardsTarget(direction, dt);
         RotateTowardsTarget(direction, dt);
+    }
+
+    private void LimitPlayerApproach()
+    {
+        Vector3 offset = previousContactPosition - target.position;
+        Vector3 travel = body.position - previousContactPosition;
+        offset.y = travel.y = 0f;
+        float radius = MovementRadius + PlayerRadius;
+        float outside = offset.sqrMagnitude - radius * radius;
+
+        // 플레이어가 먼저 들어온 경우에는 적을 강제로 밀어내지 않는다.
+        if (outside < -0.00001f || travel.sqrMagnitude <= 0.00000001f) return;
+        float toward = Vector3.Dot(offset, travel);
+        if (toward >= 0f) return;
+        float discriminant = toward * toward - travel.sqrMagnitude * Mathf.Max(0f, outside);
+        if (discriminant < 0f) return;
+        float contactTime = (-toward - Mathf.Sqrt(discriminant)) / travel.sqrMagnitude;
+        if (contactTime < 0f || contactTime > 1f) return;
+
+        // 다른 적의 물리 압력으로 플레이어를 관통한 이동만 접촉 지점까지 되돌린다.
+        Vector3 position = body.position;
+        Vector3 contact = previousContactPosition + travel * contactTime;
+        contact.y = position.y;
+        body.position = contact;
+        Vector3 normal = contact - target.position;
+        normal.y = 0f;
+        normal.Normalize();
+        float inwardSpeed = Vector3.Dot(body.linearVelocity, normal);
+        if (inwardSpeed < 0f) body.linearVelocity -= normal * inwardSpeed;
     }
 
     private void MoveTowardsTarget(Vector3 direction, float dt)
@@ -146,7 +181,7 @@ public class EnemyDefaultMovement : EnemyMovement
 
     private void MoveKnockback(Vector3 knockback, float dt)
     {
-        if (EnemyObstacleCollision.CastSphere(body.position, knockback, collisionRadius, out RaycastHit hit))
+        if (EnemyObstacleCollision.CastSphere(body.position + ColliderCenterOffset, knockback, collisionRadius, out RaycastHit hit))
             knockback = Vector3.ClampMagnitude(knockback, Mathf.Max(0f, hit.distance - 0.002f));
         body.linearVelocity = knockback / dt;
         recordPhysicsMovement = false;
@@ -171,7 +206,7 @@ public class EnemyDefaultMovement : EnemyMovement
     internal bool CastObstacle(Vector3 direction, out RaycastHit hit)
     {
         float probeRadius = Mathf.Max(0.01f, collisionRadius - 0.02f);
-        return EnemyObstacleCollision.CastSphere(framePosition, direction, probeRadius, out hit);
+        return EnemyObstacleCollision.CastSphere(framePosition + ColliderCenterOffset, direction, probeRadius, out hit);
     }
 
     internal override bool CheckScreenExit(bool inside, float now)

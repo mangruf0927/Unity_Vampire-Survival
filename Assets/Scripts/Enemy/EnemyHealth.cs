@@ -72,9 +72,9 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         if (isDead || damage <= 0f) return;
 
         currentHealth = Mathf.Max(0f, currentHealth - damage);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlaySFX(SoundManager.EnemyHit);
         if (currentHealth > 0f)
         {
-            if (SoundManager.Instance != null) SoundManager.Instance.PlaySFX(SoundManager.EnemyHit);
             if (animator != null && animator.isActiveAndEnabled && animator.runtimeAnimatorController != null)
             {
                 animator.ResetTrigger(HitParameter);

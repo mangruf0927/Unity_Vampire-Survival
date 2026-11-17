@@ -2940,7 +2940,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c923cae2fe954704b25e04eec7981964, type: 3}
   - {fileID: 11400000, guid: b8f179914839495eae5f666128afb0b6, type: 3}
   - {fileID: 11400000, guid: 59f802462d6744d580888ddd6e2958b6, type: 3}
-  testStartingWeapon: {fileID: 11400000, guid: 1ad1e090c5ac4fb08c379dfa009d6cb2, type: 3}
+  testStartingWeapon: {fileID: 0}
   playerMovement: {fileID: 774257184}
   attackOrigin: {fileID: 774257183}
   gameCamera: {fileID: 330585545}

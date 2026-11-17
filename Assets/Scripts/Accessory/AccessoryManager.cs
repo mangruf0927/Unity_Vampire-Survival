@@ -7,6 +7,7 @@ public class AccessoryManager : MonoBehaviour
     [SerializeField] private Accessory[] accessoryPrefabs;
     [SerializeField, Min(0)] private int maximumAccessories = 3;
 
+    private bool hasValidPrefabs;
     private readonly Dictionary<Accessory, Accessory> ownedAccessories = new();
     private readonly List<Accessory> acquisitionOrder = new();
 
@@ -14,6 +15,44 @@ public class AccessoryManager : MonoBehaviour
     public int OwnedCount => ownedAccessories.Count;
     public int MaximumAccessories => maximumAccessories;
     public event System.Action OwnedItemsChanged;
+
+    private void Awake()
+    {
+        hasValidPrefabs = ValidatePrefabs();
+    }
+
+    private bool ValidatePrefabs()
+    {
+        if (accessoryPrefabs == null)
+        {
+            Debug.LogError("AccessoryManager: Accessory Prefabs 목록을 설정해 주세요.", this);
+            return false;
+        }
+
+        bool valid = true;
+        HashSet<int> registeredIds = new();
+        for (int i = 0; i < accessoryPrefabs.Length; i++)
+        {
+            Accessory prefab = accessoryPrefabs[i];
+            if (prefab == null)
+            {
+                Debug.LogError($"AccessoryManager: Accessory Prefabs[{i}]가 비어 있습니다.", this);
+                valid = false;
+                continue;
+            }
+            if (!registeredIds.Add(prefab.DataId))
+            {
+                Debug.LogError($"AccessoryManager: 장신구 Data ID {prefab.DataId}가 중복 등록되었습니다. 프리팹: {prefab.name}", this);
+                valid = false;
+            }
+            if (!DataManager.Instance.Accessories.TryGet(prefab.DataId, out _))
+            {
+                Debug.LogError($"AccessoryManager: 프리팹 {prefab.name}의 Data ID {prefab.DataId}가 Accessories 테이블에 없습니다.", this);
+                valid = false;
+            }
+        }
+        return valid;
+    }
 
     public Accessory GetOwnedAccessory(Accessory prefab)
     {
@@ -24,7 +63,7 @@ public class AccessoryManager : MonoBehaviour
 
     public void AddChoices(List<ILevelUpOption> choices)
     {
-        if (accessoryPrefabs == null) return;
+        if (!hasValidPrefabs) return;
 
         foreach (Accessory prefab in accessoryPrefabs)
         {
@@ -42,7 +81,7 @@ public class AccessoryManager : MonoBehaviour
 
     public bool AcquireOrUpgrade(Accessory choice, bool ignoreLimit = false)
     {
-        if (choice == null || accessoryPrefabs == null) return false;
+        if (!hasValidPrefabs || choice == null) return false;
 
         foreach (Accessory prefab in accessoryPrefabs)
         {

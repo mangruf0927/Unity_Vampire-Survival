@@ -17,6 +17,7 @@ public class WeaponManager : MonoBehaviour
 
     [SerializeField, Min(0)] private int maximumWeapons = 3;
     private readonly Dictionary<Weapon, Weapon> ownedWeapons = new();
+    private bool hasValidPrefabs;
     private float damageMultiplier = 1f;
     private float cooldownMultiplier = 1f;
     private float characterDamageMultiplier = 1f;
@@ -54,6 +55,9 @@ public class WeaponManager : MonoBehaviour
 
     private void Awake()
     {
+        hasValidPrefabs = ValidatePrefabs();
+        if (!hasValidPrefabs) return;
+
         if (playerMovement == null) playerMovement = GetComponent<PlayerMovement>();
         if (attackOrigin == null) attackOrigin = transform;
         if (gameCamera == null) gameCamera = Camera.main;
@@ -79,6 +83,56 @@ public class WeaponManager : MonoBehaviour
         Debug.LogError($"시작 무기 ID {startingId}를 Weapon Prefabs에 등록해 주세요.", this);
     }
 
+    private bool ValidatePrefabs()
+    {
+        if (weaponPrefabs == null)
+        {
+            Debug.LogError("WeaponManager: Weapon Prefabs 목록을 설정해 주세요.", this);
+            return false;
+        }
+
+        bool valid = true;
+        HashSet<int> registeredIds = new();
+        for (int i = 0; i < weaponPrefabs.Length; i++)
+        {
+            Weapon prefab = weaponPrefabs[i];
+            if (prefab == null)
+            {
+                Debug.LogError($"WeaponManager: Weapon Prefabs[{i}]가 비어 있습니다.", this);
+                valid = false;
+                continue;
+            }
+            if (!registeredIds.Add(prefab.DataId))
+            {
+                Debug.LogError($"WeaponManager: 무기 Data ID {prefab.DataId}가 중복 등록되었습니다. 프리팹: {prefab.name}", this);
+                valid = false;
+            }
+            if (!DataManager.Instance.Weapons.TryGet(prefab.DataId, out WeaponData data))
+            {
+                Debug.LogError($"WeaponManager: 프리팹 {prefab.name}의 Data ID {prefab.DataId}가 Weapons 테이블에 없습니다.", this);
+                valid = false;
+                continue;
+            }
+
+            bool matchesAttackType = (data.attackType == WeaponAttackType.Projectile && (prefab is MagicWandWeapon || prefab is KnifeWeapon))
+                || (data.attackType == WeaponAttackType.Orbit && prefab is KingBibleWeapon)
+                || (data.attackType == WeaponAttackType.Slash && prefab is WhipWeapon);
+            if (!matchesAttackType)
+            {
+                Debug.LogError($"WeaponManager: 프리팹 {prefab.name}의 구현 {prefab.GetType().Name}과 Data ID {data.Id}의 공격 유형 {data.attackType}이 일치하지 않습니다.", this);
+                valid = false;
+            }
+        }
+
+        foreach (PlayerData player in DataManager.Instance.Players.All.Values)
+        {
+            if (registeredIds.Contains(player.weaponId)) continue;
+            Debug.LogError($"WeaponManager: 캐릭터 ID {player.Id}의 시작 무기 ID {player.weaponId}가 Weapon Prefabs에 등록되지 않았습니다.", this);
+            valid = false;
+        }
+        return valid;
+    }
+
     private Vector3 GetAttackDirection()
     {
         return playerMovement != null ? playerMovement.LastMoveDirection : attackOrigin.forward;
@@ -86,6 +140,7 @@ public class WeaponManager : MonoBehaviour
 
     private void Update()
     {
+        if (!hasValidPrefabs) return;
         Vector3 direction = GetAttackDirection();
         foreach (Weapon weapon in ownedWeapons.Values)
             if (weapon != null) weapon.SetAttackDirection(direction);
@@ -100,7 +155,7 @@ public class WeaponManager : MonoBehaviour
 
     public void AddChoices(List<ILevelUpOption> choices)
     {
-        if (weaponPrefabs == null) return;
+        if (!hasValidPrefabs) return;
         for (int i = 0; i < weaponPrefabs.Length; i++)
         {
             Weapon prefab = weaponPrefabs[i];
@@ -114,7 +169,7 @@ public class WeaponManager : MonoBehaviour
 
     public bool AcquireOrUpgrade(Weapon choice)
     {
-        if (choice == null || weaponPrefabs == null) return false;
+        if (!hasValidPrefabs || choice == null) return false;
         for (int i = 0; i < weaponPrefabs.Length; i++)
         {
             Weapon prefab = weaponPrefabs[i];

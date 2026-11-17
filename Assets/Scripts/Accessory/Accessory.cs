@@ -10,6 +10,7 @@ public abstract class Accessory : MonoBehaviour, ILevelUpOption
     private bool isOwned;
     private int level;
 
+    public int DataId => dataId;
     public bool IsOwned => isOwned;
     public int Level => level;
     public bool CanUpgrade => !isOwned || level < 5;

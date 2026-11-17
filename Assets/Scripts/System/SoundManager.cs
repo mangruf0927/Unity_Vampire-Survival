@@ -5,13 +5,12 @@ using UnityEngine.SceneManagement;
 
 public class SoundManager : Singleton<SoundManager>
 {
+    private const string BGMVolumeKey = "Audio.BGMVolume";
+    private const string SFXVolumeKey = "Audio.SFXVolume";
     public const string MagicWandAttack = "MagicWandAttack";
     public const string KnifeAttack = "KnifeAttack";
-    public const string KingBibleAttack = "KingBibleAttack";
     public const string WhipAttack = "WhipAttack";
-    public const string TorchBreak = "TorchBreak";
     public const string EnemyHit = "EnemyHit";
-    public const string EnemyDeath = "EnemyDeath";
     public const string PlayerHit = "PlayerHit";
     public const string ExperiencePickup = "ExperiencePickup";
     public const string LevelUp = "LevelUp";
@@ -61,7 +60,7 @@ public class SoundManager : Singleton<SoundManager>
 
     private void Start()
     {
-        if (IsInstance) PlayBGM(SceneManager.GetActiveScene().name);
+        if (IsInstance && SceneManager.GetActiveScene().name == "GameScene") PlayBGM("GameScene");
     }
 
     protected override void OnDestroy()
@@ -84,6 +83,8 @@ public class SoundManager : Singleton<SoundManager>
     {
         if (initialized) return;
 
+        bgmVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(BGMVolumeKey, bgmVolume));
+        sfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(SFXVolumeKey, sfxVolume));
         CreateBGMSource();
         CreateSFXSources();
 
@@ -158,7 +159,7 @@ public class SoundManager : Singleton<SoundManager>
         nextPlayTimes.Clear();
 
         StopBGM();
-        PlayBGM(scene.name);
+        if (scene.name == "GameScene") PlayBGM("GameScene");
     }
 
     public void PlayBGM(string name)
@@ -229,12 +230,14 @@ public class SoundManager : Singleton<SoundManager>
     public void ChangeBGMVolume(float volume)
     {
         bgmVolume = Mathf.Clamp01(volume);
+        PlayerPrefs.SetFloat(BGMVolumeKey, bgmVolume);
         if (bgmSource != null) bgmSource.volume = bgmVolume;
     }
 
     public void ChangeSFXVolume(float volume)
     {
         sfxVolume = Mathf.Clamp01(volume);
+        PlayerPrefs.SetFloat(SFXVolumeKey, sfxVolume);
         if (sfxSources == null) return;
 
         for (int i = 0; i < sfxSources.Length; i++)
@@ -245,4 +248,20 @@ public class SoundManager : Singleton<SoundManager>
 
     public float GetBGMVolume() => bgmVolume;
     public float GetSFXVolume() => sfxVolume;
+
+    public void SaveVolumeSettings()
+    {
+        PlayerPrefs.Save();
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        if (paused && initialized) SaveVolumeSettings();
+    }
+
+    protected override void OnApplicationQuit()
+    {
+        if (initialized) SaveVolumeSettings();
+        base.OnApplicationQuit();
+    }
 }

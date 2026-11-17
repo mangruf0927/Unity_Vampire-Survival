@@ -78,7 +78,6 @@ public class Torch : MonoBehaviour, IDamageable
 
         broken = true;
         DropItem();
-        if (SoundManager.Instance != null) SoundManager.Instance.PlaySFX(SoundManager.TorchBreak);
         ObjectPool.Instance.TryReturnToPool(gameObject);
     }
 

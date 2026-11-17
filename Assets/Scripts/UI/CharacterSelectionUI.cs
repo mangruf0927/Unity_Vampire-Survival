@@ -14,23 +14,35 @@ public class CharacterSelectionUI : MonoBehaviour
         public Button button;
         public Image background;
         public TextMeshProUGUI characterName;
-        public TextMeshProUGUI startingWeapon;
-        public TextMeshProUGUI description;
+        public Image portrait;
+        public Image startingWeapon;
+        [NonSerialized] public Color originalColor;
     }
 
     [SerializeField] private GameObject selectionPanel;
     [SerializeField] private RectTransform content;
     [SerializeField] private CharacterCard[] cards;
     [SerializeField] private Button startButton;
+    [SerializeField] private TextMeshProUGUI selectedCharacterName;
+    [SerializeField] private Image selectedPortrait;
+    [SerializeField] private Image selectedStartingWeapon;
+    [SerializeField] private TextMeshProUGUI selectedDescription;
 
-    [SerializeField] private Color selectedColor = new(0.43f, 0.36f, 0.12f, 1f);
-    [SerializeField] private Color normalColor = new(0.12f, 0.15f, 0.22f, 1f);
+    [SerializeField] private Color selectedColor = new(0.55f, 0.55f, 0f, 1f);
     [SerializeField] private string gameSceneName = "GameScene";
 
     private bool isStarting;
 
     private void Awake()
     {
+        if (cards != null)
+        {
+            for (int i = 0; i < cards.Length; i++)
+            {
+                if (cards[i].background != null)
+                    cards[i].originalColor = cards[i].background.color;
+            }
+        }
         if (selectionPanel != null) selectionPanel.SetActive(false);
     }
 
@@ -65,9 +77,7 @@ public class CharacterSelectionUI : MonoBehaviour
             CharacterCard card = cards[i];
             PlayerData data = DataManager.Instance.Players.Get(card.playerId);
 
-            card.characterName.text = data.displayName;
-            card.startingWeapon.text = "시작 무기: " + DataManager.Instance.Weapons.Get(data.weaponId).displayName;
-            card.description.text = data.abilityDescription;
+            if (card.characterName != null) card.characterName.text = data.displayName;
         }
     }
 
@@ -75,26 +85,26 @@ public class CharacterSelectionUI : MonoBehaviour
     {
         if (isStarting || cards == null) return;
 
-        bool registered = false;
+        CharacterCard selectedCard = null;
 
         for (int i = 0; i < cards.Length; i++)
         {
             if (cards[i].playerId != playerId) continue;
 
-            registered = true;
+            selectedCard = cards[i];
             break;
         }
 
-        if (!registered) return;
+        if (selectedCard == null) return;
 
         if (DataManager.Instance.SelectedPlayerId != playerId && SoundManager.Instance != null)
             SoundManager.Instance.PlaySFX(SoundManager.UIClick, false);
 
         DataManager.Instance.SelectPlayer(playerId);
-        UpdateSelection(playerId);
+        UpdateSelection(selectedCard);
     }
 
-    private void UpdateSelection(int playerId)
+    private void UpdateSelection(CharacterCard selectedCard)
     {
         for (int i = 0; i < cards.Length; i++)
         {
@@ -102,8 +112,16 @@ public class CharacterSelectionUI : MonoBehaviour
 
             if (card.background == null) continue;
 
-            card.background.color = card.playerId == playerId ? selectedColor : normalColor;
+            card.background.color = card == selectedCard ? selectedColor : card.originalColor;
         }
+
+        PlayerData data = DataManager.Instance.Players.Get(selectedCard.playerId);
+        if (selectedCharacterName != null) selectedCharacterName.text = data.displayName;
+        if (selectedDescription != null) selectedDescription.text = data.abilityDescription;
+        if (selectedPortrait != null)
+            selectedPortrait.sprite = selectedCard.portrait != null ? selectedCard.portrait.sprite : null;
+        if (selectedStartingWeapon != null)
+            selectedStartingWeapon.sprite = selectedCard.startingWeapon != null ? selectedCard.startingWeapon.sprite : null;
     }
 
     private void FitContent()

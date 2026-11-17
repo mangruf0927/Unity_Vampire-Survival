@@ -22,8 +22,9 @@
 ### 시작과 캐릭터 선택
 
 - StartScene에서 TMP의 ‘시작하려면 아무 키나 누르세요’ 문구를 깜빡인다. 현재 시작 입력은 키보드의 새 키 입력이다.
-- 입력 후 같은 씬의 캐릭터 선택 패널을 연다. 캐릭터 카드의 이름·시작 무기·고유 능력 설명은 JSON을 사용한다.
-- 카드 선택은 배경색으로 구분한다. 표시 시 첫 카드 안토니오를 기본 선택한다.
+- 입력 후 같은 씬의 캐릭터 선택 패널을 연다. 카드에는 JSON의 이름과 씬에 설정된 캐릭터·시작 무기 이미지를 표시한다. 카드 아래 고유 능력 텍스트는 표시하지 않는다.
+- 캐릭터를 선택하면 기존 하단 설명창의 이름·고유 능력 설명은 Players.json에서 갱신하고, 캐릭터·시작 무기 이미지는 선택한 카드의 Image에서 복사한다. 설명창의 배치와 디자인은 유지한다.
+- 선택 카드는 황록색 배경으로 구분하고 선택이 해제된 카드는 씬에 설정된 원래 배경색으로 복원한다. 표시 시 첫 카드 안토니오를 기본 선택하며 설명창도 함께 갱신한다.
 - 카드 Button On Click은 `CharacterSelectionUI.SelectCharacter(1/2/3)`, 시작 버튼은 `StartGame()`에 연결한다.
 - 선택 ID는 DataManager에 유지하고 GameScene에서 기존 플레이어에 적용한다. 캐릭터별 플레이어 생성 팩토리는 사용하지 않는다.
 
@@ -40,7 +41,7 @@
 - 게임 오버·클리어 패널의 나가기는 GameManager.ShowGameResult()로 연결한다. 결과창의 메인 화면 버튼은 기존 ReturnToStartScene()으로 시작 화면에 돌아간다. 일시 정지 팝업의 종료하기는 기존처럼 시작 화면으로 바로 이동한다.
 - GameResultUI는 종료 확정 시 생존 시간(mm:ss, 최대 10분), 달성 레벨, 처치 수, 캐릭터 이름, 무기별 아이콘·이름·최종 레벨·획득 시각, 장신구 아이콘·최종 레벨을 UI에 복사한다. 이후 플레이어가 제거되어도 결과는 유지된다. 결과창에서도 게임은 정지 상태다.
 - 처치 수는 EnemyHealth의 사망 확정 알림을 GameManager가 집계한다. 일반·이벤트 적을 포함하며 화면 밖 풀 반환은 집계하지 않는다. WeaponManager는 최초 획득 시 TimeSystem의 시각을 Weapon.AcquisitionTime에 기록하며 강화 시에는 변경하지 않는다.
-- 결과창은 GameScene의 HUDCanvas / ResultUI / ResultPanel에서 편집한다. 무기 행 3개와 장신구 슬롯 5개를 준비하고 미보유 항목은 숨긴다. 글자는 TextMeshProUGUI, 아이콘과 배경은 Image이며 위치·크기·색상과 버튼 연결을 Inspector에서 수정할 수 있다.
+- 결과창은 GameScene의 HUDCanvas / ResultUI / ResultPanel에서 편집한다. 메인 화면 버튼은 ResultPanel 아래에서 ResultFrame 바깥 하단 중앙에 배치하며 결과창과 함께 표시/숨김 처리한다. 제목 아래 구분선은 중앙에, 왼쪽 통계·무기 표와 오른쪽 캐릭터·장신구는 각 절반의 중앙을 기준으로 배치한다. 무기 행 3개와 장신구 슬롯 5개를 준비하고 미보유 항목은 숨긴다. 글자는 TextMeshProUGUI, 아이콘과 배경은 Image이며 위치·크기·색상과 버튼 연결을 Inspector에서 수정할 수 있다.
 - 나가기/종료하기 버튼은 Inspector에서 `GameManager.ReturnToStartScene()`을 호출한다. timeScale을 1로 복구한 뒤 StartScene으로 이동한다. 즉시 재시작 전용 버튼은 없다.
 
 ## 4. 플레이어와 카메라

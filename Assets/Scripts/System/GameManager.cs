@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour, IObserver
     [SerializeField] private PlayerHPBar playerHPBar;
     [SerializeField] private PauseUI pauseUI;
     [SerializeField] private LevelUpUI levelUpUI;
+    [SerializeField] private GameResultUI gameResultUI;
 
     private readonly List<ILevelUpOption> choices = new();
 
@@ -28,6 +29,7 @@ public class GameManager : MonoBehaviour, IObserver
     private int pendingChoices;
     private bool isLeaving;
     private bool isDeathPending;
+    private int defeatedEnemies;
 
     public GameState State { get; private set; } = GameState.Playing;
 
@@ -43,6 +45,7 @@ public class GameManager : MonoBehaviour, IObserver
         if (levelUpUI != null) levelUpUI.Hide();
         if (gameOverUI != null) gameOverUI.Hide();
         if (gameClearUI != null) gameClearUI.Hide();
+        if (gameResultUI != null) gameResultUI.Hide();
         if (playerHPBar != null) playerHPBar.SetVisible(true);
 
         if (pauseUI != null)
@@ -54,6 +57,7 @@ public class GameManager : MonoBehaviour, IObserver
 
     private void OnEnable()
     {
+        EnemyHealth.EnemyKilled += CountEnemyKill;
         if (playerHealth != null) playerHealth.AddObserver(this);
         if (playerExperience != null) playerExperience.AddObserver(this);
         Notify();
@@ -61,6 +65,7 @@ public class GameManager : MonoBehaviour, IObserver
 
     private void OnDisable()
     {
+        EnemyHealth.EnemyKilled -= CountEnemyKill;
         if (playerHealth != null) playerHealth.RemoveObserver(this);
         if (playerExperience != null) playerExperience.RemoveObserver(this);
     }
@@ -101,6 +106,12 @@ public class GameManager : MonoBehaviour, IObserver
             pendingChoices += Mathf.Max(0, playerExperience.Level - lastPlayerLevel);
             lastPlayerLevel = playerExperience.Level;
         }
+    }
+
+    private void CountEnemyKill()
+    {
+        if (State != GameState.GameOver && State != GameState.Completed && !isLeaving)
+            defeatedEnemies++;
     }
 
     public void ChooseOption(int index)
@@ -217,6 +228,14 @@ public class GameManager : MonoBehaviour, IObserver
         State = result;
         SetPaused(true);
 
+        // 플레이어가 제거되기 전에 실제 플레이 결과를 UI에 복사해 둔다.
+        if (gameResultUI != null)
+            gameResultUI.Capture(timeSystem != null ? Mathf.Min(StageDuration, timeSystem.ElapsedSeconds) : 0f,
+                playerExperience != null ? playerExperience.Level : lastPlayerLevel, defeatedEnemies,
+                DataManager.Instance.SelectedPlayer.displayName,
+                weaponManager != null ? weaponManager.OwnedWeapons : null,
+                accessoryManager != null ? accessoryManager.OwnedAccessories : null);
+
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.StopBGM();
@@ -275,5 +294,14 @@ public class GameManager : MonoBehaviour, IObserver
         isLeaving = true;
         Time.timeScale = 1f;
         SceneManager.LoadScene("StartScene");
+    }
+
+    public void ShowGameResult()
+    {
+        if (isLeaving || (State != GameState.GameOver && State != GameState.Completed) || gameResultUI == null) return;
+
+        if (gameOverUI != null) gameOverUI.Hide();
+        if (gameClearUI != null) gameClearUI.Hide();
+        gameResultUI.Show();
     }
 }

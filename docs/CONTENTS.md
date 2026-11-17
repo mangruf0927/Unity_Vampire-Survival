@@ -39,6 +39,10 @@
 - GameManager가 LateUpdate에서 600초 도달을 먼저 검사하고, 다음으로 사망 요청을 처리한다. 결과는 한 번만 확정한다.
 - 게임 오버는 즉시 게임을 정지하고 GAME OVER 패널을 표시한다. 플레이어 외형의 Die만 UnscaledTime으로 끝까지 재생한 뒤 플레이어를 비활성화·제거한다. Animator가 없으면 기존처럼 즉시 제거한다. 클리어는 플레이어를 유지하고 GAME COMPLETED 패널을 표시한다.
 - GameOverUI와 GameClearUI는 분리되어 있으며 결과 시 HP 바와 일시 정지 버튼을 숨긴다.
+- 게임 오버·클리어 패널의 나가기는 GameManager.ShowGameResult()로 연결한다. 결과창의 메인 화면 버튼은 기존 ReturnToStartScene()으로 시작 화면에 돌아간다. 일시 정지 팝업의 종료하기는 기존처럼 시작 화면으로 바로 이동한다.
+- GameResultUI는 종료 확정 시 생존 시간(mm:ss, 최대 10분), 달성 레벨, 처치 수, 캐릭터 이름, 무기별 아이콘·이름·최종 레벨·획득 시각, 장신구 아이콘·최종 레벨을 UI에 복사한다. 이후 플레이어가 제거되어도 결과는 유지된다. 결과창에서도 게임은 정지 상태다.
+- 처치 수는 EnemyHealth의 사망 확정 알림을 GameManager가 집계한다. 일반·이벤트 적을 포함하며 화면 밖 풀 반환은 집계하지 않는다. WeaponManager는 최초 획득 시 TimeSystem의 시각을 Weapon.AcquisitionTime에 기록하며 강화 시에는 변경하지 않는다.
+- 결과창은 GameScene의 HUDCanvas / ResultUI / ResultPanel에서 편집한다. 무기 행 3개와 장신구 슬롯 5개를 준비하고 미보유 항목은 숨긴다. 글자는 TextMeshProUGUI, 아이콘과 배경은 Image이며 위치·크기·색상과 버튼 연결을 Inspector에서 수정할 수 있다.
 - 나가기/종료하기 버튼은 Inspector에서 `GameManager.ReturnToStartScene()`을 호출한다. timeScale을 1로 복구한 뒤 StartScene으로 이동한다. 즉시 재시작 전용 버튼은 없다.
 
 ## 4. 플레이어와 카메라

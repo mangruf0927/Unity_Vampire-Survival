@@ -26,6 +26,6 @@ public class ExperienceUI : MonoBehaviour, IObserver
 
         float ratio = (float)playerExperience.CurrentExperience / playerExperience.RequiredExperience;
         experienceSlider.SetValueWithoutNotify(Mathf.Clamp01(ratio));
-        levelText.text = $"LV{playerExperience.Level}";
+        levelText.text = $"레벨 {playerExperience.Level}";
     }
 }

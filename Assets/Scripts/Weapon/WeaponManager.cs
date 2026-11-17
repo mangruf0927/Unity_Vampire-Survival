@@ -13,6 +13,7 @@ public class WeaponManager : MonoBehaviour
     [SerializeField] private PlayerMovement playerMovement;
     [SerializeField] private Transform attackOrigin;
     [SerializeField] private Camera gameCamera;
+    [SerializeField] private TimeSystem timeSystem;
 
     [SerializeField, Min(0)] private int maximumWeapons = 3;
     private readonly Dictionary<Weapon, Weapon> ownedWeapons = new();
@@ -56,6 +57,7 @@ public class WeaponManager : MonoBehaviour
         if (playerMovement == null) playerMovement = GetComponent<PlayerMovement>();
         if (attackOrigin == null) attackOrigin = transform;
         if (gameCamera == null) gameCamera = Camera.main;
+        if (timeSystem == null) timeSystem = FindFirstObjectByType<TimeSystem>();
 #if UNITY_EDITOR
         if (testStartingWeapon != null)
         {
@@ -135,6 +137,7 @@ public class WeaponManager : MonoBehaviour
                 instance.SetCooldownMultiplier(cooldownMultiplier);
                 instance.SetCharacterBonuses(characterDamageMultiplier, characterSpeedMultiplier, characterProjectileBonus);
                 instance.Acquire();
+                instance.AcquisitionTime = timeSystem != null ? timeSystem.ElapsedSeconds : 0f;
                 ownedWeapons[prefab] = instance;
                 acquisitionOrder.Add(instance);
                 OwnedItemsChanged?.Invoke();

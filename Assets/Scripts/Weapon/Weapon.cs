@@ -30,6 +30,7 @@ public abstract class Weapon : MonoBehaviour, ILevelUpOption
     public int DataId => dataId;
     public bool IsOwned => isOwned;
     public Sprite Icon => icon;
+    public float AcquisitionTime { get; internal set; }
     public int Level => isOwned ? Mathf.Clamp(level, 1, 8) : 0;
     public bool CanUpgrade => !isOwned || Level < 8;
     public string DisplayName => Data.displayName;

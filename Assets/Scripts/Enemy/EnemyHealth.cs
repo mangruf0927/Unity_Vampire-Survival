@@ -9,6 +9,11 @@ public class EnemyHealth : MonoBehaviour, IDamageable
     private float currentHealth;
     private bool isDead;
 
+    public static event System.Action EnemyKilled;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetKillNotifications() => EnemyKilled = null;
+
     private static readonly int IsMovingParameter = Animator.StringToHash("IsMoving");
     private static readonly int HitParameter = Animator.StringToHash("Hit");
     private static readonly int DieParameter = Animator.StringToHash("Die");
@@ -83,6 +88,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
         isDead = true;
         movement.StopForDeath();
+        EnemyKilled?.Invoke();
         DropExperienceGem();
 
         if (animator == null || !animator.isActiveAndEnabled || animator.runtimeAnimatorController == null

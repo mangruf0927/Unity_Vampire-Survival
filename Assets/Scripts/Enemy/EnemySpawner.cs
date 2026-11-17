@@ -7,25 +7,8 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private Transform player;
     [FormerlySerializedAs("gameCamera")]
     [SerializeField] private Camera spawnCamera;
-    [System.Serializable]
-    private class EnemyEntry
-    {
-        public PoolTypeEnums poolType;
-        [Min(0f)] public float weight = 1f;
-    }
-
-    [System.Serializable]
-    private class SpawnStage
-    {
-        [Min(0f)] public float startTime;
-        public EnemyEntry[] enemies;
-        [Min(0.01f)] public float spawnInterval = 1f;
-        [Min(0)] public int minimumEnemies = 15;
-        [Min(0)] public int maximumEnemies = 50;
-    }
-
     [SerializeField] private TimeSystem timeSystem;
-    [SerializeField] private SpawnStage[] stages = new SpawnStage[10];
+    private SpawnStageData[] stages;
     [SerializeField, Min(0.01f)] private float offscreenCheckInterval = 0.2f;
     private float nextOffscreenCheckTime;
 
@@ -51,10 +34,11 @@ public class EnemySpawner : MonoBehaviour
 
     private void Start()
     {
-        if (player == null || spawnCamera == null || timeSystem == null ||
-            stages == null || stages.Length != 10)
+        StageData stageData = DataManager.Instance.CurrentStage;
+        stages = stageData.spawnStages;
+        if (player == null || spawnCamera == null || timeSystem == null)
         {
-            Debug.LogError("EnemySpawner: Player, Camera, Time System과 10개 구간을 설정해 주세요.", this);
+            Debug.LogError("EnemySpawner: Player, Camera, Time System을 설정해 주세요.", this);
             enabled = false;
             return;
         }
@@ -68,23 +52,16 @@ public class EnemySpawner : MonoBehaviour
 
         for (int i = 0; i < stages.Length; i++)
         {
-            SpawnStage stage = stages[i];
-            if (stage == null || stage.enemies == null || stage.enemies.Length == 0 ||
-                stage.spawnInterval <= 0f || stage.minimumEnemies < 0 || stage.maximumEnemies < 0)
-            {
-                Debug.LogError($"EnemySpawner: {i}번째 구간의 생성 설정을 확인해 주세요.", this);
-                enabled = false;
-                return;
-            }
+            SpawnStageData stage = stages[i];
             for (int j = 0; j < stage.enemies.Length; j++)
             {
-                EnemyEntry entry = stage.enemies[j];
+                EnemyEntryData entry = stage.enemies[j];
                 if (entry == null || entry.weight <= 0f) continue;
                 if (!ValidatePool(entry.poolType)) return;
             }
         }
         float elapsed = timeSystem.ElapsedSeconds;
-        foreach (EventEnemyData data in DataManager.Instance.EventEnemies.All.Values) eventEnemies.Add(data);
+        foreach (EventEnemyData data in stageData.eventEnemies) eventEnemies.Add(data);
         nextEventIndices = new int[eventEnemies.Count];
         eventBoundsRadii = new float[eventEnemies.Count];
         for (int i = 0; i < eventEnemies.Count; i++)
@@ -142,7 +119,7 @@ public class EnemySpawner : MonoBehaviour
             currentStage = index;
             spawnTimer = 0f;
         }
-        SpawnStage stage = stages[index];
+        SpawnStageData stage = stages[index];
         spawnTimer -= Time.deltaTime;
         if (spawnTimer > 0f) return;
         spawnTimer = stage.spawnInterval;
@@ -172,7 +149,7 @@ public class EnemySpawner : MonoBehaviour
         return index;
     }
 
-    private bool TryChooseEnemy(SpawnStage stage, out PoolTypeEnums type)
+    private bool TryChooseEnemy(SpawnStageData stage, out PoolTypeEnums type)
     {
         type = PoolTypeEnums.Slime;
         float total = 0f;
@@ -182,7 +159,7 @@ public class EnemySpawner : MonoBehaviour
         float roll = Random.value * total;
         for (int i = 0; i < stage.enemies.Length; i++)
         {
-            EnemyEntry entry = stage.enemies[i];
+            EnemyEntryData entry = stage.enemies[i];
             if (entry == null || entry.weight <= 0f) continue;
             type = entry.poolType;
             roll -= entry.weight;

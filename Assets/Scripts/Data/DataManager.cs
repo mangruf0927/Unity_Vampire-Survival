@@ -18,7 +18,7 @@ public class DataManager
     }
 
     private readonly DataTable<EnemyData> enemies = new();
-    private readonly DataTable<EventEnemyData> eventEnemies = new();
+    private readonly DataTable<StageData> stages = new();
     private readonly DataTable<WeaponData> weapons = new();
     private readonly DataTable<AccessoryData> accessories = new();
     private readonly DataTable<PlayerData> players = new();
@@ -27,7 +27,8 @@ public class DataManager
     private readonly Dictionary<string, Action<JToken>> tableLoaderDictionary = new();
 
     public DataTable<EnemyData> Enemies { get { LoadAll(); return enemies; } }
-    public DataTable<EventEnemyData> EventEnemies { get { LoadAll(); return eventEnemies; } }
+    public DataTable<StageData> Stages { get { LoadAll(); return stages; } }
+    public StageData CurrentStage => Stages.Get(1);
     public DataTable<WeaponData> Weapons { get { LoadAll(); return weapons; } }
     public DataTable<AccessoryData> Accessories { get { LoadAll(); return accessories; } }
     public DataTable<PlayerData> Players { get { LoadAll(); return players; } }
@@ -38,7 +39,7 @@ public class DataManager
     private DataManager()
     {
         tableLoaderDictionary.Add("Enemies", enemies.LoadFromToken);
-        tableLoaderDictionary.Add("EventEnemies", eventEnemies.LoadFromToken);
+        tableLoaderDictionary.Add("Stages", stages.LoadFromToken);
         tableLoaderDictionary.Add("Weapons", weapons.LoadFromToken);
         tableLoaderDictionary.Add("Accessories", accessories.LoadFromToken);
         tableLoaderDictionary.Add("Players", players.LoadFromToken);
@@ -90,6 +91,8 @@ public class DataManager
             foreach (PlayerData player in players.All.Values)
                 if (!weapons.TryGet(player.weaponId, out _))
                     throw new InvalidOperationException($"Player ID {player.Id}: 시작 무기 ID {player.weaponId}가 없습니다.");
+            currentFile = "Stages";
+            stages.Get(1);
             IsLoaded = true;
         }
         catch (Exception exception)
@@ -102,7 +105,7 @@ public class DataManager
     private void ClearTables()
     {
         enemies.Clear();
-        eventEnemies.Clear();
+        stages.Clear();
         weapons.Clear();
         accessories.Clear();
         players.Clear();

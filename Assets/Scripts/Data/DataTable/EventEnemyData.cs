@@ -5,7 +5,7 @@ using UnityEngine;
 
 public enum EventEnemyDirection { ToPlayer, Fixed }
 
-// 체력/피해는 프리팹이 참조하는 EnemyData, 이벤트 생성과 이동 설정은 이 테이블이 담당한다.
+// 체력/피해는 프리팹이 참조하는 EnemyData, 이벤트 생성과 이동 설정은 StageData 내부의 이벤트 설정이 담당한다.
 public class EventEnemyData : IGameData, IValidatable
 {
     [JsonProperty(Required = Required.Always)] public int Id { get; set; }

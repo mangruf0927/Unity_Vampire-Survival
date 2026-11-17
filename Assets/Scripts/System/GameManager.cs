@@ -8,7 +8,7 @@ public enum GameState { Playing, GameOver, Completed, Paused, ChoosingUpgrade }
 
 public class GameManager : MonoBehaviour, IObserver
 {
-    private const float StageDuration = 600f;
+    private float stageDuration;
 
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private PlayerExperience playerExperience;
@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour, IObserver
 
     private void Awake()
     {
+        stageDuration = DataManager.Instance.CurrentStage.duration;
         SetPaused(false);
     }
 
@@ -82,7 +83,7 @@ public class GameManager : MonoBehaviour, IObserver
     {
         if (State == GameState.GameOver || State == GameState.Completed || isLeaving) return;
 
-        if (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)
+        if (timeSystem != null && timeSystem.ElapsedSeconds >= stageDuration)
             FinishGame(GameState.Completed);
         else if (isDeathPending)
             FinishGame(GameState.GameOver);
@@ -117,7 +118,7 @@ public class GameManager : MonoBehaviour, IObserver
     public void ChooseOption(int index)
     {
         if (State != GameState.ChoosingUpgrade || isLeaving || index < 0 || index >= choices.Count) return;
-        if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)) return;
+        if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= stageDuration)) return;
         if (!ApplyChoice(choices[index])) return;
 
         pendingChoices--;
@@ -190,7 +191,7 @@ public class GameManager : MonoBehaviour, IObserver
     public void PauseGame()
     {
         if (State != GameState.Playing || isLeaving) return;
-        if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= StageDuration)) return;
+        if (isDeathPending || (timeSystem != null && timeSystem.ElapsedSeconds >= stageDuration)) return;
 
         State = GameState.Paused;
         SetPaused(true);
@@ -230,7 +231,7 @@ public class GameManager : MonoBehaviour, IObserver
 
         // 플레이어가 제거되기 전에 실제 플레이 결과를 UI에 복사해 둔다.
         if (gameResultUI != null)
-            gameResultUI.Capture(timeSystem != null ? Mathf.Min(StageDuration, timeSystem.ElapsedSeconds) : 0f,
+            gameResultUI.Capture(timeSystem != null ? Mathf.Min(stageDuration, timeSystem.ElapsedSeconds) : 0f,
                 playerExperience != null ? playerExperience.Level : lastPlayerLevel, defeatedEnemies,
                 DataManager.Instance.SelectedPlayer.displayName,
                 weaponManager != null ? weaponManager.OwnedWeapons : null,

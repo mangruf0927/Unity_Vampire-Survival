@@ -1,0 +1,205 @@
+{
+  "tableName": "Stages",
+  "records": [
+    {
+      "Id": 1,
+      "duration": 600,
+      "spawnStages": [
+        {
+          "startTime": 0.0,
+          "enemies": [
+            {
+              "poolType": "Slime",
+              "weight": 1.0
+            }
+          ],
+          "spawnInterval": 1.0,
+          "minimumEnemies": 15,
+          "maximumEnemies": 50
+        },
+        {
+          "startTime": 60.0,
+          "enemies": [
+            {
+              "poolType": "Slime",
+              "weight": 6.0
+            },
+            {
+              "poolType": "TurtleMonster",
+              "weight": 4.0
+            }
+          ],
+          "spawnInterval": 0.9,
+          "minimumEnemies": 25,
+          "maximumEnemies": 70
+        },
+        {
+          "startTime": 120.0,
+          "enemies": [
+            {
+              "poolType": "Slime",
+              "weight": 5.0
+            },
+            {
+              "poolType": "TurtleMonster",
+              "weight": 5.0
+            }
+          ],
+          "spawnInterval": 0.8,
+          "minimumEnemies": 40,
+          "maximumEnemies": 120
+        },
+        {
+          "startTime": 180.0,
+          "enemies": [
+            {
+              "poolType": "RockGolem",
+              "weight": 7.0
+            },
+            {
+              "poolType": "Slime",
+              "weight": 3.0
+            }
+          ],
+          "spawnInterval": 0.75,
+          "minimumEnemies": 50,
+          "maximumEnemies": 130
+        },
+        {
+          "startTime": 240.0,
+          "enemies": [
+            {
+              "poolType": "Lich",
+              "weight": 4.0
+            },
+            {
+              "poolType": "RockGolem",
+              "weight": 6.0
+            }
+          ],
+          "spawnInterval": 0.7,
+          "minimumEnemies": 60,
+          "maximumEnemies": 150
+        },
+        {
+          "startTime": 300.0,
+          "enemies": [
+            {
+              "poolType": "Grunt",
+              "weight": 3.0
+            },
+            {
+              "poolType": "RockGolem",
+              "weight": 7.0
+            }
+          ],
+          "spawnInterval": 0.65,
+          "minimumEnemies": 70,
+          "maximumEnemies": 170
+        },
+        {
+          "startTime": 360.0,
+          "enemies": [
+            {
+              "poolType": "Grunt",
+              "weight": 4.0
+            },
+            {
+              "poolType": "TurtleMonster",
+              "weight": 6.0
+            }
+          ],
+          "spawnInterval": 0.6,
+          "minimumEnemies": 85,
+          "maximumEnemies": 200
+        },
+        {
+          "startTime": 420.0,
+          "enemies": [
+            {
+              "poolType": "Slime",
+              "weight": 6.0
+            },
+            {
+              "poolType": "Grunt",
+              "weight": 4.0
+            }
+          ],
+          "spawnInterval": 0.5,
+          "minimumEnemies": 95,
+          "maximumEnemies": 250
+        },
+        {
+          "startTime": 480.0,
+          "enemies": [
+            {
+              "poolType": "TurtleMonster",
+              "weight": 3.0
+            },
+            {
+              "poolType": "Lich",
+              "weight": 3.0
+            },
+            {
+              "poolType": "Grunt",
+              "weight": 4.0
+            }
+          ],
+          "spawnInterval": 0.45,
+          "minimumEnemies": 110,
+          "maximumEnemies": 260
+        },
+        {
+          "startTime": 540.0,
+          "enemies": [
+            {
+              "poolType": "Slime",
+              "weight": 3.0
+            },
+            {
+              "poolType": "TurtleMonster",
+              "weight": 2.0
+            },
+            {
+              "poolType": "RockGolem",
+              "weight": 2.0
+            },
+            {
+              "poolType": "Lich",
+              "weight": 2.0
+            },
+            {
+              "poolType": "Grunt",
+              "weight": 1.0
+            }
+          ],
+          "spawnInterval": 0.4,
+          "minimumEnemies": 130,
+          "maximumEnemies": 320
+        }
+      ],
+      "eventEnemies": [
+        {
+          "Id": 1,
+          "poolType": "SwarmSlime",
+          "spawnTimes": [
+            125,
+            130,
+            135,
+            425,
+            430,
+            435
+          ],
+          "count": 50,
+          "maxActive": 120,
+          "moveSpeed": 16.0,
+          "spacing": 1.3,
+          "pushStrength": 5.0,
+          "maxOffset": 0.25,
+          "recoverySpeed": 4.0,
+          "directionMode": "ToPlayer"
+        }
+      ]
+    }
+  ]
+}

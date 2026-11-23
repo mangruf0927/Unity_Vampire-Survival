@@ -172,7 +172,7 @@ public static class EnemyCrowd
         return TryGetProjectileHit(start, end, hitRadius, out hitEnemy, out _, ignoredEnemies, ignoredEnemyVersions);
     }
 
-    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, out float firstHitTime, HashSet<EnemyMovement> ignoredEnemies = null, Dictionary<EnemyMovement, int> ignoredEnemyVersions = null)
+    internal static bool TryGetProjectileHit(Vector3 start, Vector3 end, float hitRadius, out EnemyMovement hitEnemy, out float firstHitTime, HashSet<EnemyMovement> ignoredEnemies = null, Dictionary<EnemyMovement, int> ignoredEnemyVersions = null, bool ignoreHeight = false)
     {
         hitEnemy = null;
         firstHitTime = float.PositiveInfinity;
@@ -188,6 +188,7 @@ public static class EnemyCrowd
         Vector2Int min = GetCell(new Vector3(Mathf.Min(start.x, end.x) - padding, 0f, Mathf.Min(start.z, end.z) - padding));
         Vector2Int max = GetCell(new Vector3(Mathf.Max(start.x, end.x) + padding, 0f, Mathf.Max(start.z, end.z) + padding));
         Vector3 segment = end - start;
+        if (ignoreHeight) segment.y = 0f;
         float lengthSquared = segment.sqrMagnitude;
 
         for (int x = min.x; x <= max.x; x++)
@@ -198,9 +199,9 @@ public static class EnemyCrowd
 
                 while (enemy != null)
                 {
-                    if (IsValidHitTarget(enemy, ignoredEnemies, ignoredEnemyVersions) && IsProjectileHit(enemy, start, segment, lengthSquared, hitRadius))
+                    if (IsValidHitTarget(enemy, ignoredEnemies, ignoredEnemyVersions) && IsProjectileHit(enemy, start, segment, lengthSquared, hitRadius, ignoreHeight))
                     {
-                        float hitTime = CalculateHitTime(enemy, start, segment, lengthSquared, hitRadius);
+                        float hitTime = CalculateHitTime(enemy, start, segment, lengthSquared, hitRadius, ignoreHeight);
 
                         if (hitTime < firstHitTime)
                         {
@@ -223,9 +224,10 @@ public static class EnemyCrowd
             || version != enemy.ActivationVersion;
     }
 
-    private static bool IsProjectileHit(EnemyMovement enemy, Vector3 start, Vector3 segment, float lengthSquared, float hitRadius)
+    private static bool IsProjectileHit(EnemyMovement enemy, Vector3 start, Vector3 segment, float lengthSquared, float hitRadius, bool ignoreHeight)
     {
         Vector3 center = enemy.transform.position;
+        if (ignoreHeight) center.y = start.y;
 
         float t = lengthSquared > 0f ? Mathf.Clamp01(Vector3.Dot(center - start, segment) / lengthSquared) : 0f;
 
@@ -235,11 +237,12 @@ public static class EnemyCrowd
         return (center - closestPoint).sqrMagnitude <= radius * radius;
     }
 
-    private static float CalculateHitTime(EnemyMovement enemy, Vector3 start, Vector3 segment, float lengthSquared, float hitRadius)
+    private static float CalculateHitTime(EnemyMovement enemy, Vector3 start, Vector3 segment, float lengthSquared, float hitRadius, bool ignoreHeight)
     {
         if (lengthSquared <= 0f) return 0f;
 
         Vector3 offset = start - enemy.transform.position;
+        if (ignoreHeight) offset.y = 0f;
         float radius = enemy.BodyRadius + hitRadius;
 
         float b = Vector3.Dot(offset, segment);

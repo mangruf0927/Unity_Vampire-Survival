@@ -15,9 +15,11 @@ public class Projectile : MonoBehaviour
     private float speed;
     private float hitRadiusMultiplier = 1f;
     private Camera targetCamera;
+    private bool ignoreHeight;
 
-    public void Initialize(Vector3 direction, float speed, Camera targetCamera, float damage, int penetrationCount, float knockback, float areaMultiplier = 1f)
+    public void Initialize(Vector3 direction, float speed, Camera targetCamera, float damage, int penetrationCount, float knockback, float areaMultiplier = 1f, bool ignoreHeight = false)
     {
+        this.ignoreHeight = ignoreHeight;
         this.direction = direction;
         this.speed = speed;
         this.targetCamera = targetCamera;
@@ -54,8 +56,8 @@ public class Projectile : MonoBehaviour
         {
             float radius = hitRadius * hitRadiusMultiplier;
             bool hasEnemy = EnemyCrowd.TryGetProjectileHit(start, end, radius,
-                out EnemyMovement enemy, out float enemyTime, ignoredEnemyVersions: hitEnemies);
-            bool hasTorch = Torch.TryGetHit(start, end, radius, out Torch torch, out float torchTime, hitTorches);
+                out EnemyMovement enemy, out float enemyTime, ignoredEnemyVersions: hitEnemies, ignoreHeight: ignoreHeight);
+            bool hasTorch = Torch.TryGetHit(start, end, radius, out Torch torch, out float torchTime, hitTorches, ignoreHeight: ignoreHeight);
             if (!hasEnemy && !hasTorch) break;
             if (hasEnemy && (!hasTorch || enemyTime <= torchTime))
             {

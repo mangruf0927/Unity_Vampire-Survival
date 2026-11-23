@@ -195,19 +195,20 @@ public class Torch : MonoBehaviour, IDamageable
         return true;
     }
 
-    internal static bool TryGetHit(Vector3 start, Vector3 end, float attackRadius, out Torch hitTorch, out float hitTime, Dictionary<Torch, int> ignored)
+    internal static bool TryGetHit(Vector3 start, Vector3 end, float attackRadius, out Torch hitTorch, out float hitTime, Dictionary<Torch, int> ignored, bool ignoreHeight = false)
     {
         hitTorch = null;
         hitTime = float.PositiveInfinity;
 
         Vector3 segment = end - start;
+        if (ignoreHeight) segment.y = 0f;
         float lengthSquared = segment.sqrMagnitude;
 
         for (int i = 0; i < activeTorches.Count; i++)
         {
             Torch torch = activeTorches[i];
             if (!IsValidTarget(torch, ignored)) continue;
-            if (!TryCalculateHitTime(torch, start, segment, lengthSquared, attackRadius, out float first)) continue;
+            if (!TryCalculateHitTime(torch, start, segment, lengthSquared, attackRadius, out float first, ignoreHeight)) continue;
             if (first >= hitTime) continue;
 
             hitTime = first;
@@ -224,11 +225,12 @@ public class Torch : MonoBehaviour, IDamageable
         return true;
     }
 
-    private static bool TryCalculateHitTime(Torch torch, Vector3 start, Vector3 segment, float lengthSquared, float attackRadius, out float hitTime)
+    private static bool TryCalculateHitTime(Torch torch, Vector3 start, Vector3 segment, float lengthSquared, float attackRadius, out float hitTime, bool ignoreHeight)
     {
         hitTime = 0f;
 
         Vector3 offset = start - torch.transform.position;
+        if (ignoreHeight) offset.y = 0f;
         float radius = attackRadius + torch.hitRadius;
         float t = lengthSquared > 0f ? Mathf.Clamp01(-Vector3.Dot(offset, segment) / lengthSquared) : 0f;
 

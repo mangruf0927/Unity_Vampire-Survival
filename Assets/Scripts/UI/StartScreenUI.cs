@@ -2,6 +2,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class StartScreenUI : MonoBehaviour
 {
@@ -9,12 +10,24 @@ public class StartScreenUI : MonoBehaviour
     [SerializeField, Min(0.01f)] private float blinkInterval = 0.8f;
     [SerializeField] private CharacterSelectionUI characterSelectionUI;
 
+    [SerializeField] private GameObject optionsPanel;
+    [SerializeField] private Button optionsButton;
+    [SerializeField] private TextMeshProUGUI optionsButtonText;
+    [SerializeField] private Sprite backSprite;
+    [SerializeField] private Sprite backHighlightedSprite;
+    [SerializeField] private Sprite backPressedSprite;
+
+    private Sprite optionsSprite;
+    private SpriteState optionsSpriteState;
     private float blinkTimer;
     private bool isStarting;
 
     private void Awake()
     {
         Time.timeScale = 1f;
+        optionsSprite = optionsButton.image.sprite;
+        optionsSpriteState = optionsButton.spriteState;
+        optionsPanel.SetActive(false);
     }
 
     private void OnEnable()
@@ -27,17 +40,67 @@ public class StartScreenUI : MonoBehaviour
 
     private void Update()
     {
-        if (isStarting) return;
+        if (isStarting || optionsPanel.activeSelf) return;
 
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
         {
             isStarting = true;
             if (startText != null) startText.gameObject.SetActive(false);
             if (characterSelectionUI != null) characterSelectionUI.Show();
+            SetBackButton(true);
             return;
         }
 
         UpdateBlink();
+    }
+
+    public void ToggleOptions()
+    {
+        if (isStarting)
+        {
+            if (characterSelectionUI != null) characterSelectionUI.Hide();
+            isStarting = false;
+            blinkTimer = 0f;
+            if (startText != null)
+            {
+                startText.gameObject.SetActive(true);
+                startText.alpha = 1f;
+            }
+            SetBackButton(false);
+            return;
+        }
+
+        bool isOpen = !optionsPanel.activeSelf;
+        optionsPanel.SetActive(isOpen);
+        SetBackButton(isOpen);
+
+        if (startText != null)
+            startText.gameObject.SetActive(!isOpen && !isStarting);
+    }
+
+    private void SetBackButton(bool showBack)
+    {
+        optionsButtonText.text = showBack ? "뒤로" : "옵션";
+        optionsButton.enabled = false;
+        optionsButton.image.sprite = showBack ? backSprite : optionsSprite;
+
+        SpriteState spriteState = optionsSpriteState;
+        if (showBack)
+        {
+            spriteState.highlightedSprite = backHighlightedSprite;
+            spriteState.pressedSprite = backPressedSprite;
+        }
+        optionsButton.spriteState = spriteState;
+        optionsButton.enabled = true;
+    }
+
+    public void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private void UpdateBlink()

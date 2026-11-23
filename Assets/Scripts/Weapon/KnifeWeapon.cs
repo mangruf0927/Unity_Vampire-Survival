@@ -3,6 +3,7 @@ using UnityEngine;
 public class KnifeWeapon : Weapon
 {
     [SerializeField] private Projectile projectilePrefab;
+    [SerializeField] private float launchHeightOffset = -0.5f;
 
     private float cooldown;
     private float burstInterval;
@@ -65,9 +66,10 @@ public class KnifeWeapon : Weapon
     private void Fire()
     {
         Vector3 direction = AttackDirection;
-        Projectile projectile = Instantiate(projectilePrefab, AttackOrigin.position, Quaternion.LookRotation(direction, Vector3.up));
+        Vector3 position = AttackOrigin.position + Vector3.up * launchHeightOffset;
+        Projectile projectile = Instantiate(projectilePrefab, position, Quaternion.LookRotation(direction, Vector3.up));
         projectile.transform.localScale *= areaMultiplier;
-        projectile.Initialize(direction, projectileSpeed * speedMultiplier * CharacterProjectileSpeedMultiplier, TargetCamera, Damage, PenetrationCount, Knockback, areaMultiplier);
+        projectile.Initialize(direction, projectileSpeed * speedMultiplier * CharacterProjectileSpeedMultiplier, TargetCamera, Damage, PenetrationCount, Knockback, areaMultiplier, ignoreHeight: true);
         if (SoundManager.Instance != null) SoundManager.Instance.PlaySFX(SoundManager.KnifeAttack);
     }
 }

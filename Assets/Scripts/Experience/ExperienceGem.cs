@@ -7,11 +7,13 @@ public class ExperienceGem : MonoBehaviour
     [SerializeField, Min(1)] private int dataId = 1;
 
     private static readonly List<ExperienceGem> activeGems = new();
+    private const float VacuumAttractionDuration = 1f;
 
     private PlayerExperience attractionTarget;
     private int experienceValue;
     private bool collected;
     private float attractionSpeed;
+    private float vacuumTimeRemaining;
 
     public float GroundOffset { get; private set; }
 
@@ -20,7 +22,18 @@ public class ExperienceGem : MonoBehaviour
 
     public static void AttractAllTo(PlayerExperience player, float speed)
     {
-        for (int i = 0; i < activeGems.Count; i++) activeGems[i].AttractTo(player, speed);
+        if (player == null || !player.isActiveAndEnabled) return;
+
+        for (int i = 0; i < activeGems.Count; i++)
+        {
+            ExperienceGem gem = activeGems[i];
+            gem.AttractTo(player, speed);
+            if (gem.collected) continue;
+
+            gem.vacuumTimeRemaining = gem.vacuumTimeRemaining > 0f
+                ? Mathf.Min(gem.vacuumTimeRemaining, VacuumAttractionDuration)
+                : VacuumAttractionDuration;
+        }
     }
 
     private void Awake()
@@ -35,12 +48,14 @@ public class ExperienceGem : MonoBehaviour
         collected = false;
         attractionTarget = null;
         attractionSpeed = 0f;
+        vacuumTimeRemaining = 0f;
     }
 
     private void OnDisable()
     {
         activeGems.Remove(this);
         attractionTarget = null;
+        vacuumTimeRemaining = 0f;
     }
 
     private void Update()
@@ -50,7 +65,23 @@ public class ExperienceGem : MonoBehaviour
 
         Vector3 targetPosition = attractionTarget.transform.position;
         targetPosition.y = transform.position.y;
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, attractionSpeed * Time.deltaTime);
+        float speed = attractionSpeed;
+        bool isVacuumAttraction = vacuumTimeRemaining > 0f;
+        if (isVacuumAttraction)
+        {
+            float distance = Vector3.Distance(transform.position, targetPosition);
+            speed = Mathf.Max(speed, distance / vacuumTimeRemaining);
+            vacuumTimeRemaining = Mathf.Max(0f, vacuumTimeRemaining - Time.deltaTime);
+        }
+
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
+
+        // 빠른 이동으로 물리 접촉을 놓쳐도 도착한 보석은 기존 획득 경로로 처리한다.
+        if (isVacuumAttraction && (vacuumTimeRemaining <= 0f || transform.position == targetPosition))
+        {
+            transform.position = targetPosition;
+            Collect(attractionTarget);
+        }
     }
 
     public void AttractTo(PlayerExperience player, float speed)

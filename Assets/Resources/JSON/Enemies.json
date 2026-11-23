@@ -7,7 +7,7 @@
       "moveSpeed": 3.0,
       "rotationSpeed": 540.0,
       "damage": 10.0,
-      "gemDropChance": 0.6,
+      "gemDropChance": 0.5,
       "offscreenReturnDelay": 5.0,
       "knockbackDistance": 1,
       "knockbackDuration": 0.15
@@ -18,7 +18,7 @@
       "moveSpeed": 1.6,
       "rotationSpeed": 540.0,
       "damage": 10.0,
-      "gemDropChance": 0.6,
+      "gemDropChance": 0.5,
       "offscreenReturnDelay": 12.0,
       "knockbackDistance": 0.8,
       "knockbackDuration": 0.15
@@ -29,7 +29,7 @@
       "moveSpeed": 2.2,
       "rotationSpeed": 540.0,
       "damage": 12.0,
-      "gemDropChance": 0.6,
+      "gemDropChance": 0.5,
       "offscreenReturnDelay": 12.0,
       "knockbackDistance": 1.0,
       "knockbackDuration": 0.15
@@ -40,7 +40,7 @@
       "moveSpeed": 4.0,
       "rotationSpeed": 540.0,
       "damage": 8.0,
-      "gemDropChance": 0.6,
+      "gemDropChance": 0.5,
       "offscreenReturnDelay": 12.0,
       "knockbackDistance": 1.2,
       "knockbackDuration": 0.15
@@ -51,7 +51,7 @@
       "moveSpeed": 1.2,
       "rotationSpeed": 540.0,
       "damage": 18.0,
-      "gemDropChance": 0.6,
+      "gemDropChance": 0.5,
       "offscreenReturnDelay": 12.0,
       "knockbackDistance": 0.35,
       "knockbackDuration": 0.15

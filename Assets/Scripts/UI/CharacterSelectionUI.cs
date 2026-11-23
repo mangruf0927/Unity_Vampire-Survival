@@ -70,6 +70,11 @@ public class CharacterSelectionUI : MonoBehaviour
             EventSystem.current.SetSelectedGameObject(cards[0].button.gameObject);
     }
 
+    public void Hide()
+    {
+        if (selectionPanel != null) selectionPanel.SetActive(false);
+    }
+
     private void UpdateCards()
     {
         for (int i = 0; i < cards.Length; i++)
